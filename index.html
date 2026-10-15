@@ -1376,6 +1376,19 @@ function saveShop(btn, status){
 var TR_STATES = ['accepted','packed','shipped','pickup','delivered','rejected','cancelled','return_req','return_ok','returned','return_no'];
 function myOrders(){ try { var h = JSON.parse(localStorage.getItem('df-orders')||'[]'); return Array.isArray(h) ? h : []; } catch(e){ return []; } }
 function fmtWhen(iso){ try { var d=new Date(iso); return d.toLocaleDateString(lang==='hi'?'hi-IN':'en-IN',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString(lang==='hi'?'hi-IN':'en-IN',{hour:'numeric',minute:'2-digit'}); } catch(e){ return ''; } }
+var trRedraw = null;
+/* Small API for the customer-account module. */
+window.DF = {
+  trackInto: function(box, id, redraw){ trRedraw = redraw || null; box.innerHTML = ''; fillTrack(box, id, true); },
+  setRedraw: function(f){ trRedraw = f || null; },
+  resetMode: function(){ trMode = ''; },
+  productBySku: function(sku){ var best = null; products.forEach(function(p){ if (p.code && (sku === p.code || String(sku).indexOf(p.code + '-') === 0) && (!best || p.code.length > best.code.length)) best = p; }); return best; },
+  addToCart: function(p, size, qty, m){ addToCart(p, size, qty, m); },
+  photo: function(p){ return p && p.photos && p.photos[0] ? p.photos[0] : ''; },
+  art: function(p){ return p ? artSvg(p.art) : ''; },
+  cartCount: function(){ return cart.length; },
+  rupees: rupees
+};
 function renderTrack(){
   var t = T(), out = document.getElementById('tr-out'), rec = document.getElementById('tr-recent');
   if (!out) return;
@@ -1388,11 +1401,15 @@ function renderTrack(){
   }
   out.innerHTML = '';
   if (!trackId){ out.appendChild(el('p',{'class':'hint',text:t.tr_err})); return; }
-  var id = trackId.toUpperCase().trim();
+  fillTrack(out, trackId.toUpperCase().trim());
+}
+/* Status steps + cancel/return actions for one order, drawn into any container (track section or account order page). */
+function fillTrack(out, id, forceKnown){
+  var t = T(), mine = myOrders();
   var r = TRACK[id];
   out.appendChild(el('div',{'class':'num',style:'font-size:20px;font-weight:600',text:id}));
   if (!r){
-    var known = mine.some(function(h){ return h.id===id; });
+    var known = forceKnown || mine.some(function(h){ return h.id===id; });
     out.appendChild(el('p',{style:'margin:8px 0 0',text:known ? t.tr_wait : t.tr_none}));
     if (known) out.appendChild(stepsEl(0, null, false));
   } else if (r.s === 'rejected' || r.s === 'cancelled'){
@@ -1404,7 +1421,7 @@ function renderTrack(){
     if (t.tr_ret[r.s]) out.appendChild(el('p',{'class':'stockline'+(r.s==='return_no'?' out':''),style:'margin-top:10px',text:t.tr_ret[r.s]}));
     var last = r.at && r.at[r.s]; if (last) out.appendChild(el('p',{'class':'hint',style:'margin-top:6px',text:t.tr_upd+fmtWhen(last)}));
   }
-  trackActions(out, id, r, mine.some(function(h){ return h.id===id; }));
+  trackActions(out, id, r, forceKnown || mine.some(function(h){ return h.id===id; }));
   out.appendChild(el('a',{'class':'btn btn-wa',style:'margin-top:14px',target:'_blank',rel:'noopener',href:waLink((lang==='hi'?'नमस्ते! मेरे ऑर्डर '+id+' का क्या स्टेटस है?':'Hello! What is the status of my order '+id+'?')),text:t.tr_ask}));
 }
 function trackActions(out, id, r, known){
@@ -1420,7 +1437,7 @@ function trackActions(out, id, r, known){
     else if (formUrlFor(id)){
       var hh = myOrders().filter(function(o){ return o.id === id; })[0] || {};
       var cw = el('select',{id:'can-why'}, t.can_opts.map(function(o){ return el('option',{text:o}); }));
-      var cp = el('input',{id:'can-phone',inputmode:'tel',autocomplete:'tel',value:hh.phone||''});
+      var cp = el('input',{id:'can-phone',inputmode:'tel',autocomplete:'tel',value:hh.phone||(window.DF&&DF.phoneHint)||''});
       var cd = el('textarea',{id:'can-more'});
       var cmsg = el('p',{'class':'hint','aria-live':'polite',style:'margin:0;font-weight:600'});
       var cbtn = el('button',{type:'button','class':'btn btn-gold',text:t.rq_send});
@@ -1450,7 +1467,7 @@ function trackActions(out, id, r, known){
     else { box.appendChild(el('p',{'class':'hint',style:'margin:0',text:D(t.ret_soon)})); }
   } else {
     var row = el('div',{'class':'row'});
-    if (canCancel) row.appendChild(el('button',{type:'button','class':'btn btn-line',style:'color:var(--danger)',text:t.tr_cancel,onclick:function(){ trMode='cancel'; renderTrack(); }}));
+    if (canCancel) row.appendChild(el('button',{type:'button','class':'btn btn-line',style:'color:var(--danger)',text:t.tr_cancel,onclick:function(){ trMode='cancel'; (trRedraw||renderTrack)(); }}));
     if (canReturn) row.appendChild(el('button',{type:'button','class':'btn btn-line',text:t.tr_return,onclick:function(){ trMode='return'; goReturn(id); }}));
     if (row.children.length) box.appendChild(row);
   }
@@ -1475,6 +1492,7 @@ function formUrlFor(id, kind, extra){
   return u.slice(0,q+1) + parts.join('&');
 }
 function goReturn(id){
+  try { window.dispatchEvent(new Event('df-nav')); } catch(e){}
   var hh = myOrders().filter(function(o){ return o.id === id; })[0] || {};
   var rp = document.getElementById('r-phone'); if (rp && !rp.value && hh.phone) rp.value = hh.phone;
   var ri = document.getElementById('r-item'); if (ri && !ri.value && hh.items) ri.value = hh.items;
@@ -1739,6 +1757,19 @@ renderAll();
 .acct-pick{display:flex;flex-direction:column;gap:4px}
 .acct-pick select{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:0 12px}
 .acct-hello{background:var(--gold-soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px}
+.acct-ocard{cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.acct-ocard:hover{border-color:var(--gold)}
+.acct-ocard .go{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.acct-chip{font-family:var(--f-brand);font-size:12px;font-weight:600;letter-spacing:.04em;padding:3px 10px;border-radius:999px;background:var(--gold-soft);color:var(--gold);white-space:nowrap}
+.acct-chip.ok{color:var(--deal)}.acct-chip.bad{background:var(--danger);color:#fff}
+.acct-item{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:start;padding:10px 0;border-bottom:1px dashed var(--line)}
+.acct-item:last-child{border-bottom:0}
+.acct-item .im{width:64px;height:80px;border-radius:8px;overflow:hidden;background:var(--art-bg);display:flex;align-items:center;justify-content:center}
+.acct-item .im img{width:100%;height:100%;object-fit:cover}
+.acct-item .im svg{width:56%;color:var(--art-line)}
+.acct-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:15px}
+.acct-kv span:nth-child(odd){color:var(--muted)}
+.acct-track .num{display:none}
 @media (max-width:560px){ .acct-modal{border-radius:0;height:100%;max-height:none;padding:16px max(16px, env(safe-area-inset-left,0px)) 28px max(16px, env(safe-area-inset-right,0px))} .acct-close{top:max(10px, env(safe-area-inset-top,0px))} }
 </style>
 <script>
@@ -1759,7 +1790,7 @@ renderAll();
       name:'Full name', mobile:'Mobile number (10 digits)', line:'House no., street, village', city:'Town / city', pin:'PIN code', land:'Landmark (optional)',
       save:'Save', saved:'Saved.', err_prof:'Please fill name, 10-digit mobile, address and 6-digit PIN.',
       hello:'Hello', addrs:'My addresses', add_addr:'Add new address', def:'Default', use_def:'Make default', edit:'Edit', del:'Delete',
-      orders:'My orders', no_orders:'No orders yet.', track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
+      orders:'My orders', no_orders:'No orders yet.', view:'View details', back:'← My orders', placed:'Placed on', pay_l:'Payment', deliv_l:'Delivery', addr_l:'Address', total_l:'Total', items_l:'Items', status_l:'Order status', add_cart:'Add to cart', added:'Added to cart ✓', buy_again:'Add all to cart (buy again)', go_cart:'Go to cart', my_cart:'My cart', p_upi:'UPI (online)', p_cod:'Cash on delivery', gone:'No longer available', size:'Size', qty:'Qty', st:{waiting:'Waiting for shop',accepted:'Accepted',packed:'Packed',shipped:'Shipped',pickup:'Ready for pickup',delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',return_req:'Return requested',return_ok:'Return approved',returned:'Returned',return_no:'Return not approved'}, track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
       pick:'Deliver to', other:'Another address (type below)', hint_login:'Login to save your address for next time.', welcome:'Logged in as ',
       e_gen:'Something went wrong. Please try again.', e_cred:'Email or password is wrong.', e_used:'This email already has an account. Tap Login.', e_weak:'Password must be at least 6 letters.', e_mail:'Please write a correct email.', e_dom:'Login is not enabled for this website address yet.', e_net:'No internet. Please try again.' },
     hi:{ login:'लॉग-इन', account:'मेरा खाता', title:'लॉग-इन करें या खाता बनाएँ', sub:'एक बार पता सेव करें, अगली बार जल्दी ऑर्डर करें।',
@@ -1769,7 +1800,7 @@ renderAll();
       name:'पूरा नाम', mobile:'मोबाइल नंबर (10 अंक)', line:'मकान नं., गली, गांव', city:'कस्बा / शहर', pin:'पिन कोड', land:'लैंडमार्क (चाहें तो)',
       save:'सेव करें', saved:'सेव हो गया।', err_prof:'नाम, 10 अंक का मोबाइल, पता और 6 अंक का पिन भरें।',
       hello:'नमस्ते', addrs:'मेरे पते', add_addr:'नया पता जोड़ें', def:'मुख्य', use_def:'मुख्य बनाएँ', edit:'बदलें', del:'हटाएँ',
-      orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
+      orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', view:'पूरी जानकारी', back:'← मेरे ऑर्डर', placed:'ऑर्डर की तारीख', pay_l:'पेमेंट', deliv_l:'डिलीवरी', addr_l:'पता', total_l:'कुल', items_l:'सामान', status_l:'ऑर्डर का स्टेटस', add_cart:'कार्ट में डालें', added:'कार्ट में डाल दिया ✓', buy_again:'सब फिर से कार्ट में डालें', go_cart:'कार्ट देखें', my_cart:'मेरा कार्ट', p_upi:'UPI (ऑनलाइन)', p_cod:'कैश ऑन डिलीवरी', gone:'अब उपलब्ध नहीं', size:'साइज़', qty:'मात्रा', st:{waiting:'दुकान के जवाब का इंतज़ार',accepted:'मंज़ूर',packed:'पैक हो गया',shipped:'भेज दिया',pickup:'दुकान से ले जाएँ',delivered:'पहुँच गया',rejected:'रद्द (दुकान ने)',cancelled:'रद्द',return_req:'वापसी की रिक्वेस्ट',return_ok:'वापसी मंज़ूर',returned:'वापस हो गया',return_no:'वापसी मंज़ूर नहीं'}, track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
       pick:'कहाँ भेजें', other:'दूसरा पता (नीचे लिखें)', hint_login:'लॉग-इन करें, अगली बार के लिए पता सेव हो जाएगा।', welcome:'लॉग-इन: ',
       e_gen:'कुछ गड़बड़ हुई। फिर से कोशिश करें।', e_cred:'ईमेल या पासवर्ड गलत है।', e_used:'इस ईमेल का खाता पहले से है। लॉग-इन दबाएँ।', e_weak:'पासवर्ड कम से कम 6 अक्षर का हो।', e_mail:'सही ईमेल लिखें।', e_dom:'इस वेबसाइट पते पर लॉग-इन अभी चालू नहीं है।', e_net:'इंटरनेट नहीं है। फिर से कोशिश करें।' }
   };
@@ -1791,7 +1822,7 @@ renderAll();
   function addrText(a){ return [a.line, a.city, a.pin ? 'PIN '+a.pin : '', a.land].filter(Boolean).join(', '); }
   function uid6(){ return Math.random().toString(36).slice(2,8); }
 
-  var auth = null, fs = null, user = null, prof = null, ready = false, modal = null, view = '', editAddr = null;
+  var auth = null, fs = null, user = null, prof = null, ready = false, modal = null, view = '', editAddr = null, curOrder = null;
 
   var ICO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
   var GICO = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
@@ -1829,6 +1860,8 @@ renderAll();
       return;
     }
     if (!prof) return;
+    if (window.DF) DF.phoneHint = prof.phone || '';
+    var rp = $('r-phone'); if (rp && !rp.value && prof.phone) rp.value = prof.phone;
     if (force || !nameI.value) nameI.value = prof.name || '';
     if (force || !phoneI.value) phoneI.value = prof.phone || '';
     var list = prof.addresses || [];
@@ -1873,7 +1906,8 @@ renderAll();
   window.addEventListener('df-render', function(){ placeButton(); fillCheckout(false); });
 
   /* ---------- modal ---------- */
-  function closeModal(){ if (modal){ modal.remove(); modal = null; document.body.style.overflow = ''; var b = $('acct-btn'); if (b) b.focus(); } }
+  window.addEventListener('df-nav', function(){ closeModal(); });
+  function closeModal(){ if (window.DF){ DF.setRedraw(null); DF.resetMode(); } if (modal){ modal.remove(); modal = null; document.body.style.overflow = ''; var b = $('acct-btn'); if (b) b.focus(); } }
   function openModal(v){
     view = v || (user ? (prof && prof.name && prof.phone && (prof.addresses||[]).length ? 'account' : 'profile') : 'login');
     if (!modal){
@@ -1966,10 +2000,11 @@ renderAll();
       setTimeout(function(){ var f = box2.querySelector('input'); if (f) f.focus(); }, 0);
       return;
     }
+    if (view === 'order' && curOrder){ drawOrder(t); return; }
     // account
     var box3 = shell(t.account);
     box3.appendChild(mk('div',{'class':'acct-hello'},[ mk('b',{text:t.hello+', '+((prof && prof.name) || '')}), mk('div',{'class':'meta',text:[user.email, prof && prof.phone].filter(Boolean).join(' · ')}) ]));
-    box3.appendChild(mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.edit_prof,onclick:function(){ openModal('profile'); }}) ]));
+    box3.appendChild(mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.edit_prof,onclick:function(){ openModal('profile'); }}), mk('button',{type:'button',text:t.my_cart+(window.DF?' ('+DF.cartCount()+')':''),onclick:goCart}) ]));
     box3.appendChild(mk('h3',{'class':'acct-h',text:t.addrs}));
     ((prof && prof.addresses) || []).forEach(function(a){
       var isDef = prof.defaultAddr === a.id;
@@ -1993,14 +2028,72 @@ renderAll();
       snap.forEach(function(d){
         var o = d.data();
         var when = o.created ? new Date(o.created).toLocaleDateString(L()===TX.hi?'hi-IN':'en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
-        ol.appendChild(mk('div',{'class':'acct-card'},[
-          mk('b',{'class':'num',text:o.id}),
+        var st = statusOf(o.id);
+        ol.appendChild(mk('button',{type:'button','class':'acct-card acct-ocard',onclick:function(){ curOrder = o; openModal('order'); }},[
+          mk('div',{'class':'go'},[ mk('b',{'class':'num',text:o.id}), mk('span',{'class':'acct-chip'+(st.cls?' '+st.cls:''),text:st.label}) ]),
           mk('span',{'class':'meta',text:[when, o.total ? rupees(o.total)+(o.allPriced===false?' + ?':'') : '', (o.items||[]).map(function(i){ return i.name+(i.size?' ('+i.size+')':'')+' × '+i.qty; }).join(', ')].filter(Boolean).join(' · ')}),
-          mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.track,onclick:function(){ closeModal(); location.hash = '#track-' + o.id; }}) ])
+          mk('span',{'class':'acct-link',style:'padding:0',text:t.view+' →'})
         ]));
       });
     }, function(){ ol.innerHTML = ''; ol.appendChild(mk('p',{'class':'hint',text:t.e_gen})); });
     box3.appendChild(mk('button',{type:'button','class':'btn btn-line',style:'color:var(--danger);margin-top:6px',text:t.logout,onclick:function(){ auth.signOut().then(closeModal); }}));
+  }
+
+  /* ---------- order details page ---------- */
+  function statusOf(id){
+    var t = L(), tr = (data.track || {})[id], s = tr ? tr.s : 'waiting';
+    return {s:s, label:(t.st[s] || s), cls: s==='delivered'||s==='returned'||s==='return_ok' ? 'ok' : (s==='rejected'||s==='cancelled'||s==='return_no' ? 'bad' : '')};
+  }
+  function goCart(){ closeModal(); var o = document.getElementById('order'); if (o) o.scrollIntoView({behavior:'smooth'}); }
+  function itemProduct(i){ return window.DF ? DF.productBySku(i.sku || '') : null; }
+  function itemMetres(i){ var m = /([\d.]+)\s*m$/.exec(i.name || ''); return m ? parseFloat(m[1]) : 0; }
+  function addItem(i){
+    var p = itemProduct(i); if (!p || !window.DF) return false;
+    var m = itemMetres(i);
+    DF.addToCart(p, m ? '' : (i.size || ''), m ? 1 : (i.qty || 1), m || 0);
+    return true;
+  }
+  function drawOrder(t){
+    var o = curOrder, st = statusOf(o.id);
+    var box = shell(o.id);
+    box.querySelector('h2').className = 'num';
+    box.appendChild(mk('button',{type:'button','class':'acct-link',text:t.back,onclick:function(){ curOrder = null; openModal('account'); }}));
+    var when = o.created ? new Date(o.created).toLocaleString(L()===TX.hi?'hi-IN':'en-IN',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+    box.appendChild(mk('div',{'class':'acct-card'},[ mk('div',{'class':'acct-kv'},[
+      mk('span',{text:t.placed}), mk('span',{text:when}),
+      mk('span',{text:t.status_l}), mk('span',null,[ mk('span',{'class':'acct-chip'+(st.cls?' '+st.cls:''),text:st.label}) ]),
+      mk('span',{text:t.pay_l}), mk('span',{text:o.pay==='upi'?t.p_upi:t.p_cod}),
+      mk('span',{text:t.deliv_l}), mk('span',{text:o.how||'—'}),
+      o.addr ? mk('span',{text:t.addr_l}) : null, o.addr ? mk('span',{text:o.addr}) : null,
+      mk('span',{text:t.total_l}), mk('b',{'class':'num',text:o.total ? rupees(o.total)+(o.allPriced===false?' + ?':'') : '—'})
+    ]) ]));
+    // items with add-to-cart
+    box.appendChild(mk('h3',{'class':'acct-h',text:t.items_l}));
+    var list = mk('div');
+    (o.items||[]).forEach(function(i){
+      var p = itemProduct(i), ph = window.DF ? DF.photo(p) : '';
+      var im = mk('div',{'class':'im'}); if (ph) im.appendChild(mk('img',{src:ph,alt:''})); else if (p && window.DF) im.innerHTML = DF.art(p);
+      var note = mk('span',{'class':'hint','aria-live':'polite'});
+      var btn = p ? mk('button',{type:'button',text:t.add_cart,onclick:function(){ if (addItem(i)) note.textContent = t.added; }}) : null;
+      list.appendChild(mk('div',{'class':'acct-item'},[ im, mk('div',{style:'display:flex;flex-direction:column;gap:4px'},[
+        mk('b',{text:i.name}),
+        mk('span',{'class':'meta',text:[i.sku, i.size ? t.size+' '+i.size : '', t.qty+' '+i.qty, i.price ? rupees(i.price*i.qty) : ''].filter(Boolean).join(' · ')}),
+        p ? mk('div',{'class':'acct-mini'},[ btn ]) : mk('span',{'class':'hint',text:t.gone}), note
+      ]) ]));
+    });
+    box.appendChild(list);
+    var allNote = mk('p',{'class':'acct-msg ok','aria-live':'polite'});
+    box.appendChild(mk('div',{'class':'acct-row'},[
+      mk('button',{type:'button','class':'btn btn-gold',text:t.buy_again,onclick:function(){ var n = 0; (o.items||[]).forEach(function(i){ if (addItem(i)) n++; }); allNote.textContent = n ? t.added : t.gone; }}),
+      mk('button',{type:'button','class':'btn btn-line',text:t.go_cart,onclick:goCart})
+    ]));
+    box.appendChild(allNote);
+    // live status + cancel / return / exchange
+    box.appendChild(mk('h3',{'class':'acct-h',text:t.status_l}));
+    var tb = mk('div',{'class':'acct-track'});
+    box.appendChild(tb);
+    var redraw = function(){ if (modal && view === 'order' && window.DF){ var y = box.scrollTop; DF.trackInto(tb, o.id, redraw); DF.setRedraw(redraw); box.scrollTop = y; } };
+    if (window.DF){ DF.resetMode(); DF.trackInto(tb, o.id, redraw); }
   }
 
   /* ---------- start ---------- */
