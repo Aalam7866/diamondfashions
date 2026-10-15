@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Diamond Fashions Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Hind:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#FBF8F2; --surface:#FFFFFF; --ink:#0B1626; --muted:#545B69; --line:#E4DCCB;
+  --gold:#8C6C26; --gold-soft:#F3EAD6; --navy:#0B1626; --on-navy:#F2EEE6; --sign-gold:#CDAA5C;
+  --ok:#1C7A3E; --bad:#A3262A; --warn:#9A5B00; --wa:#1C6E45; --blue:#1F4E8C;
+  --f-brand:'Jost','Hind',system-ui,sans-serif; --f-body:'Hind','Jost',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A1322; --surface:#12203A; --ink:#F2EEE6; --muted:#AEB5C2; --line:#25365A;
+  --gold:#CDAA5C; --gold-soft:#1A2A46; --navy:#060D18; --ok:#4CC27A; --bad:#E0787B; --warn:#E3A44A; --wa:#34A56C; --blue:#7FB0F0; color-scheme:dark } }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sign-gold);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px)) 0 max(16px,env(safe-area-inset-right,0px))}
+header{background:var(--navy);color:var(--on-navy);position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top,0px)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-brand);font-weight:600;letter-spacing:.2em;font-size:17px}
+.brand small{display:block;font-weight:400;letter-spacing:.3em;font-size:10px;color:var(--sign-gold)}
+.hbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(205,170,92,.6);background:transparent;color:var(--on-navy);cursor:pointer;font-weight:600;font-size:14px;text-decoration:none}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:2px solid var(--line);background:var(--surface);position:sticky;top:60px;z-index:15}
+nav.tabs button{border:0;background:none;padding:12px 16px;font-weight:700;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sign-gold)}
+nav.tabs .n{display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;background:var(--bad);color:#fff;font-size:12px;margin-left:4px}
+main{padding:18px 0 80px}
+h1,h2,h3{margin:0;line-height:1.25}
+h2{font-size:22px;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid transparent;font-weight:600;cursor:pointer;text-decoration:none;font-size:15px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.b-gold{background:var(--sign-gold);color:#0B1626}
+.b-line{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.b-ok{background:var(--ok);color:#fff}
+.b-bad{background:var(--surface);border-color:var(--bad);color:var(--bad)}
+.b-wa{background:var(--wa);color:#fff}
+.b-sm{min-height:36px;padding:0 12px;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.card.new{border-left:5px solid var(--sign-gold)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.st{font-family:var(--f-brand);font-size:12px;font-weight:600;letter-spacing:.04em;padding:3px 10px;border-radius:999px;background:var(--gold-soft);color:var(--gold);white-space:nowrap}
+.st.ok{color:var(--ok)}.st.bad{background:var(--bad);color:#fff}.st.new{background:var(--sign-gold);color:#0B1626}
+.num{font-family:var(--f-brand);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.items{margin:8px 0;padding:0;list-style:none}
+.items li{padding:4px 0;border-bottom:1px dashed var(--line)}
+.items li:last-child{border-bottom:0}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;font-size:15px;margin:6px 0}
+.kv span:nth-child(odd){color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-weight:600;font-size:14px}
+.field input,.field select,.field textarea{min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
+.field textarea{min-height:70px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:600px){.two,.three{grid-template-columns:minmax(0,1fr)}}
+.msg{min-height:1.2em;font-weight:600;margin:6px 0}
+.msg.ok{color:var(--ok)}.msg.err{color:var(--bad)}
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;text-align:left;padding:0}
+.pcard:hover{border-color:var(--gold)}
+.pcard .im{aspect-ratio:4/5;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:600}
+.pcard .im img{width:100%;height:100%;object-fit:cover}
+.pcard .b{padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.ph{width:84px}
+.ph img{width:84px;height:105px;object-fit:cover;border-radius:8px;border:2px solid var(--line);display:block}
+.ph.cover img{border-color:var(--sign-gold)}
+.ph .t{display:flex;justify-content:space-between;margin-top:3px}
+.ph .t button{width:26px;height:28px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;padding:0;font-size:13px}
+.addph{width:84px;height:105px;border:2px dashed var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--gold);font-weight:600;font-size:13px;position:relative;cursor:pointer}
+.addph input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.scrim{position:fixed;inset:0;background:rgba(6,13,24,.62);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);border-radius:16px;width:min(720px,100%);max-height:100%;overflow:auto;padding:18px 18px 22px;position:relative}
+.modal .x{position:absolute;top:10px;right:10px;width:42px;height:42px;border-radius:50%;border:0;background:var(--bg);cursor:pointer;font-size:20px}
+@media (max-width:600px){.scrim{padding:0}.modal{border-radius:0;height:100%;max-height:none}}
+table.inv{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:15px}
+table.inv th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);background:var(--bg)}
+table.inv td{padding:6px 10px;border-bottom:1px solid var(--line)}
+table.inv input{width:90px;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 8px;background:var(--bg);text-align:right}
+.invwrap{overflow-x:auto}
+.login{max-width:420px;margin:60px auto;text-align:center}
+.login .card{padding:24px}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:50px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer;font-size:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font-family:var(--f-brand);font-size:24px}
+.kpi span{font-size:13px;color:var(--muted)}
+@media (max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.search{width:100%;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 12px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div id="app"><p class="wrap" style="padding-top:40px">Loading…</p></div>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* Diamond Fashions owner panel: orders (seller hub), requests, products, stock, settings. Data lives in Firestore. */
+(function(){
+var ADMINS = ['dimondfashion95@gmail.com'];
+var CFG = {"apiKey":"AIzaSyDEnVBUgdbQQnpy0aXKS4TFa8EmkuBnKW4","authDomain":"diamond-fashions.firebaseapp.com","projectId":"diamond-fashions","storageBucket":"diamond-fashions.firebasestorage.app","messagingSenderId":"548211132063","appId":"1:548211132063:web:0ee6dca5768f4ec7b3c4aa"};
+firebase.initializeApp(CFG);
+var auth = firebase.auth(), db = firebase.firestore(), FV = firebase.firestore.FieldValue;
+
+var CATS = {women:'Women / महिला', men:'Men / पुरुष', boys:'Boys / लड़के', girls:'Girls / लड़कियाँ', kids:'Kids & Baby / बच्चे'};
+var PFX = {women:'W', men:'M', boys:'B', girls:'G', kids:'K'};
+var ARTS = ['suit','saree','lehenga','blouse','leggings','kurta','jacket','shirt','tshirt','pant','kidset','frock','romper'];
+var ST = {new:'नया', accepted:'मंज़ूर', packed:'पैक', shipped:'भेजा', pickup:'दुकान पर तैयार', delivered:'पहुँच गया', rejected:'मना किया', cancelled:'रद्द', return_req:'वापसी रिक्वेस्ट', return_ok:'वापसी मंज़ूर', returned:'वापस आया', return_no:'वापसी मना'};
+var STEN = {new:'New', accepted:'Accepted', packed:'Packed', shipped:'Shipped', pickup:'Ready for pickup', delivered:'Delivered', rejected:'Rejected', cancelled:'Cancelled', return_req:'Return requested', return_ok:'Return approved', returned:'Returned', return_no:'Return not approved'};
+
+var me = null, tab = 'orders', ofilter = 'active', orders = [], requests = [], products = [], cfg = {}, track = {}, q = '';
+var unsubs = [];
+var app = document.getElementById('app');
+
+function el(tag, a, kids){ var n = document.createElement(tag); if (a) for (var k in a){ var v = a[k];
+  if (k==='text') n.textContent = v; else if (k==='html') n.innerHTML = v; else if (k.slice(0,2)==='on') n.addEventListener(k.slice(2), v);
+  else if (v!==null && v!==undefined && v!==false) n.setAttribute(k, v); }
+  (kids||[]).forEach(function(c){ if (c) n.appendChild(typeof c==='string' ? document.createTextNode(c) : c); }); return n; }
+function rupees(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
+function now(){ return new Date().toISOString(); }
+function when(iso){ if (!iso) return ''; var d = new Date(iso); return d.toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
+function digits(s){ return String(s||'').replace(/\D/g,''); }
+function stCls(s){ return s==='new' ? 'new' : (s==='delivered'||s==='returned'||s==='return_ok' ? 'ok' : (s==='rejected'||s==='cancelled'||s==='return_no' ? 'bad' : '')); }
+function sizeCode(s){ return String(s).replace(/\s*yrs?$/i,'Y').replace(/\s*months?$/i,'M').replace(/^free\s*size$/i,'FS').replace(/\s+/g,''); }
+function sizesOf(p){ return String(p.sizes||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean); }
+function byCode(sku){ var best=null; products.forEach(function(p){ if (p.code && (sku===p.code || String(sku).indexOf(p.code+'-')===0) && (!best || p.code.length>best.code.length)) best=p; }); return best; }
+function metresOf(i){ var m = /([\d.]+)\s*m$/.exec(i.name||''); return m ? parseFloat(m[1]) : 0; }
+function isAdmin(u){ return u && u.email && ADMINS.indexOf(u.email.toLowerCase()) >= 0; }
+
+/* ---------- login ---------- */
+function drawLogin(err){
+  app.innerHTML = '';
+  var m = el('p',{'class':'msg err',text:err||''});
+  var box = el('div',{'class':'login wrap'},[ el('div',{'class':'card'},[
+    el('div',{'class':'brand',style:'color:var(--ink)',html:'DIAMOND<small style="color:var(--gold)">FASHIONS · ADMIN</small>'}),
+    el('p',{'class':'muted',text:'मालिक का लॉग-इन। सिर्फ़ दुकान के मालिक का Google खाता चलेगा।'}),
+    el('button',{'class':'gbtn',type:'button',html:'<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Google से लॉग-इन',onclick:function(){
+      var p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
+      auth.signInWithPopup(p).catch(function(e){ if (/popup-blocked|operation-not-supported/.test(e.code||'')) return auth.signInWithRedirect(p); m.textContent = 'लॉग-इन नहीं हुआ: ' + (e.code||e.message); });
+    }}), m
+  ]) ]);
+  app.appendChild(box);
+}
+
+/* ---------- shell ---------- */
+function newCount(){ return orders.filter(function(o){ return o.status==='new'; }).length; }
+function reqCount(){ return requests.filter(function(r){ return r.status==='new'; }).length; }
+function draw(){
+  var y = window.scrollY;
+  app.innerHTML = '';
+  var head = el('header',null,[ el('div',{'class':'wrap'},[
+    el('div',{'class':'brand',html:'DIAMOND<small>ADMIN · SELLER HUB</small>'}),
+    el('div',{'class':'hbtns'},[ el('a',{'class':'pill',href:'/',target:'_blank',text:'वेबसाइट देखें'}), el('button',{'class':'pill',type:'button',text:'लॉग-आउट',onclick:function(){ auth.signOut(); }}) ])
+  ]) ]);
+  app.appendChild(head);
+  var tabs = [['orders','ऑर्डर',newCount()],['requests','रिक्वेस्ट',reqCount()],['products','सामान',0],['stock','स्टॉक',0],['settings','सेटिंग',0]];
+  var nav = el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(tb){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===tb[0]),onclick:function(){ tab=tb[0]; draw(); window.scrollTo(0,0); }},[ tb[1], tb[2] ? el('span',{'class':'n',text:String(tb[2])}) : null ]); }));
+  app.appendChild(el('div',{'class':'wrap',style:'padding:0'},[nav]));
+  var main = el('main',{'class':'wrap'});
+  app.appendChild(main);
+  ({orders:drawOrders, requests:drawRequests, products:drawProducts, stock:drawStock, settings:drawSettings})[tab](main);
+  window.scrollTo(0, y);
+}
+
+/* ---------- orders ---------- */
+function drawOrders(main){
+  var today = new Date().toISOString().slice(0,10);
+  var todays = orders.filter(function(o){ return (o.created||'').slice(0,10)===today && o.status!=='rejected' && o.status!=='cancelled'; });
+  main.appendChild(el('div',{'class':'kpis'},[
+    el('div',{'class':'kpi'},[ el('b',{text:String(newCount())}), el('span',{text:'नए ऑर्डर'}) ]),
+    el('div',{'class':'kpi'},[ el('b',{text:String(orders.filter(function(o){ return ['accepted','packed','shipped','pickup'].indexOf(o.status)>=0; }).length)}), el('span',{text:'चालू ऑर्डर'}) ]),
+    el('div',{'class':'kpi'},[ el('b',{text:String(todays.length)}), el('span',{text:'आज के ऑर्डर'}) ]),
+    el('div',{'class':'kpi'},[ el('b',{text:rupees(todays.reduce(function(s,o){ return s+(o.total||0); },0))}), el('span',{text:'आज की बिक्री'}) ])
+  ]));
+  var F = [['active','नए + चालू'],['new','नए'],['done','पूरे'],['ret','वापसी'],['closed','रद्द'],['all','सभी']];
+  main.appendChild(el('div',{'class':'chips'}, F.map(function(f){ return el('button',{'class':'chip',type:'button','aria-pressed':String(ofilter===f[0]),text:f[1],onclick:function(){ ofilter=f[0]; draw(); }}); })));
+  main.appendChild(el('input',{'class':'search',type:'search',placeholder:'ऑर्डर नंबर, नाम या मोबाइल से खोजें',value:q,oninput:function(e){ q=e.target.value; var c=document.getElementById('olist'); c.innerHTML=''; listOrders(c); }}));
+  var list = el('div',{id:'olist'}); main.appendChild(list); listOrders(list);
+}
+function listOrders(list){
+  var groups = {active:['new','accepted','packed','shipped','pickup'], new:['new'], done:['delivered','returned','return_no'], ret:['return_req','return_ok'], closed:['rejected','cancelled']};
+  var qq = q.trim().toLowerCase();
+  var shown = orders.filter(function(o){ return (ofilter==='all' || groups[ofilter].indexOf(o.status)>=0) && (!qq || (o.id+' '+o.name+' '+o.phone).toLowerCase().indexOf(qq)>=0); });
+  if (!shown.length){ list.appendChild(el('p',{'class':'muted',text: orders.length ? 'इस लिस्ट में कोई ऑर्डर नहीं।' : 'अभी कोई ऑर्डर नहीं। जब ग्राहक वेबसाइट से ऑर्डर करेगा, यहाँ अपने-आप दिखेगा।'})); return; }
+  shown.forEach(function(o){ list.appendChild(orderCard(o)); });
+}
+function waTo(phone, text){ var p = digits(phone); if (p.length===10) p = '91'+p; return 'https://wa.me/'+p+'?text='+encodeURIComponent(text); }
+function custMsg(o, s){
+  var hi = o.lang==='hi', id = o.id;
+  var M = hi ? {accepted:'आपका ऑर्डर '+id+' मंज़ूर हो गया है। हम जल्द पैक करेंगे।'+(o.pay==='upi'&&!o.paid?' कृपया UPI से पेमेंट कर दें: '+(cfg.upi||''):''), packed:'आपका ऑर्डर '+id+' पैक हो गया है।', shipped:'आपका ऑर्डर '+id+' भेज दिया गया है। जल्द पहुँचेगा।', pickup:'आपका ऑर्डर '+id+' तैयार है। दुकान से ले जाएँ।', delivered:'आपका ऑर्डर '+id+' पहुँच गया। धन्यवाद! '+(cfg.returnDays||3)+' दिन में वापसी हो सकती है।', rejected:'माफ़ कीजिए, ऑर्डर '+id+' अभी पूरा नहीं हो सकता।', cancelled:'आपका ऑर्डर '+id+' रद्द कर दिया गया है।', return_ok:'ऑर्डर '+id+' की वापसी मंज़ूर हो गई है।', return_no:'माफ़ कीजिए, ऑर्डर '+id+' की वापसी मंज़ूर नहीं हो सकी।', returned:'ऑर्डर '+id+' का सामान वापस मिल गया।'}
+    : {accepted:'Your order '+id+' is accepted. We will pack it soon.'+(o.pay==='upi'&&!o.paid?' Please pay by UPI: '+(cfg.upi||''):''), packed:'Your order '+id+' is packed.', shipped:'Your order '+id+' is on the way.', pickup:'Your order '+id+' is ready. Please collect it from the shop.', delivered:'Your order '+id+' is delivered. Thank you! Returns are open for '+(cfg.returnDays||3)+' days.', rejected:'Sorry, order '+id+' cannot be completed right now.', cancelled:'Your order '+id+' has been cancelled.', return_ok:'Return for order '+id+' is approved.', return_no:'Sorry, the return for order '+id+' was not approved.', returned:'We have received the return for order '+id+'.'};
+  return (hi?'डायमंड फैशन्स: ':'Diamond Fashions: ') + (M[s]||'') + (hi?'\nट्रैक करें: ':'\nTrack: ') + location.origin + '/#track-' + id;
+}
+function orderCard(o){
+  var c = el('div',{'class':'card'+(o.status==='new'?' new':'')});
+  c.appendChild(el('div',{'class':'row',style:'justify-content:space-between'},[ el('span',{'class':'num',style:'font-size:18px',text:o.id}), el('span',{'class':'st '+stCls(o.status),text:ST[o.status]||o.status}) ]));
+  c.appendChild(el('div',{'class':'kv'},[
+    el('span',{text:'समय'}), el('span',{text:when(o.created)}),
+    el('span',{text:'ग्राहक'}), el('span',null,[ el('b',{text:o.name||''}), ' · ', el('a',{href:'tel:'+digits(o.phone),text:o.phone||''}) ]),
+    el('span',{text:'कैसे'}), el('span',{text:o.how||''}),
+    (o.addr||o.pin) ? el('span',{text:'पता'}) : null, (o.addr||o.pin) ? el('span',{text:[o.addr, o.pin?'PIN '+o.pin:'', o.land].filter(Boolean).join(', ')}) : null,
+    el('span',{text:'पेमेंट'}), el('span',null,[ o.pay==='upi' ? 'UPI ' : 'COD ', o.pay==='upi' ? el('span',{'class':'st '+(o.paid?'ok':''),text:o.paid?'पैसे मिले':'पैसे बाकी'}) : null ]),
+    o.note ? el('span',{text:'नोट'}) : null, o.note ? el('span',{text:o.note}) : null
+  ]));
+  c.appendChild(el('ul',{'class':'items'}, (o.items||[]).map(function(i){ return el('li',null,[ el('span',{'class':'num small muted',text:(i.sku||'')+'  '}), i.name+(i.size?' ('+i.size+')':'')+' × '+i.qty, i.price ? el('b',{style:'float:right',text:rupees(i.price*i.qty)}) : null ]); })));
+  c.appendChild(el('div',{'class':'row',style:'justify-content:space-between;font-weight:700;margin-bottom:8px'},[ el('span',{text:'कुल'}), el('span',{'class':'num',text:rupees(o.total)+(o.allPriced===false?' + ?':'')}) ]));
+  var acts = el('div',{'class':'row'});
+  var go = function(s, label, cls){ acts.appendChild(el('button',{'class':'btn b-sm '+(cls||'b-gold'),type:'button',text:label,onclick:function(){ setStatus(o, s); }})); };
+  var pick = !/deliver|घर/i.test(o.how||'');
+  if (o.status==='new'){ go('accepted','✓ मंज़ूर करें','b-ok'); go('rejected','✗ मना करें','b-bad'); }
+  if (o.status==='accepted') go('packed','पैक हो गया');
+  if (o.status==='packed') go(pick?'pickup':'shipped', pick?'दुकान पर तैयार':'भेज दिया');
+  if (o.status==='shipped'||o.status==='pickup') go('delivered','पहुँच गया','b-ok');
+  if (o.status==='return_req'){ go('return_ok','वापसी मंज़ूर','b-ok'); go('return_no','वापसी मना','b-bad'); }
+  if (o.status==='return_ok') go('returned','सामान वापस आया','b-ok');
+  if (['new','accepted','packed','shipped','pickup'].indexOf(o.status)>=0 && o.status!=='new') acts.appendChild(el('button',{'class':'btn b-sm b-bad',type:'button',text:'रद्द करें',onclick:function(){ if (confirm('ऑर्डर '+o.id+' रद्द करें?')) setStatus(o,'cancelled'); }}));
+  if (o.pay==='upi') acts.appendChild(el('button',{'class':'btn b-sm b-line',type:'button',text:o.paid?'पेमेंट: मिला ✓':'पेमेंट मिल गया',onclick:function(){ db.collection('orders').doc(o.id).update({paid:!o.paid}); }}));
+  if (o.status!=='new') acts.appendChild(el('a',{'class':'btn b-sm b-wa',target:'_blank',rel:'noopener',href:waTo(o.phone, custMsg(o, o.status)),text:'ग्राहक को WhatsApp'}));
+  else acts.appendChild(el('a',{'class':'btn b-sm b-line',target:'_blank',rel:'noopener',href:waTo(o.phone, (o.lang==='hi'?'नमस्ते '+o.name+' जी, डायमंड फैशन्स से। आपका ऑर्डर '+o.id+' मिला है।':'Hello '+o.name+', this is Diamond Fashions. We received your order '+o.id+'.')),text:'WhatsApp'}));
+  c.appendChild(acts);
+  var r = requests.filter(function(x){ return x.orderId===o.id && x.status==='new'; });
+  if (r.length) c.appendChild(el('p',{'class':'msg err',text:'⚠ इस ऑर्डर की '+r.length+' रिक्वेस्ट बाकी है, "रिक्वेस्ट" टैब देखें।'}));
+  return c;
+}
+/* stock: deduct once on accept, restore on reject/cancel/returned */
+function stockChange(o, sign){
+  var batch = db.batch(), touched = {};
+  (o.items||[]).forEach(function(i){
+    var p = byCode(i.sku||''); if (!p) return;
+    var m = metresOf(i);
+    var cur = touched[p.id] || {stockM:p.stockM, stock:Object.assign({}, p.stock||{})};
+    if (p.unit==='m'){ var q2 = m || i.qty || 0; cur.stockM = Math.max(0, Math.round(((cur.stockM||0) + sign*q2)*100)/100); }
+    else { var key = i.size || '_'; var v = cur.stock[key]; if (typeof v === 'number') cur.stock[key] = Math.max(0, v + sign*(i.qty||1)); }
+    touched[p.id] = cur;
+  });
+  Object.keys(touched).forEach(function(id){ batch.set(db.collection('products').doc(id), touched[id], {merge:true}); });
+  return Object.keys(touched).length ? batch.commit() : Promise.resolve();
+}
+function setStatus(o, s){
+  var t = now(), upd = {status:s, log: FV.arrayUnion({at:t, s:s})};
+  var pick = !/deliver|घर/i.test(o.how||'');
+  var tr = {s:s, pick:pick}; tr['at.'+s] = t;
+  var p = Promise.resolve();
+  if (s==='accepted' && !o.inv){ upd.inv = true; p = stockChange(o, -1); }
+  if ((s==='rejected'||s==='cancelled'||s==='returned') && o.inv){ upd.inv = false; p = stockChange(o, +1); }
+  if (s==='delivered') upd.deliveredAt = t;
+  p.then(function(){
+    return db.collection('orders').doc(o.id).update(upd);
+  }).then(function(){
+    return db.collection('track').doc(o.id).set({s:s, pick:pick, at:Object.assign({}, (track[o.id]&&track[o.id].at)||{}, (function(){ var a={}; a[s]=t; return a; })())}, {merge:true});
+  }).then(function(){
+    if (['accepted','packed','shipped','pickup','delivered','cancelled','rejected','return_ok','return_no','returned'].indexOf(s)>=0 && o.phone){
+      if (confirm((ST[s]||s)+' ✓\nग्राहक को WhatsApp पर बताएँ?')) window.open(waTo(o.phone, custMsg(Object.assign({},o,{status:s}), s)), '_blank');
+    }
+  }).catch(function(e){ alert('सेव नहीं हुआ: '+(e.message||e)); });
+}
+
+/* ---------- requests ---------- */
+function drawRequests(main){
+  main.appendChild(el('h2',{text:'Cancel / Return / Exchange रिक्वेस्ट'}));
+  var list = requests.slice().sort(function(a,b){ return (a.status==='new'?0:1)-(b.status==='new'?0:1) || (b.created||'').localeCompare(a.created||''); });
+  if (!list.length){ main.appendChild(el('p',{'class':'muted',text:'अभी कोई रिक्वेस्ट नहीं।'})); return; }
+  list.forEach(function(r){
+    var o = orders.filter(function(x){ return x.id===r.orderId; })[0];
+    var kind = {cancel:'रद्द करना है', return:'वापसी (पैसे वापस)', exchange:'बदलाव (Exchange)'}[r.kind] || r.kind;
+    var c = el('div',{'class':'card'+(r.status==='new'?' new':'')},[
+      el('div',{'class':'row',style:'justify-content:space-between'},[ el('b',{text:kind+' · '}), el('span',{'class':'num',text:r.orderId}), el('span',{'class':'st '+(r.status==='new'?'new':''),text:r.status==='new'?'नई':'हो गई'}) ]),
+      el('div',{'class':'kv'},[ el('span',{text:'समय'}), el('span',{text:when(r.created)}), el('span',{text:'मोबाइल'}), el('a',{href:'tel:'+digits(r.phone),text:r.phone||''}),
+        r.item ? el('span',{text:'सामान'}) : null, r.item ? el('span',{text:r.item}) : null,
+        el('span',{text:'कारण'}), el('span',{text:r.reason||''}), r.details ? el('span',{text:'जानकारी'}) : null, r.details ? el('span',{text:r.details}) : null,
+        el('span',{text:'ऑर्डर'}), el('span',{text: o ? (o.name+' · '+(ST[o.status]||o.status)+' · '+rupees(o.total)) : 'यह ऑर्डर यहाँ नहीं मिला'}) ])
+    ]);
+    if (r.status==='new'){
+      var acts = el('div',{'class':'row'});
+      var done = function(){ return db.collection('requests').doc(r._id).update({status:'done', doneAt:now()}); };
+      if (o && r.kind==='cancel') acts.appendChild(el('button',{'class':'btn b-sm b-bad',type:'button',text:'ऑर्डर रद्द करें',onclick:function(){ setStatus(o,'cancelled'); done(); }}));
+      if (o && r.kind!=='cancel'){
+        acts.appendChild(el('button',{'class':'btn b-sm b-ok',type:'button',text:'वापसी मंज़ूर',onclick:function(){ db.collection('orders').doc(o.id).update({ret:{kind:r.kind, reason:r.reason, item:r.item||'', at:r.created}}).then(function(){ setStatus(o,'return_ok'); done(); }); }}));
+        acts.appendChild(el('button',{'class':'btn b-sm b-bad',type:'button',text:'वापसी मना',onclick:function(){ setStatus(o,'return_no'); done(); }}));
+      }
+      acts.appendChild(el('a',{'class':'btn b-sm b-wa',target:'_blank',rel:'noopener',href:waTo(r.phone,'नमस्ते, डायमंड फैशन्स से। आपके ऑर्डर '+r.orderId+' की रिक्वेस्ट मिली है।'),text:'WhatsApp'}));
+      acts.appendChild(el('button',{'class':'btn b-sm b-line',type:'button',text:'छोड़ दें',onclick:done}));
+      c.appendChild(acts);
+    }
+    main.appendChild(c);
+  });
+}
+
+/* ---------- products ---------- */
+function drawProducts(main){
+  main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin-bottom:10px'},[ el('h2',{style:'margin:0',text:'सामान ('+products.length+')'}), el('button',{'class':'btn b-gold',type:'button',text:'+ नया सामान',onclick:function(){ editProduct(null); }}) ]));
+  if (!products.length){
+    var m = el('p',{'class':'msg'});
+    main.appendChild(el('div',{'class':'card'},[ el('p',{text:'अभी Admin में कोई सामान नहीं है। वेबसाइट पर जो सामान, फ़ोटो और दाम हैं, उन्हें एक बार यहाँ लाना होगा।'}),
+      el('button',{'class':'btn b-gold',type:'button',text:'वेबसाइट से सारा सामान लाएँ',onclick:function(e){ importFromSite(e.target, m); }}), m ]));
+    return;
+  }
+  var s = el('input',{'class':'search',type:'search',placeholder:'नाम या कोड से खोजें'}); main.appendChild(s);
+  var grid = el('div',{'class':'plist'}); main.appendChild(grid);
+  var fill = function(){ grid.innerHTML=''; var qq = s.value.trim().toLowerCase();
+    products.filter(function(p){ return !qq || (p.name+' '+p.code).toLowerCase().indexOf(qq)>=0; }).forEach(function(p){
+      var im = el('div',{'class':'im'}); if (p.photos && p.photos[0]) im.appendChild(el('img',{src:p.photos[0],alt:''})); else im.textContent = 'फ़ोटो नहीं';
+      grid.appendChild(el('button',{'class':'pcard',type:'button',onclick:function(){ editProduct(p); }},[ im, el('div',{'class':'b'},[ el('span',{'class':'num small muted',text:p.code}), el('b',{text:p.name}),
+        el('span',{text:(p.price?rupees(p.price)+(p.unit==='m'?' / मीटर':''):'दाम नहीं')+(p.hidden?' · छुपा':'')+(p.inStock===false?' · स्टॉक ख़त्म':'')}) ]) ]));
+    }); };
+  s.oninput = fill; fill();
+}
+function compress(src, maxW, q){
+  return new Promise(function(res, rej){ var img = new Image(); img.onload = function(){
+    var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, maxW / Math.max(w, h));
+    var c = document.createElement('canvas'); c.width = Math.round(w*k); c.height = Math.round(h*k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', q)); }; img.onerror = rej; img.src = src; });
+}
+function fileToData(f){ return new Promise(function(res, rej){ var r = new FileReader(); r.onload = function(){ res(r.result); }; r.onerror = rej; r.readAsDataURL(f); }); }
+function docSize(p){ return JSON.stringify(p).length; }
+function fitPhotos(photos){ // keep a product under Firestore's 1 MB limit
+  var tries = [[1000,.72],[800,.62],[650,.55],[520,.5]];
+  var go = function(i){ return Promise.all(photos.map(function(s){ return s.length > 120000 || i>0 ? compress(s, tries[i][0], tries[i][1]) : s; })).then(function(out){
+    var total = out.reduce(function(a,s){ return a+s.length; },0); if (total < 880000 || i === tries.length-1) return out; return go(i+1); }); };
+  return go(0);
+}
+function nextCode(cat){ var pf = 'DF-'+(PFX[cat]||'X'), max = 0; products.forEach(function(p){ var m = new RegExp('^'+pf+'(\\d+)$').exec(p.code||''); if (m) max = Math.max(max, parseInt(m[1],10)); }); return pf + (max+1<10?'0':'') + (max+1); }
+function editProduct(p0){
+  var isNew = !p0, p = JSON.parse(JSON.stringify(p0 || {cat:'women', art:'suit', unit:'pc', inStock:true, photos:[], sizes:'', stock:{}, stockM:0, minM:1}));
+  p.photos = p.photos || []; p.stock = p.stock || {};
+  var sc = el('div',{'class':'scrim',onclick:function(e){ if (e.target===sc) close(); }}), box = el('div',{'class':'modal'}); sc.appendChild(box); document.body.appendChild(sc); document.body.style.overflow='hidden';
+  function close(){ sc.remove(); document.body.style.overflow=''; }
+  var msg = el('p',{'class':'msg'});
+  function inp(id, label, val, a){ return el('div',{'class':'field'},[ el('label',{'for':id,text:label}), el('input',Object.assign({id:id,value:val==null?'':val},a||{})) ]); }
+  function sel(id, label, val, opts){ var s = el('select',{id:id}, opts.map(function(o){ return el('option',{value:o[0],text:o[1]}); })); s.value = val; return el('div',{'class':'field'},[ el('label',{'for':id,text:label}), s ]); }
+  function v(id){ var n = document.getElementById(id); return n ? n.value.trim() : ''; }
+  function render(){
+    box.innerHTML = '';
+    box.appendChild(el('button',{'class':'x',type:'button',text:'×','aria-label':'बंद करें',onclick:close}));
+    box.appendChild(el('h2',{text: isNew ? 'नया सामान' : (p.code+' · '+p.name)}));
+    // photos
+    var ph = el('div',{'class':'photos'});
+    p.photos.forEach(function(src, i){
+      ph.appendChild(el('div',{'class':'ph'+(i===0?' cover':'')},[ el('img',{src:src,alt:''}), el('div',{'class':'t'},[
+        el('button',{type:'button',title:'बाएँ',text:'←',onclick:function(){ if (i>0){ var x=p.photos[i]; p.photos[i]=p.photos[i-1]; p.photos[i-1]=x; render(); } }}),
+        el('button',{type:'button',title:'हटाएँ',text:'🗑',onclick:function(){ p.photos.splice(i,1); render(); }}),
+        el('button',{type:'button',title:'दाएँ',text:'→',onclick:function(){ if (i<p.photos.length-1){ var x=p.photos[i]; p.photos[i]=p.photos[i+1]; p.photos[i+1]=x; render(); } }}) ]) ]));
+    });
+    var fi = el('input',{type:'file',accept:'image/*',multiple:'multiple'});
+    fi.onchange = function(){ msg.textContent = 'फ़ोटो जोड़ रहे हैं…'; msg.className='msg';
+      Promise.all(Array.prototype.map.call(fi.files, function(f){ return fileToData(f).then(function(d){ return compress(d, 1000, .72); }); })).then(function(list){ keep(); p.photos = p.photos.concat(list); render(); }, function(){ msg.textContent='फ़ोटो नहीं जुड़ी'; msg.className='msg err'; }); };
+    ph.appendChild(el('label',{'class':'addph'},[ '+ फ़ोटो', fi ]));
+    box.appendChild(el('div',{'class':'field'},[ el('label',{text:'फ़ोटो (पहली फ़ोटो कवर बनेगी)'}), ph ]));
+    box.appendChild(inp('e-name','नाम',p.name));
+    box.appendChild(el('div',{'class':'two'},[ sel('e-cat','कैटेगरी',p.cat,Object.keys(CATS).map(function(k){ return [k,CATS[k]]; })), sel('e-unit','बिक्री',p.unit,[['pc','पीस (साइज़ के साथ)'],['m','मीटर (कपड़ा)']]) ]));
+    box.appendChild(el('div',{'class':'two'},[ inp('e-price', p.unit==='m'?'दाम ₹ / मीटर':'दाम ₹', p.price, {inputmode:'decimal'}), inp('e-mrp','MRP ₹ (काटा हुआ दाम)', p.mrp, {inputmode:'decimal'}) ]));
+    if (p.unit==='m'){
+      box.appendChild(el('div',{'class':'two'},[ inp('e-stockM','कुल कितने मीटर हैं',p.stockM,{inputmode:'decimal'}), inp('e-minM','कम से कम कितने मीटर बिकेगा',p.minM||1,{inputmode:'decimal'}) ]));
+    } else {
+      box.appendChild(inp('e-sizes','साइज़ (कॉमा से अलग, जैसे M, L, XL)',p.sizes));
+      var sz = sizesOf(p); var stockBox = el('div',{'class':'three'});
+      (sz.length ? sz : ['_']).forEach(function(s){ var key = s; stockBox.appendChild(inp('e-st-'+sizeCode(s), (s==='_'?'स्टॉक':'स्टॉक '+s)+' (खाली = गिनती नहीं)', p.stock[key]==null?'':p.stock[key], {inputmode:'numeric','data-size':key})); });
+      box.appendChild(el('div',{'class':'field'},[ el('label',{text:'स्टॉक'}), stockBox ]));
+    }
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'e-desc',text:'जानकारी'}), el('textarea',{id:'e-desc'},[p.desc||'']) ]));
+    box.appendChild(sel('e-art','फ़ोटो न हो तो कौन सा निशान दिखे',p.art||'suit',ARTS.map(function(a){ return [a,a]; })));
+    box.appendChild(el('div',{'class':'row',style:'margin:6px 0 12px'},[
+      el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-in',checked:p.inStock!==false?'checked':null}), ' स्टॉक में है' ]),
+      el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-hid',checked:p.hidden?'checked':null}), ' वेबसाइट पर छुपाएँ' ]) ]));
+    var save = el('button',{'class':'btn b-gold',type:'button',text:'सेव करें',onclick:function(){ doSave(save); }});
+    box.appendChild(el('div',{'class':'row'},[ save, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:'हटाएँ',onclick:function(){ if (confirm(p.name+' हटाएँ?')) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:'रद्द',onclick:close}) ]));
+    box.appendChild(msg);
+    ['e-unit','e-sizes'].forEach(function(id){ var n = document.getElementById(id); if (n) n.addEventListener('change', function(){ keep(); render(); }); });
+  }
+  function num(x){ if (x==='' || x==null) return null; var n = parseFloat(String(x).replace(/,/g,'')); return isNaN(n) ? null : n; }
+  function keep(){
+    if (!document.getElementById('e-name')) return;
+    p.name = v('e-name'); p.cat = v('e-cat'); p.unit = v('e-unit') || p.unit; p.price = num(v('e-price')); p.mrp = num(v('e-mrp'));
+    p.desc = v('e-desc'); p.art = v('e-art'); p.inStock = document.getElementById('e-in').checked; p.hidden = document.getElementById('e-hid').checked;
+    if (document.getElementById('e-stockM')){ p.stockM = num(v('e-stockM'))||0; p.minM = num(v('e-minM'))||1; }
+    if (document.getElementById('e-sizes')){ p.sizes = v('e-sizes'); var st = {}; Array.prototype.forEach.call(box.querySelectorAll('[data-size]'), function(n){ var x = num(n.value); if (x!==null) st[n.getAttribute('data-size')] = Math.round(x); }); p.stock = st; }
+  }
+  function doSave(btn){
+    keep();
+    if (!p.name){ msg.textContent = 'नाम लिखें'; msg.className = 'msg err'; return; }
+    btn.disabled = true; msg.textContent = 'सेव हो रहा है…'; msg.className = 'msg';
+    if (isNew){ p.code = nextCode(p.cat); p.id = 'p' + Date.now().toString(36); p.order = Date.now(); }
+    fitPhotos(p.photos).then(function(ph){ p.photos = ph; p.updated = now(); if (docSize(p) > 1000000) throw new Error('फ़ोटो बहुत बड़ी हैं, एक-दो फ़ोटो कम करें'); return db.collection('products').doc(p.id).set(p); })
+      .then(function(){ msg.textContent = 'सेव हो गया ✓ वेबसाइट पर दिख जाएगा'; msg.className = 'msg ok'; setTimeout(close, 700); },
+            function(e){ btn.disabled = false; msg.textContent = 'सेव नहीं हुआ: ' + (e.message||e); msg.className = 'msg err'; });
+  }
+  render();
+}
+function importFromSite(btn, m){
+  btn.disabled = true; m.textContent = 'वेबसाइट से सामान ला रहे हैं… (1–2 मिनट)'; m.className = 'msg';
+  fetch('/index.html', {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(html){
+    var mm = /<script type="application\/json" id="shop-data">([\s\S]*?)<\/script>/.exec(html); if (!mm) throw new Error('डेटा नहीं मिला');
+    var d = JSON.parse(mm[1]);
+    var shop = d.shop || {};
+    var jobs = (d.products||[]).map(function(p, i){ p.order = i; p.photos = p.photos || []; return fitPhotos(p.photos).then(function(ph){ p.photos = ph; return db.collection('products').doc(p.id).set(p); }); });
+    jobs.push(db.collection('config').doc('shop').set({upi:shop.upi||'', cod:shop.cod!==false, returnDays:shop.returnDays||3, waNumber:shop.waNumber||'', display:shop.display||'', place:shop.place||''}, {merge:true}));
+    Object.keys(d.track||{}).forEach(function(id){ var t = d.track[id]; jobs.push(db.collection('track').doc(id).set({s:t.s, pick:!!t.pick, at:t.at||{}}, {merge:true})); });
+    return Promise.all(jobs).then(function(){ return d.products.length; });
+  }).then(function(n){ m.textContent = n + ' सामान आ गए ✓'; m.className = 'msg ok'; }, function(e){ btn.disabled = false; m.textContent = 'नहीं हुआ: ' + (e.message||e); m.className = 'msg err'; });
+}
+
+/* ---------- stock ---------- */
+function drawStock(main){
+  main.appendChild(el('h2',{text:'स्टॉक'}));
+  main.appendChild(el('p',{'class':'muted small',text:'संख्या बदलें और बाहर टैप करें, अपने-आप सेव होगा। खाली = गिनती नहीं (हमेशा उपलब्ध)। ऑर्डर मंज़ूर करने पर स्टॉक अपने-आप घटता है।'}));
+  var tb = el('tbody');
+  products.forEach(function(p){
+    var keys = p.unit==='m' ? ['m'] : (sizesOf(p).length ? sizesOf(p) : ['_']);
+    keys.forEach(function(k, i){
+      var val = p.unit==='m' ? p.stockM : (p.stock||{})[k];
+      var low = typeof val === 'number' && val <= (p.unit==='m' ? (p.minM||1)*2 : 2);
+      var input = el('input',{inputmode:'decimal',value:val==null?'':val,onchange:function(e){
+        var x = e.target.value.trim(), n = x==='' ? null : parseFloat(x); var upd = {};
+        if (p.unit==='m') upd.stockM = n || 0; else { var st = Object.assign({}, p.stock||{}); if (n===null || isNaN(n)) delete st[k]; else st[k] = Math.round(n); upd.stock = st; }
+        db.collection('products').doc(p.id).set(upd, {merge:true}).then(function(){ e.target.style.borderColor = 'var(--ok)'; });
+      }});
+      tb.appendChild(el('tr',null,[ el('td',{'class':'num small',text:i===0?p.code:''}), el('td',{text:i===0?p.name:''}), el('td',{text:p.unit==='m'?'मीटर':(k==='_'?'—':k)}), el('td',null,[input]), el('td',{html: low ? '<span class="st bad">कम</span>' : ''}) ]));
+    });
+  });
+  main.appendChild(el('div',{'class':'invwrap'},[ el('table',{'class':'inv'},[ el('thead',null,[ el('tr',null,['कोड','नाम','साइज़','स्टॉक',''].map(function(h){ return el('th',{text:h}); })) ]), tb ]) ]));
+}
+
+/* ---------- settings ---------- */
+function drawSettings(main){
+  var m = el('p',{'class':'msg'});
+  main.appendChild(el('h2',{text:'दुकान की सेटिंग'}));
+  var f = el('div',{'class':'card'},[
+    el('div',{'class':'field'},[ el('label',{text:'UPI ID'}), el('input',{id:'s-upi',value:cfg.upi||''}) ]),
+    el('div',{'class':'field'},[ el('label',{text:'WhatsApp नंबर (91 के साथ, जैसे 918874129818)'}), el('input',{id:'s-wa',value:cfg.waNumber||'',inputmode:'tel'}) ]),
+    el('div',{'class':'field'},[ el('label',{text:'वापसी कितने दिन में'}), el('input',{id:'s-days',value:cfg.returnDays||3,inputmode:'numeric'}) ]),
+    el('label',{'class':'row',style:'margin-bottom:12px'},[ el('input',{type:'checkbox',id:'s-cod',checked:cfg.cod!==false?'checked':null}), ' कैश ऑन डिलीवरी (COD) चालू' ]),
+    el('button',{'class':'btn b-gold',type:'button',text:'सेव करें',onclick:function(){
+      var upd = {upi:document.getElementById('s-upi').value.trim(), waNumber:digits(document.getElementById('s-wa').value), returnDays:parseInt(document.getElementById('s-days').value,10)||3, cod:document.getElementById('s-cod').checked};
+      db.collection('config').doc('shop').set(upd, {merge:true}).then(function(){ m.textContent='सेव हो गया ✓'; m.className='msg ok'; }, function(e){ m.textContent='नहीं हुआ: '+e.message; m.className='msg err'; });
+    }}), m ]);
+  main.appendChild(f);
+  main.appendChild(el('p',{'class':'muted small',text:'लॉग-इन: '+(me&&me.email)}));
+}
+
+/* ---------- live data ---------- */
+var drawTimer = null;
+function redraw(){ clearTimeout(drawTimer); drawTimer = setTimeout(function(){ if (!document.querySelector('.scrim')) draw(); }, 120); }
+function listen(){
+  unsubs.forEach(function(u){ u(); }); unsubs = [];
+  unsubs.push(db.collection('orders').orderBy('created','desc').limit(400).onSnapshot(function(s){
+    var before = newCount(); orders = s.docs.map(function(d){ return d.data(); });
+    if (newCount() > before && before >= 0 && orders.length) { try { new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=').play(); } catch(e){} document.title = '('+newCount()+') Diamond Fashions Admin'; }
+    redraw(); }, function(e){ app.innerHTML=''; drawLogin('डेटा नहीं खुला: '+e.message+' (Firestore Rules चेक करें)'); }));
+  unsubs.push(db.collection('requests').orderBy('created','desc').limit(300).onSnapshot(function(s){ requests = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); redraw(); }));
+  unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); }));
+  unsubs.push(db.collection('track').onSnapshot(function(s){ track = {}; s.docs.forEach(function(d){ track[d.id] = d.data(); }); }));
+  unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ cfg = s.exists ? s.data() : {}; }));
+}
+auth.getRedirectResult().catch(function(){});
+auth.onAuthStateChanged(function(u){
+  me = u;
+  if (!u){ unsubs.forEach(function(x){ x(); }); unsubs = []; drawLogin(); return; }
+  if (!isAdmin(u)){ drawLogin('यह खाता ('+u.email+') मालिक का नहीं है। सही Gmail से लॉग-इन करें।'); auth.signOut(); return; }
+  draw(); listen();
+});
+})();
+</script>
+</body>
+</html>

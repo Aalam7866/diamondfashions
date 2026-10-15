@@ -771,7 +771,9 @@ function renderFrame(){
     err.textContent='';
     var kind = /exchange|बदल/i.test(optText('r-want')||'') ? 'Exchange' : 'Return';
     updateReturnLink();
-    sendRequest(rd, msg, formUrlFor(val('r-order').toUpperCase().replace(/\s+/g,''), kind, {phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')}), null, document.getElementById('r-send'));
+    var rid = val('r-order').toUpperCase().replace(/\s+/g,'');
+    sendRequest(rd, msg, formUrlFor(rid, kind, {phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')}), null, document.getElementById('r-send'),
+      {orderId:rid, kind:kind.toLowerCase(), phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')});
   });
   ['t-name','t-phone','t-for','t-what','t-date','t-cloth','t-note'].forEach(function(id){
     var n=document.getElementById(id); n.addEventListener('input', updateTailorLink); n.addEventListener('change', updateTailorLink);
@@ -1070,7 +1072,7 @@ function placeOrder(){
   try { var hist = JSON.parse(localStorage.getItem('df-orders')||'[]'); hist.unshift({id:order.id, phone:order.phone, items:order.items.map(function(i){return i.sku+' '+i.name;}).join(', ')}); localStorage.setItem('df-orders', JSON.stringify(hist.slice(0,10))); } catch(e) {}
   placed = order;
   try { window.dispatchEvent(new CustomEvent('df-order',{detail:order})); } catch(e){}
-  if (orderFormUrl(order)){ order.sent = 'sending'; sendOrderDirect(order); }
+  if ((window.DF && DF.saveOrder) || orderFormUrl(order)){ order.sent = 'sending'; sendOrderDirect(order); }
   cart = []; saveCart(); renderCart();
   renderDone();
   document.getElementById('order').scrollIntoView({behavior:'smooth'});
@@ -1100,10 +1102,11 @@ function submitFilledForm(filled){
   });
 }
 /* Sends a return / cancel request in the background; on failure shows a WhatsApp fallback. */
-function sendRequest(btn, msg, filled, waText, waEl){
+function sendRequest(btn, msg, filled, waText, waEl, req){
   var t = T();
   btn.disabled = true; btn.setAttribute('aria-disabled','true'); msg.className = 'hint'; msg.style.fontWeight = '600'; msg.textContent = t.rq_sending;
-  submitFilledForm(filled).then(function(){
+  var viaForm = function(){ return submitFilledForm(filled); };
+  ((window.DF && DF.saveRequest && req) ? DF.saveRequest(req).catch(viaForm) : viaForm()).then(function(){
     msg.textContent = t.rq_sent; msg.style.color = 'var(--deal)'; btn.hidden = true;
   }, function(){
     btn.disabled = false; btn.removeAttribute('aria-disabled');
@@ -1113,7 +1116,9 @@ function sendRequest(btn, msg, filled, waText, waEl){
   });
 }
 function sendOrderDirect(o){
-  submitFilledForm(orderFormUrl(o)).then(function(){ o.sent = 'ok'; if (placed === o) renderDone(); }, function(){ o.sent = 'fail'; if (placed === o) renderDone(); });
+  var viaForm = function(){ return orderFormUrl(o) ? submitFilledForm(orderFormUrl(o)) : Promise.reject(); };
+  var first = (window.DF && DF.saveOrder) ? DF.saveOrder(o).catch(viaForm) : viaForm();
+  first.then(function(){ o.sent = 'ok'; if (placed === o) renderDone(); }, function(){ o.sent = 'fail'; if (placed === o) renderDone(); });
 }
 function orderFormUrl(o){
   var u = String(SHOP.orderFormUrl || '');
@@ -1387,6 +1392,11 @@ window.DF = {
   photo: function(p){ return p && p.photos && p.photos[0] ? p.photos[0] : ''; },
   art: function(p){ return p ? artSvg(p.art) : ''; },
   cartCount: function(){ return cart.length; },
+  getTrack: function(id){ return TRACK[id]; },
+  setProducts: function(list){ if (!list || !list.length || adminMode) return; try { captureForms(); } catch(e){}
+    products = list.filter(function(p){ return !p.hidden; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }).map(normalize); renderAll(); },
+  setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); },
+  setTrack: function(map){ Object.keys(TRACK).forEach(function(k){ if (!map[k]) return; }); Object.keys(map).forEach(function(k){ TRACK[k] = map[k]; }); try { renderTrack(); } catch(e){} },
   rupees: rupees
 };
 function renderTrack(){
@@ -1445,7 +1455,8 @@ function trackActions(out, id, r, known){
         if (cp.value.replace(/\D/g,'').length < 10){ cmsg.className='error'; cmsg.textContent = t.ret_err; cp.focus(); return; }
         var reason = cw.options[cw.selectedIndex].text;
         sendRequest(cbtn, cmsg, formUrlFor(id,'Cancel',{phone:cp.value, reason:reason, details:cd.value}),
-          [t.wa_can,'',t.wa_oid+': '+id, t.wa_reason+': '+reason, t.wa_mobile+': '+cp.value].concat(cd.value?[cd.value]:[]).join('\n'));
+          [t.wa_can,'',t.wa_oid+': '+id, t.wa_reason+': '+reason, t.wa_mobile+': '+cp.value].concat(cd.value?[cd.value]:[]).join('\n'), null,
+          {orderId:id, kind:'cancel', phone:cp.value, reason:reason, details:cd.value, item:''});
       };
       box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'can-why',text:t.can_lbl}), cw ]));
       box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'can-phone',text:t.rq_phone}), cp ]));
@@ -2041,7 +2052,7 @@ renderAll();
 
   /* ---------- order details page ---------- */
   function statusOf(id){
-    var t = L(), tr = (data.track || {})[id], s = tr ? tr.s : 'waiting';
+    var t = L(), tr = (window.DF && DF.getTrack(id)) || (data.track || {})[id], s = tr ? tr.s : 'waiting';
     return {s:s, label:(t.st[s] || s), cls: s==='delivered'||s==='returned'||s==='return_ok' ? 'ok' : (s==='rejected'||s==='cancelled'||s==='return_no' ? 'bad' : '')};
   }
   function goCart(){ closeModal(); var o = document.getElementById('order'); if (o) o.scrollIntoView({behavior:'smooth'}); }
@@ -2096,12 +2107,33 @@ renderAll();
     if (window.DF){ DF.resetMode(); DF.trackInto(tb, o.id, redraw); }
   }
 
+  /* ---------- live shop data + direct orders (Firestore) ---------- */
+  function startLive(){
+    if (!window.DF) return;
+    fs.collection('products').get().then(function(s){ if (!s.empty) DF.setProducts(s.docs.map(function(d){ return d.data(); })); }).catch(function(){});
+    fs.collection('config').doc('shop').onSnapshot(function(s){ if (s.exists) DF.setConfig(s.data()); }, function(){});
+    fs.collection('track').onSnapshot(function(s){ var m = {}; s.docs.forEach(function(d){ m[d.id] = d.data(); }); DF.setTrack(m); }, function(){});
+    DF.saveOrder = function(o){
+      var doc = {id:o.id, items:(o.items||[]).map(function(i){ return {sku:i.sku||'', name:i.name||'', size:i.size||'', qty:i.qty||1, price:i.price||0}; }),
+        total:o.total||0, allPriced:!!o.allPriced, pay:o.pay||'cod', paid:false, name:o.name||'', phone:o.phone||'', how:o.how||'', home:/deliver|घर/i.test(o.how||''),
+        addr:o.addr||'', pin:o.pin||'', land:o.land||'', note:o.note||'', lang:(document.documentElement.lang||'en').slice(0,2),
+        uid:user ? user.uid : '', email:user ? (user.email||'') : '', status:'new', created:new Date().toISOString(), log:[{at:new Date().toISOString(), s:'new'}]};
+      return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000);
+    };
+    DF.saveRequest = function(r){
+      return withTimeout(fs.collection('requests').add({orderId:r.orderId||'', kind:r.kind||'return', phone:r.phone||'', item:r.item||'', reason:r.reason||'', details:r.details||'',
+        uid:user ? user.uid : '', status:'new', created:new Date().toISOString()}), 12000);
+    };
+  }
+  function withTimeout(p, ms){ return new Promise(function(res, rej){ var t = setTimeout(function(){ rej(new Error('timeout')); }, ms); p.then(function(v){ clearTimeout(t); res(v); }, function(e){ clearTimeout(t); rej(e); }); }); }
+
   /* ---------- start ---------- */
   loadScript(base+'firebase-app-compat.js').then(function(){
     return Promise.all([loadScript(base+'firebase-auth-compat.js'), loadScript(base+'firebase-firestore-compat.js')]);
   }).then(function(){
     firebase.initializeApp(CFG);
     auth = firebase.auth(); fs = firebase.firestore();
+    startLive();
     auth.getRedirectResult().catch(function(){});
     auth.onAuthStateChanged(function(u){
       user = u; prof = null;
