@@ -113,8 +113,9 @@ table.inv input{width:90px;min-height:38px;border:1px solid var(--line);border-r
 /* Diamond Fashions owner panel: orders (seller hub), requests, products, stock, settings. Data lives in Firestore. */
 (function(){
 var LANG = (function(){ try { return localStorage.getItem('adm-lang') || 'en'; } catch(e){ return 'en'; } })();
+var EN_ADD = {"विज्ञापन": "Banners / Ads", "बैनर / विज्ञापन": "Banners / Ads", "+ नया बैनर": "+ New banner", "ये बैनर वेबसाइट पर सबसे ऊपर स्लाइड होते हैं। फ़ोटो या वीडियो (YouTube या MP4 लिंक) लगा सकते हैं। कोई बैनर न हो तो वेबसाइट अपने-आप बैनर दिखाती है।": "These banners slide at the top of the website. Use a photo or a video (YouTube or MP4 link). If you add none, the website shows automatic banners.", "अभी कोई बैनर नहीं।": "No banners yet.", "चालू": "Live", "बंद": "Off", "बदलें": "Edit", "ऊपर": "Up", "नीचे": "Down", "नया बैनर": "New banner", "बैनर बदलें": "Edit banner", "किस तरह का": "Type", "फ़ोटो": "Photo", "वीडियो": "Video", "बैनर फ़ोटो (चौड़ी फ़ोटो सबसे अच्छी, जैसे 1600×600)": "Banner photo (wide works best, e.g. 1600×600)", "फ़ोटो चुनें": "Choose photo", "वीडियो लिंक (YouTube या .mp4)": "Video link (YouTube or .mp4)", "छोटा लेबल (जैसे 50% तक छूट)": "Small label (e.g. Up to 50% off)", "हेडिंग": "Heading", "लाइन": "Line", "बटन का नाम": "Button text", "दबाने पर कहाँ जाए": "When tapped, go to", "कहीं नहीं": "Nowhere", "कैटेगरी: ": "Category: ", "किसी सामान पर (कोड लिखें)": "A product (type code)", "सिलाई वाला हिस्सा": "Tailoring section", "दूसरी वेबसाइट (लिंक)": "Another website (link)", "सामान कोड या लिंक": "Product code or link", "वेबसाइट पर दिखाएँ": "Show on website", "फ़ोटो चुनें या वीडियो लिंक डालें": "Choose a photo or add a video link", "फ़ोटो बहुत बड़ी है": "Photo is too large", "बैनर हटाएँ?": "Delete banner?"};
 var EN = {"Women / महिला": "Women", "Men / पुरुष": "Men", "Boys / लड़के": "Boys", "Girls / लड़कियाँ": "Girls", "Kids & Baby / बच्चे": "Kids & Baby", "नया": "New", "मंज़ूर": "Accepted", "पैक": "Packed", "भेजा": "Shipped", "दुकान पर तैयार": "Ready at shop", "पहुँच गया": "Delivered", "मना किया": "Rejected", "रद्द": "Cancelled", "वापसी रिक्वेस्ट": "Return requested", "वापसी मंज़ूर": "Return approved", "वापस आया": "Returned", "वापसी मना": "Return refused", "मालिक का लॉग-इन। सिर्फ़ दुकान के मालिक का Google खाता चलेगा।": "Owner login. Only the shop owner's Google account can open this.", "Google से लॉग-इन": "Login with Google", "लॉग-इन नहीं हुआ: ": "Login failed: ", "वेबसाइट देखें": "View website", "लॉग-आउट": "Logout", "ऑर्डर": "Orders", "रिक्वेस्ट": "Requests", "सामान": "Products", "स्टॉक": "Stock", "सेटिंग": "Settings", "नए ऑर्डर": "New orders", "चालू ऑर्डर": "Active orders", "आज के ऑर्डर": "Today's orders", "आज की बिक्री": "Today's sales", "नए + चालू": "New + active", "नए": "New", "पूरे": "Completed", "वापसी": "Returns", "सभी": "All", "ऑर्डर नंबर, नाम या मोबाइल से खोजें": "Search by order no., name or mobile", "इस लिस्ट में कोई ऑर्डर नहीं।": "No orders in this list.", "अभी कोई ऑर्डर नहीं। जब ग्राहक वेबसाइट से ऑर्डर करेगा, यहाँ अपने-आप दिखेगा।": "No orders yet. When a customer orders on the website it appears here automatically.", "समय": "Time", "ग्राहक": "Customer", "कैसे": "How", "पता": "Address", "पेमेंट": "Payment", "पैसे मिले": "Paid", "पैसे बाकी": "Not paid", "नोट": "Note", "कुल": "Total", "✓ मंज़ूर करें": "✓ Accept", "✗ मना करें": "✗ Reject", "पैक हो गया": "Mark packed", "भेज दिया": "Mark shipped", "सामान वापस आया": "Mark returned", "रद्द करें": "Cancel", "ऑर्डर ": "Cancel order ", " रद्द करें?": "?", "पेमेंट: मिला ✓": "Payment: received ✓", "पेमेंट मिल गया": "Mark paid", "ग्राहक को WhatsApp": "WhatsApp customer", "⚠ इस ऑर्डर की ": "⚠ This order has ", " रिक्वेस्ट बाकी है, \"रिक्वेस्ट\" टैब देखें।": " pending request(s). See the Requests tab.", " ✓\\nग्राहक को WhatsApp पर बताएँ?": " ✓\\nTell the customer on WhatsApp?", "सेव नहीं हुआ: ": "Could not save: ", "Cancel / Return / Exchange रिक्वेस्ट": "Cancel / Return / Exchange requests", "अभी कोई रिक्वेस्ट नहीं।": "No requests yet.", "रद्द करना है": "Wants to cancel", "वापसी (पैसे वापस)": "Return (refund)", "बदलाव (Exchange)": "Exchange", "नई": "New", "हो गई": "Done", "मोबाइल": "Mobile", "कारण": "Reason", "जानकारी": "Details", "यह ऑर्डर यहाँ नहीं मिला": "This order is not in the list", "ऑर्डर रद्द करें": "Cancel order", "छोड़ दें": "Dismiss", "सामान (": "Products (", "+ नया सामान": "+ New product", "अभी Admin में कोई सामान नहीं है। वेबसाइट पर जो सामान, फ़ोटो और दाम हैं, उन्हें एक बार यहाँ लाना होगा।": "There are no products in Admin yet. Bring the website products, photos and prices here once.", "वेबसाइट से सारा सामान लाएँ": "Import all products from website", "नाम या कोड से खोजें": "Search by name or code", "फ़ोटो नहीं": "No photo", " / मीटर": " / metre", "दाम नहीं": "No price", " · छुपा": " · hidden", " · स्टॉक ख़त्म": " · out of stock", "बंद करें": "Close", "नया सामान": "New product", "बाएँ": "Left", "हटाएँ": "Delete", "दाएँ": "Right", "फ़ोटो जोड़ रहे हैं…": "Adding photos…", "फ़ोटो नहीं जुड़ी": "Could not add photo", "+ फ़ोटो": "+ Photo", "फ़ोटो (पहली फ़ोटो कवर बनेगी)": "Photos (first photo is the cover)", "नाम": "Name", "कैटेगरी": "Category", "बिक्री": "Sold by", "पीस (साइज़ के साथ)": "Piece (with sizes)", "मीटर (कपड़ा)": "Metre (fabric)", "दाम ₹ / मीटर": "Price ₹ / metre", "दाम ₹": "Price ₹", "MRP ₹ (काटा हुआ दाम)": "MRP ₹ (crossed-out price)", "कुल कितने मीटर हैं": "Total metres in stock", "कम से कम कितने मीटर बिकेगा": "Minimum metres per order", "साइज़ (कॉमा से अलग, जैसे M, L, XL)": "Sizes (comma separated, e.g. M, L, XL)", "स्टॉक ": "Stock ", " (खाली = गिनती नहीं)": " (blank = not counted)", "फ़ोटो न हो तो कौन सा निशान दिखे": "Icon to show when there is no photo", " स्टॉक में है": " In stock", " वेबसाइट पर छुपाएँ": " Hide on website", "सेव करें": "Save", " हटाएँ?": " — delete?", "नाम लिखें": "Please write a name", "सेव हो रहा है…": "Saving…", "फ़ोटो बहुत बड़ी हैं, एक-दो फ़ोटो कम करें": "Photos are too large, remove one or two", "सेव हो गया ✓ वेबसाइट पर दिख जाएगा": "Saved ✓ It will show on the website", "वेबसाइट से सामान ला रहे हैं… (1–2 मिनट)": "Importing products from website… (1–2 minutes)", "डेटा नहीं मिला": "Data not found", " सामान आ गए ✓": " products imported ✓", "नहीं हुआ: ": "Failed: ", "संख्या बदलें और बाहर टैप करें, अपने-आप सेव होगा। खाली = गिनती नहीं (हमेशा उपलब्ध)। ऑर्डर मंज़ूर करने पर स्टॉक अपने-आप घटता है।": "Change a number and tap outside; it saves by itself. Blank = not counted (always available). Stock goes down automatically when you accept an order.", "मीटर": "Metre", "<span class=\"st bad\">कम</span>": "<span class=\"st bad\">Low</span>", "कोड": "Code", "साइज़": "Size", "दुकान की सेटिंग": "Shop settings", "WhatsApp नंबर (91 के साथ, जैसे 918874129818)": "WhatsApp number (with 91, e.g. 918874129818)", "वापसी कितने दिन में": "Return window (days)", " कैश ऑन डिलीवरी (COD) चालू": " Cash on delivery (COD) on", "सेव हो गया ✓": "Saved ✓", "लॉग-इन: ": "Logged in: ", "डेटा नहीं खुला: ": "Could not open data: ", " (Firestore Rules चेक करें)": " (check Firestore Rules)", "यह खाता (": "This account (", ") मालिक का नहीं है। सही Gmail से लॉग-इन करें।": ") is not the owner's. Please log in with the right Gmail."};
-function L(h){ return LANG === 'en' && EN[h] !== undefined ? EN[h] : h; }
+function L(h){ if (LANG === 'en' && EN_ADD[h] !== undefined) return EN_ADD[h]; return LANG === 'en' && EN[h] !== undefined ? EN[h] : h; }
 function langBtn(dark){ return el('button',{'class':dark?'pill':'btn b-line b-sm',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('adm-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}); }
 var ADMINS = ['dimondfashion95@gmail.com'];
 var CFG = {"apiKey":"AIzaSyDEnVBUgdbQQnpy0aXKS4TFa8EmkuBnKW4","authDomain":"diamond-fashions.firebaseapp.com","projectId":"diamond-fashions","storageBucket":"diamond-fashions.firebasestorage.app","messagingSenderId":"548211132063","appId":"1:548211132063:web:0ee6dca5768f4ec7b3c4aa"};
@@ -127,6 +128,7 @@ var ARTS = ['suit','saree','lehenga','blouse','leggings','kurta','jacket','shirt
 var ST = {new:L('नया'), accepted:L('मंज़ूर'), packed:L('पैक'), shipped:L('भेजा'), pickup:L('दुकान पर तैयार'), delivered:L('पहुँच गया'), rejected:L('मना किया'), cancelled:L('रद्द'), return_req:L('वापसी रिक्वेस्ट'), return_ok:L('वापसी मंज़ूर'), returned:L('वापस आया'), return_no:L('वापसी मना')};
 var STEN = {new:'New', accepted:'Accepted', packed:'Packed', shipped:'Shipped', pickup:'Ready for pickup', delivered:'Delivered', rejected:'Rejected', cancelled:'Cancelled', return_req:'Return requested', return_ok:'Return approved', returned:'Returned', return_no:'Return not approved'};
 
+var banners = [];
 var me = null, tab = 'orders', ofilter = 'active', orders = [], requests = [], products = [], cfg = {}, track = {}, q = '';
 var unsubs = [];
 var app = document.getElementById('app');
@@ -172,12 +174,12 @@ function draw(){
     el('div',{'class':'hbtns'},[ langBtn(true), el('a',{'class':'pill',href:'/',target:'_blank',text:L('वेबसाइट देखें')}), el('button',{'class':'pill',type:'button',text:L('लॉग-आउट'),onclick:function(){ auth.signOut(); }}) ])
   ]) ]);
   app.appendChild(head);
-  var tabs = [['orders',L('ऑर्डर'),newCount()],['requests',L('रिक्वेस्ट'),reqCount()],['products',L('सामान'),0],['stock',L('स्टॉक'),0],['settings',L('सेटिंग'),0]];
+  var tabs = [['orders',L('ऑर्डर'),newCount()],['requests',L('रिक्वेस्ट'),reqCount()],['products',L('सामान'),0],['banners',L('विज्ञापन'),0],['stock',L('स्टॉक'),0],['settings',L('सेटिंग'),0]];
   var nav = el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(tb){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===tb[0]),onclick:function(){ tab=tb[0]; draw(); window.scrollTo(0,0); }},[ tb[1], tb[2] ? el('span',{'class':'n',text:String(tb[2])}) : null ]); }));
   app.appendChild(el('div',{'class':'wrap',style:'padding:0'},[nav]));
   var main = el('main',{'class':'wrap'});
   app.appendChild(main);
-  ({orders:drawOrders, requests:drawRequests, products:drawProducts, stock:drawStock, settings:drawSettings})[tab](main);
+  ({orders:drawOrders, requests:drawRequests, products:drawProducts, banners:drawBanners, stock:drawStock, settings:drawSettings})[tab](main);
   window.scrollTo(0, y);
 }
 
@@ -418,6 +420,77 @@ function importFromSite(btn, m){
   }).then(function(n){ m.textContent = n + L(' सामान आ गए ✓'); m.className = 'msg ok'; }, function(e){ btn.disabled = false; m.textContent = L('नहीं हुआ: ') + (e.message||e); m.className = 'msg err'; });
 }
 
+
+/* ---------- banners / ads ---------- */
+function ytId(u){ var m = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{6,})/.exec(u||''); return m ? m[1] : ''; }
+function drawBanners(main){
+  main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin-bottom:6px'},[ el('h2',{style:'margin:0',text:L('बैनर / विज्ञापन')}), el('button',{'class':'btn b-gold',type:'button',text:L('+ नया बैनर'),onclick:function(){ editBanner(null); }}) ]));
+  main.appendChild(el('p',{'class':'muted small',text:L('ये बैनर वेबसाइट पर सबसे ऊपर स्लाइड होते हैं। फ़ोटो या वीडियो (YouTube या MP4 लिंक) लगा सकते हैं। कोई बैनर न हो तो वेबसाइट अपने-आप बैनर दिखाती है।')}));
+  if (!banners.length){ main.appendChild(el('p',{'class':'muted',text:L('अभी कोई बैनर नहीं।')})); return; }
+  banners.forEach(function(b, i){
+    var prev = el('div',{style:'aspect-ratio:16/6;border-radius:10px;overflow:hidden;background:#0B1626;position:relative;margin-bottom:8px'});
+    if (b.type === 'video' && ytId(b.video)) prev.appendChild(el('img',{src:'https://i.ytimg.com/vi/'+ytId(b.video)+'/hqdefault.jpg',alt:'',style:'width:100%;height:100%;object-fit:cover'}));
+    else if (b.img) prev.appendChild(el('img',{src:b.img,alt:'',style:'width:100%;height:100%;object-fit:cover'}));
+    if (b.type === 'video') prev.appendChild(el('span',{'class':'st new',style:'position:absolute;top:8px;right:8px',text:L('वीडियो')}));
+    if (b.title) prev.appendChild(el('b',{style:'position:absolute;left:14px;bottom:12px;color:#fff;font-size:20px;text-shadow:0 1px 6px #000',text:b.title}));
+    var move = function(d){ var j = i + d; if (j < 0 || j >= banners.length) return; var o = banners[j]; var batch = db.batch();
+      batch.set(db.collection('config').doc(b._id), {order:o.order||j}, {merge:true}); batch.set(db.collection('config').doc(o._id), {order:b.order||i}, {merge:true});
+      if ((o.order||j) === (b.order||i)){ batch.set(db.collection('config').doc(b._id), {order:j}, {merge:true}); batch.set(db.collection('config').doc(o._id), {order:i}, {merge:true}); }
+      batch.commit(); };
+    main.appendChild(el('div',{'class':'card'},[ prev, el('div',{'class':'row',style:'justify-content:space-between'},[
+      el('span',{'class':'st '+(b.active===false?'bad':'ok'),text:b.active===false?L('बंद'):L('चालू')}),
+      el('div',{'class':'row'},[ el('button',{'class':'btn b-sm b-line',type:'button',text:'↑ '+L('ऊपर'),onclick:function(){ move(-1); }}), el('button',{'class':'btn b-sm b-line',type:'button',text:'↓ '+L('नीचे'),onclick:function(){ move(1); }}),
+        el('button',{'class':'btn b-sm b-gold',type:'button',text:L('बदलें'),onclick:function(){ editBanner(b); }}),
+        el('button',{'class':'btn b-sm b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(L('बैनर हटाएँ?'))) db.collection('config').doc(b._id).delete(); }}) ]) ]) ]));
+  });
+}
+function editBanner(b0){
+  var isNew = !b0, b = JSON.parse(JSON.stringify(b0 || {type:'image', active:true, order:Date.now(), link:'', title:'', sub:'', btn:'', tag:''}));
+  var sc = el('div',{'class':'scrim',onclick:function(e){ if (e.target===sc) close(); }}), box = el('div',{'class':'modal'}); sc.appendChild(box); document.body.appendChild(sc); document.body.style.overflow='hidden';
+  function close(){ sc.remove(); document.body.style.overflow=''; }
+  var msg = el('p',{'class':'msg'});
+  function v(id){ var n = document.getElementById(id); return n ? n.value.trim() : ''; }
+  function keep(){ if (!document.getElementById('b-type')) return; b.type = v('b-type'); b.video = v('b-video'); b.tag = v('b-tag'); b.title = v('b-title'); b.sub = v('b-sub'); b.btn = v('b-btn');
+    var lk = v('b-lk'), lv = v('b-lv'); b.link = lk==='none' ? '' : lk==='p' ? 'p:'+lv.toUpperCase() : lk==='url' ? lv : lk; b.active = document.getElementById('b-act').checked; }
+  function render(){
+    box.innerHTML = '';
+    box.appendChild(el('button',{'class':'x',type:'button',text:'×','aria-label':L('बंद करें'),onclick:close}));
+    box.appendChild(el('h2',{text:isNew ? L('नया बैनर') : L('बैनर बदलें')}));
+    var ty = el('select',{id:'b-type'},[ el('option',{value:'image',text:L('फ़ोटो')}), el('option',{value:'video',text:L('वीडियो')}) ]); ty.value = b.type;
+    ty.onchange = function(){ keep(); render(); };
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'b-type',text:L('किस तरह का')}), ty ]));
+    if (b.type === 'image'){
+      var prev = el('div',{style:'aspect-ratio:16/6;border-radius:10px;overflow:hidden;background:#0B1626;margin-bottom:8px'}); if (b.img) prev.appendChild(el('img',{src:b.img,alt:'',style:'width:100%;height:100%;object-fit:cover'}));
+      var fi = el('input',{type:'file',accept:'image/*'});
+      fi.onchange = function(){ if (!fi.files[0]) return; msg.textContent = '…'; fileToData(fi.files[0]).then(function(d){ return compress(d, 1600, .78); }).then(function(d){ if (d.length > 700000) return compress(d, 1200, .65); return d; }).then(function(d){ keep(); b.img = d; render(); }); };
+      box.appendChild(el('div',{'class':'field'},[ el('label',{text:L('बैनर फ़ोटो (चौड़ी फ़ोटो सबसे अच्छी, जैसे 1600×600)')}), prev, el('label',{'class':'btn b-line',style:'position:relative;overflow:hidden'},[ L('फ़ोटो चुनें'), Object.assign(fi,{style:'position:absolute;inset:0;opacity:0;cursor:pointer'}) ]) ]));
+    }
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'b-video',text:L('वीडियो लिंक (YouTube या .mp4)')}), el('input',{id:'b-video',value:b.video||'',placeholder:'https://youtu.be/...',type:'url'}) ]));
+    if (b.type !== 'video') box.lastChild.hidden = true;
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'b-tag',text:L('छोटा लेबल (जैसे 50% तक छूट)')}), el('input',{id:'b-tag',value:b.tag||''}) ]));
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'b-title',text:L('हेडिंग')}), el('input',{id:'b-title',value:b.title||''}) ]));
+    box.appendChild(el('div',{'class':'two'},[ el('div',{'class':'field'},[ el('label',{'for':'b-sub',text:L('लाइन')}), el('input',{id:'b-sub',value:b.sub||''}) ]), el('div',{'class':'field'},[ el('label',{'for':'b-btn',text:L('बटन का नाम')}), el('input',{id:'b-btn',value:b.btn||''}) ]) ]));
+    var lk = b.link||'', kind = !lk ? 'none' : /^cat:/.test(lk) ? lk : /^p:/.test(lk) ? 'p' : /^sec:/.test(lk) ? lk : 'url';
+    var opts = [['none',L('कहीं नहीं')]].concat(Object.keys(CATS).map(function(k){ return ['cat:'+k, L('कैटेगरी: ')+L(CATS[k])]; })).concat([['p',L('किसी सामान पर (कोड लिखें)')],['sec:tailor',L('सिलाई वाला हिस्सा')],['url',L('दूसरी वेबसाइट (लिंक)')]]);
+    var ls = el('select',{id:'b-lk'}, opts.map(function(o){ return el('option',{value:o[0],text:o[1]}); })); ls.value = kind;
+    var lv = el('input',{id:'b-lv',placeholder:L('सामान कोड या लिंक'),value: kind==='p' ? lk.slice(2) : kind==='url' ? lk : ''});
+    var syncLv = function(){ lv.hidden = !(ls.value==='p' || ls.value==='url'); }; ls.onchange = syncLv; syncLv();
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'b-lk',text:L('दबाने पर कहाँ जाए')}), ls, lv ]));
+    box.appendChild(el('label',{'class':'row',style:'margin:6px 0 12px'},[ el('input',{type:'checkbox',id:'b-act',checked:b.active!==false?'checked':null}), ' '+L('वेबसाइट पर दिखाएँ') ]));
+    var save = el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){
+      keep();
+      if ((b.type==='image' && !b.img) || (b.type==='video' && !b.video)){ msg.textContent = L('फ़ोटो चुनें या वीडियो लिंक डालें'); msg.className = 'msg err'; return; }
+      if (b.type==='video') delete b.img;
+      if (JSON.stringify(b).length > 950000){ msg.textContent = L('फ़ोटो बहुत बड़ी है'); msg.className = 'msg err'; return; }
+      save.disabled = true; var id = b._id || ('banner_' + Date.now().toString(36)); delete b._id; b.updated = now();
+      db.collection('config').doc(id).set(b).then(function(){ msg.textContent = L('सेव हो गया ✓'); msg.className = 'msg ok'; setTimeout(close, 600); }, function(e){ save.disabled = false; msg.textContent = L('सेव नहीं हुआ: ') + e.message; msg.className = 'msg err'; });
+    }});
+    box.appendChild(el('div',{'class':'row'},[ save, el('button',{'class':'btn b-line',type:'button',text:'×',onclick:close}) ]));
+    box.appendChild(msg);
+  }
+  render();
+}
+
 /* ---------- stock ---------- */
 function drawStock(main){
   main.appendChild(el('h2',{text:L('स्टॉक')}));
@@ -469,6 +542,7 @@ function listen(){
   unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); }));
   unsubs.push(db.collection('track').onSnapshot(function(s){ track = {}; s.docs.forEach(function(d){ track[d.id] = d.data(); }); }));
   unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ cfg = s.exists ? s.data() : {}; }));
+  unsubs.push(db.collection('config').onSnapshot(function(s){ banners = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); if (tab === 'banners') redraw(); }));
 }
 auth.getRedirectResult().catch(function(){});
 auth.onAuthStateChanged(function(u){
