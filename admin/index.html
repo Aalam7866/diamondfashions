@@ -670,6 +670,8 @@ function postCaption(p, kind, left){
   lines.push('#DiamondFashions #Purandarpur #Maharajganj ' + tagCat + (kind === 'low' ? ' #limitedstock' : ' #newarrival'));
   return lines.join('\n');
 }
+/* Instagram does not open links in captions and reads "#p-" as a hashtag */
+function igCaption(cap, p){ return cap.replace(/🛒 Order online: \S+/, '🛒 Order online: diamondfashions.in (link in bio) · search code ' + p.code); }
 function socialLog(entry){
   return metaRef().get().then(function(s){ var log = (s.exists && s.data().log) || []; log.unshift(entry); return metaRef().set({log: log.slice(0, 30)}, {merge:true}); }).catch(function(){});
 }
@@ -685,7 +687,7 @@ function postProduct(p, kind){
     if (!meta.igId || meta.ig === false) return;
     return gfetch(r.id, {fields:'images', access_token:tok}).then(function(ph){
       var url = ph.images && ph.images[0] && ph.images[0].source; if (!url) throw new Error('No image URL');
-      return gfetch(meta.igId + '/media', {image_url:url, caption:cap, access_token:tok}, 'POST');
+      return gfetch(meta.igId + '/media', {image_url:url, caption:igCaption(cap, p), access_token:tok}, 'POST');
     }).then(function(cr){
       var tries = 0;
       function wait(){ return gfetch(cr.id, {fields:'status_code', access_token:tok}).then(function(st){
