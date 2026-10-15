@@ -387,6 +387,15 @@ footer .wrap{padding-block:22px 96px;display:flex;justify-content:space-between;
 .pp-more{grid-column:1/-1;padding:4px 22px 26px;border-top:1px solid var(--line);min-width:0}
 .pp-more > h3{font-size:19px;font-weight:700;margin:18px 0 10px}
 .pp-more .rail-track{padding-bottom:8px}
+.pdet-btn{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:50px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer;font-weight:700;font-size:16px;color:var(--ink)}
+.pdet-btn[aria-expanded="true"] span:last-child{transform:rotate(180deg)}
+.pdet{border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;margin-top:-8px;padding:10px 14px 12px}
+.pdet table{width:100%;border-collapse:collapse;font-size:15px}
+.pdet td{padding:7px 0;border-bottom:1px dashed var(--line);vertical-align:top}
+.pdet td:first-child{color:var(--muted);width:42%;padding-right:10px}
+.pdet tr:last-child td{border-bottom:0}
+.pdet p{margin:10px 0 0;white-space:pre-line}
+.rv-link{border:0;background:none;color:var(--gold);font-weight:700;cursor:pointer;padding:4px 0;text-decoration:underline;font-size:14px}
 .rbadge{display:inline-flex;align-items:center;gap:3px;background:var(--deal);color:#fff;font-size:12px;font-weight:700;border-radius:4px;padding:1px 6px;font-family:var(--f-brand);line-height:1.5}
 .rbadge.low{background:#C07A12}.rbadge.bad{background:var(--danger)}
 .rline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
@@ -954,10 +963,10 @@ function renderGrid(){
 /* ---------- Flipkart-style layer ---------- */
 var FKS = {
   en:{u1:'Cash on Delivery',u1s:'or pay by UPI',u2:'{d}-day returns',u2s:'Easy return & exchange',u3:'Tailoring',u3s:'Ladies & gents stitching',home:'Home',cats:'Categories',track:'Track',acct:'Account',cart:'Cart',
-      deals:'Deals for you', similar:'Similar products', alsolike:'You may also like', ratings:' ratings',all:'View all',off:'% off',from:'From ',r_women:"Women's wear",r_men:"Men's wear",r_kids:'Kids & baby', r_foot:'Footwear', r_jw:'Artificial jewellery', r_beauty:'Beauty & makeup', r_cook:'Kitchen & cookware',r_fab:'Fabric by metre',
+      deals:'Deals for you', det_btn:'Product details', det_code:'Item code', det_cat:'Category', det_sizes:'Sizes', det_sold:'Sold by', det_pc:'Piece', det_m:'Metre (min. {m} m)', det_ret:'Return', det_ret_v:'{d}-day easy return', det_pay:'Payment', det_pay_v:'Cash on Delivery or UPI', det_desc:'Description', rv_h:'Ratings & Reviews', rv_none:'No reviews yet.', rv_write:'Write a review', rv_site:'To write a review, open our website diamondfashions.in and log in.', similar:'Similar products', alsolike:'You may also like', ratings:' ratings',all:'View all',off:'% off',from:'From ',r_women:"Women's wear",r_men:"Men's wear",r_kids:'Kids & baby', r_foot:'Footwear', r_jw:'Artificial jewellery', r_beauty:'Beauty & makeup', r_cook:'Kitchen & cookware',r_fab:'Fabric by metre',
       b1t:'New suits & sarees',b1s:'Fresh styles for every occasion',b2t:'Ladies & gents tailoring',b2s:'Perfect fitting, on time',b3t:'Fabric by the metre',b3s:'Buy exactly how much you need',b4t:'Cash on Delivery',b4s:'Order online, pay at your door. Easy {d}-day returns.',shop:'Shop now',book:'Book now',upto:'Up to {p}% off',video:'VIDEO'},
   hi:{u1:'कैश ऑन डिलीवरी',u1s:'या UPI से पेमेंट',u2:'{d} दिन में वापसी',u2s:'आसान वापसी और बदलाव',u3:'सिलाई',u3s:'लेडीज़ और जेंट्स सिलाई',home:'होम',cats:'कैटेगरी',track:'ट्रैक',acct:'खाता',cart:'कार्ट',
-      deals:'आपके लिए ऑफ़र', similar:'इसी तरह का सामान', alsolike:'ये भी पसंद आ सकते हैं', ratings:' रेटिंग',all:'सब देखें',off:'% छूट',from:'शुरू ',r_women:'महिलाओं के कपड़े',r_men:'पुरुषों के कपड़े',r_kids:'बच्चों के कपड़े', r_foot:'जूते-चप्पल', r_jw:'आर्टिफ़िशियल ज्वेलरी', r_beauty:'ब्यूटी और मेकअप', r_cook:'बर्तन और किचन',r_fab:'मीटर से कपड़ा',
+      deals:'आपके लिए ऑफ़र', det_btn:'सामान की पूरी जानकारी', det_code:'आइटम कोड', det_cat:'कैटेगरी', det_sizes:'साइज़', det_sold:'बिक्री', det_pc:'पीस', det_m:'मीटर (कम से कम {m} मी.)', det_ret:'वापसी', det_ret_v:'{d} दिन में आसान वापसी', det_pay:'पेमेंट', det_pay_v:'कैश ऑन डिलीवरी या UPI', det_desc:'विवरण', rv_h:'रेटिंग और रिव्यू', rv_none:'अभी कोई रिव्यू नहीं।', rv_write:'रिव्यू लिखें', rv_site:'रिव्यू लिखने के लिए हमारी वेबसाइट diamondfashions.in खोलें और लॉग-इन करें।', similar:'इसी तरह का सामान', alsolike:'ये भी पसंद आ सकते हैं', ratings:' रेटिंग',all:'सब देखें',off:'% छूट',from:'शुरू ',r_women:'महिलाओं के कपड़े',r_men:'पुरुषों के कपड़े',r_kids:'बच्चों के कपड़े', r_foot:'जूते-चप्पल', r_jw:'आर्टिफ़िशियल ज्वेलरी', r_beauty:'ब्यूटी और मेकअप', r_cook:'बर्तन और किचन',r_fab:'मीटर से कपड़ा',
       b1t:'नए सूट और साड़ियाँ',b1s:'हर मौके के लिए नए डिज़ाइन',b2t:'लेडीज़ और जेंट्स सिलाई',b2s:'सही फिटिंग, समय पर',b3t:'मीटर से कपड़ा',b3s:'जितना चाहिए उतना लें',b4t:'कैश ऑन डिलीवरी',b4s:'ऑनलाइन ऑर्डर करें, घर पर पैसे दें। {d} दिन में आसान वापसी।',shop:'अभी खरीदें',book:'बुक करें',upto:'{p}% तक छूट',video:'वीडियो'}
 };
 function FK(){ return FKS[lang] || FKS.en; }
@@ -1039,6 +1048,26 @@ function rateBadge(id, withCount){
   var r = rateOf(id); if (!r) return null;
   var b = el('span',{'class':'rbadge'+(r.avg < 2.5 ? ' bad' : r.avg < 3.5 ? ' low' : ''),text:r.avg.toFixed(1)+' ★'});
   return withCount ? el('span',{'class':'rline'},[ b, el('span',{text:r.count+FK().ratings}) ]) : b;
+}
+function detailRows(p){
+  var f = FK(), rows = [[f.det_code, p.code], [f.det_cat, T().cats[p.cat] || p.cat]];
+  if (sizesOf(p).length) rows.push([f.det_sizes, sizesOf(p).join(', ')]);
+  rows.push([f.det_sold, isM(p) ? f.det_m.replace('{m}', fmtM(p.minM)) : f.det_pc]);
+  String(p.details || '').split('\n').forEach(function(l){ var i = l.indexOf(':'); if (i > 0 && l.slice(i+1).trim()) rows.push([l.slice(0,i).trim(), l.slice(i+1).trim()]); });
+  rows.push([f.det_ret, f.det_ret_v.replace('{d}', SHOP.returnDays || 3)], [f.det_pay, SHOP.cod ? f.det_pay_v : 'UPI']);
+  return rows;
+}
+function detailsBox(p){
+  var f = FK();
+  var body = el('div',{'class':'pdet',id:'pp-det',hidden:'hidden'},[ el('table',null,[ el('tbody',null, detailRows(p).map(function(r){ return el('tr',null,[ el('td',{text:r[0]}), el('td',{text:r[1]}) ]); })) ]),
+    (p.longDesc || p.desc) ? el('p',null,[ el('b',{text:f.det_desc+': '}), p.longDesc || p.desc ]) : null ]);
+  var btn = el('button',{type:'button','class':'pdet-btn','aria-expanded':'false','aria-controls':'pp-det',onclick:function(){ var open = body.hidden; body.hidden = !open; btn.setAttribute('aria-expanded', String(open)); }},[ el('span',{text:f.det_btn}), el('span',{'aria-hidden':'true',text:'▾'}) ]);
+  return el('div',null,[btn, body]);
+}
+function reviewsPlaceholder(p){
+  var f = FK(), r = rateOf(p.id);
+  return [ el('h3',{text:f.rv_h}), el('p',{'class':'hint',text: r ? r.avg.toFixed(1)+' ★ · '+r.count+f.ratings : f.rv_none}),
+    el('button',{type:'button','class':'btn btn-line',text:f.rv_write,onclick:function(e){ e.target.insertAdjacentElement('afterend', el('p',{'class':'hint',style:'margin-top:8px',text:f.rv_site})); e.target.disabled = true; }}) ];
 }
 function relatedOf(p){
   var others = products.filter(function(x){ return x.id !== p.id && avail(x) !== false; });
@@ -1198,11 +1227,12 @@ function openProduct(id, from){
   var info = el('div',{'class':'info'},[
     el('div',{'class':'catline',text:t.cats[p.cat]}),
     el('h2',{id:'pp-title',text:p.name}),
-    el('div',{id:'pp-rating'},[ rateBadge(p.id, true) ]),
+    el('div',{'class':'row',style:'gap:12px'},[ el('div',{id:'pp-rating'},[ rateBadge(p.id, true) ]), el('button',{type:'button','class':'rv-link',text:'★ '+FK().rv_write,onclick:function(){ var r = document.getElementById('pp-reviews'); if (r){ r.scrollIntoView({behavior:'smooth'}); var b = r.querySelector('button'); if (b) setTimeout(function(){ b.focus(); b.click(); }, 400); } }}) ]),
     el('div',{'class':'sku',id:'pp-sku',text:t.item_no+skuFor(p,size)}),
     pricing(p),
     el('div',{'class':'stockline'+(avail(p)?'':' out'),text:avail(p)?t.in_stock:t.out_stock}),
     p.desc ? el('p',{style:'margin:0',text:p.desc}) : null,
+    detailsBox(p),
     (!isM(p) && chipBox) ? el('div',null,[ el('div',{'class':'lbl',text:t.size_choose}), chipBox ]) : null,
     isM(p) ? mBox : el('div',null,[ el('div',{'class':'lbl',text:t.qty}), qtyBox, el('div',{'class':'off',id:'pp-left',style:'margin-top:6px;color:var(--danger)',text:(function(){ var n = stockOf(p, sizes.length ? size : ''); return (n !== Infinity && n > 0 && n <= 3) ? D3(t.only_left, n) : ''; })()}) ]),
     err,
@@ -1212,7 +1242,7 @@ function openProduct(id, from){
   ]);
   var closeB = el('button',{type:'button','class':'pp-close','aria-label':t.close,html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',onclick:closeProduct});
   var rel = relatedOf(p), fk = FK();
-  var more = el('div',{'class':'pp-more'},[ el('div',{id:'pp-reviews','data-pid':p.id}) ]);
+  var more = el('div',{'class':'pp-more'},[ el('div',{id:'pp-reviews','data-pid':p.id}, reviewsPlaceholder(p)) ]);
   [[fk.similar, rel.same],[fk.alsolike, rel.also]].forEach(function(r){
     if (!r[1].length) return;
     var tr = el('div',{'class':'rail-track'});
