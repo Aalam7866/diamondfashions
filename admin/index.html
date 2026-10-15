@@ -436,7 +436,13 @@ function editProduct(p0){
       el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-in',checked:p.inStock!==false?'checked':null}), L(' स्टॉक में है') ]),
       el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-hid',checked:p.hidden?'checked':null}), L(' वेबसाइट पर छुपाएँ') ]) ]));
     var save = el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){ doSave(save); }});
-    box.appendChild(el('div',{'class':'row'},[ save, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
+    var postB = isNew || !(meta && meta.pageToken) ? null : el('button',{'class':'btn b-line',type:'button',text:'📣 '+SL('FB/Instagram पर पोस्ट करें','Post to FB / Instagram'),onclick:function(){
+      if (!confirm(SL('यह सामान अभी Facebook/Instagram पर पोस्ट करें?','Post this item to Facebook/Instagram now?'))) return;
+      postB.disabled = true; msg.textContent = SL('पोस्ट हो रहा है…','Posting…'); msg.className = 'msg';
+      keep(); var lft = pcsLeft(p);
+      postProduct(p, lft !== null && lft > 0 && lft <= ((meta && meta.low) || 3) ? 'low' : 'new').then(function(){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓'); msg.className = 'msg ok'; postB.disabled = false; },
+        function(e){ msg.textContent = SL('पोस्ट नहीं हुआ: ','Could not post: ') + (e.message||e); msg.className = 'msg err'; postB.disabled = false; }); }});
+    box.appendChild(el('div',{'class':'row'},[ save, postB, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
     box.appendChild(msg);
     ['e-unit','e-sizes'].forEach(function(id){ var n = document.getElementById(id); if (n) n.addEventListener('change', function(){ keep(); render(); }); });
   }
@@ -594,7 +600,182 @@ function drawSettings(main){
       db.collection('config').doc('shop').set(upd, {merge:true}).then(function(){ m.textContent=L('सेव हो गया ✓'); m.className='msg ok'; }, function(e){ m.textContent=L('नहीं हुआ: ')+e.message; m.className='msg err'; });
     }}), m ]);
   main.appendChild(f);
+  drawSocial(main);
   main.appendChild(el('p',{'class':'muted small',text:L('लॉग-इन: ')+(me&&me.email)}));
+}
+
+/* ---------- Facebook & Instagram auto-post ---------- */
+var GV = 'https://graph.facebook.com/v23.0/';
+var meta = null, metaLoaded = false, socialBusy = {}, socialQueue = Promise.resolve();
+function SL(hi, en){ return LANG === 'en' ? en : hi; }
+function metaRef(){ return db.collection('secret').doc('meta'); }
+function gfetch(path, params, method, body){
+  var q = Object.keys(params||{}).map(function(k){ return encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }).join('&');
+  return fetch(GV + path + (q ? '?'+q : ''), {method:method||'GET', body:body||undefined}).then(function(r){ return r.json(); }).then(function(j){
+    if (j && j.error) throw new Error(j.error.message || 'Facebook error'); return j; });
+}
+function pcsLeft(p){
+  if (p.unit === 'm') return null;
+  var st = p.stock || {}, ks = Object.keys(st).filter(function(k){ return typeof st[k] === 'number'; });
+  if (!ks.length) return null;
+  return ks.reduce(function(a,k){ return a + st[k]; }, 0);
+}
+function loadImg(src){ return new Promise(function(res){ if (!src) return res(null); var im = new Image(); im.crossOrigin = 'anonymous'; im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = src; }); }
+function wrapText(ctx, text, x, y, maxW, lh, maxLines){
+  var words = String(text).split(' '), line = '', n = 0;
+  for (var i = 0; i < words.length; i++){
+    var t = line ? line+' '+words[i] : words[i];
+    if (ctx.measureText(t).width > maxW && line){ n++; if (n === maxLines){ ctx.fillText(line.replace(/.{0,2}$/,'…'), x, y); return y; } ctx.fillText(line, x, y); y += lh; line = words[i]; }
+    else line = t;
+  }
+  ctx.fillText(line, x, y); return y;
+}
+/* 1080 x 1350 branded post picture */
+function postImage(p, kind, left){
+  return loadImg((p.photos||[])[0]).then(function(im){
+    var W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
+    x.fillStyle = '#F4EEE2'; x.fillRect(0,0,W,H);
+    var ph = 1000;
+    if (im){ var k = Math.max(W/im.width, ph/im.height), w = im.width*k, h = im.height*k; x.drawImage(im, (W-w)/2, (ph-h)/2, w, h); }
+    else { x.fillStyle = '#EADFC8'; x.fillRect(0,0,W,ph); x.fillStyle = '#8A6A2A'; x.font = '600 64px Georgia, serif'; x.textAlign = 'center'; wrapText(x, p.name, W/2, 460, 860, 80, 3); x.textAlign = 'left'; }
+    x.fillStyle = '#0B1626'; x.fillRect(0, ph, W, H-ph);
+    x.fillStyle = '#CDAA5C'; x.fillRect(0, ph, W, 8);
+    // tag
+    var tag = kind === 'low' ? ('ONLY ' + left + ' LEFT · सिर्फ़ ' + left + ' बचे') : 'NEW ARRIVAL · नया माल';
+    x.font = 'bold 34px Arial, sans-serif'; var tw = x.measureText(tag).width + 48;
+    x.fillStyle = kind === 'low' ? '#C0392B' : '#CDAA5C'; x.beginPath(); if (x.roundRect) x.roundRect(40, ph-80, tw, 60, 30); else x.rect(40, ph-80, tw, 60); x.fill();
+    x.fillStyle = kind === 'low' ? '#fff' : '#0B1626'; x.fillText(tag, 64, ph-38);
+    // name + price
+    x.fillStyle = '#FFFFFF'; x.font = 'bold 50px Arial, sans-serif'; var y = wrapText(x, p.name, 48, ph+82, W-96, 58, 2);
+    x.font = 'bold 54px Arial, sans-serif'; x.fillStyle = '#CDAA5C';
+    var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') + (p.unit === 'm' ? ' / m' : '') : 'Ask for price';
+    x.fillText(price, 48, y + 76);
+    if (p.mrp && p.price && p.mrp > p.price){ var pw = x.measureText(price).width; x.font = '36px Arial, sans-serif'; x.fillStyle = '#9AA3B2'; var mt = '₹' + Number(p.mrp).toLocaleString('en-IN'); x.fillText(mt, 72+pw, y+76); x.fillRect(72+pw, y+64, x.measureText(mt).width, 3);
+      x.fillStyle = '#4CC27A'; x.font = 'bold 36px Arial, sans-serif'; x.fillText(Math.round((1-p.price/p.mrp)*100)+'% OFF', 100+pw+x.measureText(mt).width, y+76); }
+    x.fillStyle = '#D3CEC2'; x.font = '30px Arial, sans-serif';
+    x.fillText('DIAMOND FASHIONS · diamondfashions.in · WhatsApp ' + (cfg.display || '+91 88741 29818'), 48, H-36);
+    return new Promise(function(res){ c.toBlob(function(b){ res(b); }, 'image/jpeg', .9); });
+  });
+}
+function postCaption(p, kind, left){
+  var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') + (p.unit === 'm' ? ' per metre' : '') : 'Ask for price';
+  var link = 'https://diamondfashions.in/#p-' + p.code;
+  var head = kind === 'low' ? '⏳ Hurry! Only ' + left + ' left — ' + p.name + '\nजल्दी करें! सिर्फ़ ' + left + ' पीस बचे हैं।' : '✨ New arrival — ' + p.name + '\nनया माल आ गया है!';
+  var lines = [head, ''];
+  if (p.desc) lines.push(p.desc);
+  lines.push('💰 Price: ' + price + (p.mrp && p.price && p.mrp > p.price ? ' (MRP ₹' + Number(p.mrp).toLocaleString('en-IN') + ')' : ''));
+  if (p.sizes) lines.push('📏 Sizes: ' + p.sizes);
+  lines.push('🔖 Code: ' + p.code, '', '🛒 Order online: ' + link, '📞 WhatsApp: ' + (cfg.display || '+91 88741 29818'), '📍 Diamond Fashions, ' + (cfg.place || 'Purandarpur, UP'), '');
+  var tagCat = {women:'#womenfashion #suits #sarees', men:'#mensfashion', boys:'#kidsfashion', girls:'#kidsfashion', kids:'#kidswear', footwear:'#footwear', jewellery:'#artificialjewellery', beauty:'#beauty', cookware:'#kitchen', stationery:'#stationery #school'}[p.cat] || '';
+  lines.push('#DiamondFashions #Purandarpur #Maharajganj ' + tagCat + (kind === 'low' ? ' #limitedstock' : ' #newarrival'));
+  return lines.join('\n');
+}
+function socialLog(entry){
+  return metaRef().get().then(function(s){ var log = (s.exists && s.data().log) || []; log.unshift(entry); return metaRef().set({log: log.slice(0, 30)}, {merge:true}); }).catch(function(){});
+}
+/* post one product to Facebook and/or Instagram */
+function postProduct(p, kind){
+  if (!meta || !meta.pageToken) return Promise.reject(new Error(SL('पहले Facebook जोड़ें (सेटिंग में)', 'Connect Facebook first (in Settings)')));
+  var left = pcsLeft(p), cap = postCaption(p, kind, left), out = {fb:'', ig:''}, tok = meta.pageToken;
+  return postImage(p, kind, left).then(function(blob){
+    var fd = new FormData(); fd.append('source', blob, 'post.jpg'); fd.append('caption', cap); fd.append('message', cap); fd.append('published', meta.fb === false ? 'false' : 'true'); fd.append('access_token', tok);
+    return gfetch(meta.pageId + '/photos', {}, 'POST', fd);
+  }).then(function(r){
+    out.fb = meta.fb === false ? '' : (r.post_id || r.id);
+    if (!meta.igId || meta.ig === false) return;
+    return gfetch(r.id, {fields:'images', access_token:tok}).then(function(ph){
+      var url = ph.images && ph.images[0] && ph.images[0].source; if (!url) throw new Error('No image URL');
+      return gfetch(meta.igId + '/media', {image_url:url, caption:cap, access_token:tok}, 'POST');
+    }).then(function(cr){
+      var tries = 0;
+      function wait(){ return gfetch(cr.id, {fields:'status_code', access_token:tok}).then(function(st){
+        if (st.status_code === 'FINISHED' || !st.status_code) return; if (st.status_code === 'ERROR' || ++tries > 10) throw new Error('Instagram could not process the photo');
+        return new Promise(function(r2){ setTimeout(r2, 2000); }).then(wait); }); }
+      return wait().then(function(){ return gfetch(meta.igId + '/media_publish', {creation_id:cr.id, access_token:tok}, 'POST'); });
+    }).then(function(pub){ out.ig = pub.id; });
+  }).then(function(){
+    socialLog({at:now(), code:p.code, name:p.name, kind:kind, fb:out.fb, ig:out.ig, ok:true});
+    return out;
+  }, function(e){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, ok:false, err:String(e.message||e).slice(0,200)}); throw e; });
+}
+/* watch product changes: new item with photo, or stock at or below the limit */
+function socialWatch(){
+  if (!meta || !meta.pageToken || !metaLoaded) return;
+  var lim = meta.low || 3;
+  var base = db.batch(), nb = 0;
+  products.forEach(function(p){
+    if (p.hidden || socialBusy[p.id]) return;
+    var s0 = p.social || {}, l0 = pcsLeft(p);
+    if (meta.autoNew === false && !s0.newAt && (p.photos||[]).length){ base.update(db.collection('products').doc(p.id), {'social.newAt':'skipped'}); nb++; return; }
+    if (meta.autoLow === false && !s0.lowAt && l0 !== null && l0 > 0 && l0 <= lim){ base.update(db.collection('products').doc(p.id), {'social.lowAt':'skipped'}); nb++; return; }
+    var sc = p.social || {}, left = pcsLeft(p), job = null, mark = {};
+    if (meta.autoNew !== false && !sc.newAt && (p.photos||[]).length && p.inStock !== false){ job = 'new'; mark['social.newAt'] = now(); }
+    else if (meta.autoLow !== false && left !== null && left > 0 && left <= lim && !sc.lowAt){ job = 'low'; mark['social.lowAt'] = now(); }
+    else if (sc.lowAt && left !== null && left > lim){ db.collection('products').doc(p.id).update({'social.lowAt': FV.delete()}).catch(function(){}); }
+    if (!job) return;
+    socialBusy[p.id] = true;
+    socialQueue = socialQueue.then(function(){
+      return db.collection('products').doc(p.id).update(mark).then(function(){ return postProduct(p, job); })
+        .then(function(){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram')); },
+              function(e){ toast('⚠ ' + p.name + ': ' + (e.message||e), true); });
+    }).then(function(){ delete socialBusy[p.id]; });
+  });
+  if (nb) base.commit().catch(function(){});
+}
+function toast(t, bad){ var n = el('div',{style:'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99;max-width:92vw;padding:12px 16px;border-radius:10px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);background:'+(bad?'var(--bad)':'var(--ok)')+';color:#fff',text:t}); document.body.appendChild(n); setTimeout(function(){ n.remove(); }, 6000); }
+/* settings card */
+function drawSocial(main){
+  var m = el('p',{'class':'msg'});
+  var card = el('div',{'class':'card'},[ el('h3',{style:'margin:0 0 6px',text:SL('Facebook और Instagram पर अपने-आप पोस्ट','Auto-post to Facebook & Instagram')}) ]);
+  main.appendChild(card);
+  if (!metaLoaded){ card.appendChild(el('p',{'class':'muted',text:SL('लोड हो रहा है… अगर यह न हटे तो Firestore Rules में "secret" वाला हिस्सा जोड़ें।','Loading… If this stays, add the "secret" part to your Firestore Rules.')})); return; }
+  if (meta && meta.pageToken){
+    card.appendChild(el('p',{html:'✅ '+SL('जुड़ा हुआ:','Connected:')+' <b>Facebook: '+(meta.pageName||meta.pageId)+'</b>'+(meta.igId?' · <b>Instagram: @'+(meta.igUser||meta.igId)+'</b>':' · '+SL('Instagram नहीं जुड़ा (पेज से Instagram Business खाता लिंक करें)','Instagram not linked (link an Instagram Business account to the Page)'))}));
+    var chk = function(key, label){ return el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:meta[key]!==false?'checked':null,onchange:function(e){ var u = {}; u[key] = e.target.checked; metaRef().set(u,{merge:true}); }}), ' '+label ]); };
+    card.appendChild(chk('autoNew', SL('नया सामान (फ़ोटो के साथ) सेव होते ही पोस्ट करें','Post new items (with a photo) as soon as they are saved')));
+    card.appendChild(chk('autoLow', SL('जब किसी सामान के कम पीस बचें तो पोस्ट करें','Post when an item is running low')));
+    card.appendChild(chk('fb', SL('Facebook पेज पर पोस्ट','Post on Facebook Page')));
+    card.appendChild(chk('ig', SL('Instagram पर पोस्ट','Post on Instagram')));
+    card.appendChild(el('div',{'class':'field',style:'max-width:260px;margin-top:8px'},[ el('label',{text:SL('कितने पीस बचने पर पोस्ट हो','Post when pieces left are at or below')}),
+      el('input',{inputmode:'numeric',value:meta.low||3,onchange:function(e){ metaRef().set({low:Math.max(1, parseInt(e.target.value,10)||3)},{merge:true}); }}) ]));
+    card.appendChild(el('p',{'class':'muted small',text:SL('हर सामान एक बार "नया माल" के रूप में पोस्ट होता है। कम स्टॉक वाली पोस्ट दोबारा तभी होगी जब स्टॉक बढ़ाकर फिर कम हो। अपने-आप पोस्ट तभी होती है जब यह Admin खुला हो (ऑर्डर मंज़ूर करते या सामान सेव करते समय)।','Each item is posted once as a new arrival. A low-stock post repeats only after you restock and it runs low again. Auto-posting runs while this Admin is open (when you save items or accept orders).')}));
+    card.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-line b-sm',type:'button',text:SL('कनेक्शन हटाएँ','Disconnect'),onclick:function(){ if (confirm(SL('Facebook/Instagram कनेक्शन हटाएँ?','Disconnect Facebook/Instagram?'))) metaRef().set({pageToken:'', pageId:'', igId:''},{merge:true}); }}) ]));
+    var log = meta.log || [];
+    if (log.length){
+      card.appendChild(el('h4',{style:'margin:14px 0 6px',text:SL('हाल की पोस्ट','Recent posts')}));
+      log.slice(0, 12).forEach(function(g){ card.appendChild(el('div',{'class':'small',style:'padding:5px 0;border-bottom:1px dashed var(--line)'},[
+        el('b',{text:(g.ok?'✅ ':'⚠ ')+(g.kind==='low'?SL('कम स्टॉक','Low stock'):SL('नया माल','New'))+' · '}), (g.code||'')+' '+(g.name||'')+' · '+when(g.at),
+        g.ok ? el('span',null,[ g.fb ? el('a',{href:'https://facebook.com/'+g.fb,target:'_blank',text:' FB'}) : null, g.ig ? el('span',{text:' · IG ✓'}) : null ]) : el('div',{style:'color:var(--bad)',text:g.err||''}) ])); });
+    }
+    return;
+  }
+  // not connected: one-time setup
+  card.appendChild(el('p',{'class':'muted small',html:SL(
+    'एक बार का सेटअप (10 मिनट)। सिर्फ़ पेज का लिंक काफ़ी नहीं है, Facebook एक "परमिशन टोकन" देता है:<br>1. Instagram को <b>Professional (Business)</b> खाता बनाएँ और उसे अपने Facebook पेज से जोड़ें।<br>2. <b>developers.facebook.com</b> पर लॉग-इन → My Apps → Create App → "Other" → "Business" टाइप → ऐप बनाएँ। App settings → Basic से <b>App ID</b> और <b>App Secret</b> कॉपी करें।<br>3. <b>developers.facebook.com/tools/explorer</b> खोलें → अपना ऐप चुनें → "User Token" → ये परमिशन जोड़ें: pages_show_list, pages_read_engagement, pages_manage_posts, instagram_basic, instagram_content_publish, business_management → <b>Generate Access Token</b> → अपना पेज और Instagram चुनकर Allow करें → टोकन कॉपी करें।<br>4. तीनों चीज़ें नीचे डालकर "जोड़ें" दबाएँ।',
+    'One-time setup (about 10 minutes). A page link alone is not enough; Facebook gives a permission token:<br>1. Make Instagram a <b>Professional (Business)</b> account and link it to your Facebook Page.<br>2. Log in at <b>developers.facebook.com</b> → My Apps → Create App → "Other" → "Business" type. From App settings → Basic copy the <b>App ID</b> and <b>App Secret</b>.<br>3. Open <b>developers.facebook.com/tools/explorer</b> → pick your app → "User Token" → add permissions: pages_show_list, pages_read_engagement, pages_manage_posts, instagram_basic, instagram_content_publish, business_management → <b>Generate Access Token</b> → choose your Page and Instagram, Allow → copy the token.<br>4. Paste all three below and press "Connect".')}));
+  var f = function(id, label, type){ return el('div',{'class':'field'},[ el('label',{'for':id,text:label}), el('input',{id:id,type:type||'text',autocomplete:'off'}) ]); };
+  card.appendChild(f('so-app','App ID')); card.appendChild(f('so-sec','App Secret','password')); card.appendChild(f('so-tok','Access Token','password'));
+  var pick = el('div');
+  var btn = el('button',{'class':'btn b-gold',type:'button',text:SL('जोड़ें','Connect'),onclick:function(){
+    var app = document.getElementById('so-app').value.trim(), sec = document.getElementById('so-sec').value.trim(), tok = document.getElementById('so-tok').value.trim();
+    if (!app || !sec || !tok){ m.textContent = SL('तीनों चीज़ें भरें','Fill all three'); m.className = 'msg err'; return; }
+    btn.disabled = true; m.textContent = SL('जोड़ रहे हैं…','Connecting…'); m.className = 'msg';
+    gfetch('oauth/access_token', {grant_type:'fb_exchange_token', client_id:app, client_secret:sec, fb_exchange_token:tok})
+      .then(function(r){ return gfetch('me/accounts', {fields:'id,name,access_token,instagram_business_account{id,username}', limit:50, access_token:r.access_token}); })
+      .then(function(r){
+        var pages = r.data || []; if (!pages.length) throw new Error(SL('कोई Facebook पेज नहीं मिला। टोकन बनाते समय पेज चुनें।','No Facebook Page found. Choose your Page when generating the token.'));
+        var save = function(pg){ var ig = pg.instagram_business_account || {};
+          return Promise.resolve().then(function(){ // existing items are not posted as "new" again
+              var b = db.batch(), n = 0; products.forEach(function(p){ var u = {}, l = pcsLeft(p); if ((p.photos||[]).length && !(p.social||{}).newAt) u['social.newAt'] = 'before-connect'; if (l !== null && l > 0 && l <= 3 && !(p.social||{}).lowAt) u['social.lowAt'] = 'before-connect'; if (Object.keys(u).length){ b.update(db.collection('products').doc(p.id), u); n++; } }); return n ? b.commit() : null; })
+            .then(function(){ return metaRef().set({pageId:pg.id, pageName:pg.name, pageToken:pg.access_token, igId:ig.id||'', igUser:ig.username||'', autoNew:true, autoLow:true, fb:true, ig:true, low:3, connectedAt:now()}, {merge:true}); })
+            .then(function(){ m.textContent = SL('जुड़ गया ✓','Connected ✓'); m.className = 'msg ok'; }); };
+        if (pages.length === 1) return save(pages[0]);
+        pick.innerHTML = ''; pick.appendChild(el('p',{text:SL('कौन सा पेज?','Which Page?')}));
+        pages.forEach(function(pg){ pick.appendChild(el('button',{'class':'btn b-line',type:'button',style:'margin:4px',text:pg.name,onclick:function(){ save(pg); }})); });
+        m.textContent = '';
+      }).catch(function(e){ btn.disabled = false; m.textContent = SL('नहीं जुड़ा: ','Could not connect: ') + (e.message||e); m.className = 'msg err'; });
+  }});
+  card.appendChild(btn); card.appendChild(pick); card.appendChild(m);
 }
 
 /* ---------- live data ---------- */
@@ -607,7 +788,8 @@ function listen(){
     if (newCount() > before && before >= 0 && orders.length) { try { new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=').play(); } catch(e){} document.title = '('+newCount()+') Diamond Fashions Admin'; }
     redraw(); }, function(e){ app.innerHTML=''; drawLogin(L('डेटा नहीं खुला: ')+e.message+L(' (Firestore Rules चेक करें)')); }));
   unsubs.push(db.collection('requests').orderBy('created','desc').limit(300).onSnapshot(function(s){ requests = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); redraw(); }));
-  unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); }));
+  unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); socialWatch(); }));
+  unsubs.push(metaRef().onSnapshot(function(s){ meta = s.exists ? s.data() : null; metaLoaded = true; if (tab === 'settings') redraw(); socialWatch(); }, function(){ metaLoaded = false; }));
   unsubs.push(db.collection('track').onSnapshot(function(s){ track = {}; s.docs.forEach(function(d){ track[d.id] = d.data(); }); }));
   unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ cfg = s.exists ? s.data() : {}; }));
   unsubs.push(db.collection('reviews').orderBy('created','desc').limit(500).onSnapshot(function(s){ reviews = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'reviews') redraw(); }, function(){}));
