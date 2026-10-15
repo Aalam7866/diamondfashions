@@ -383,6 +383,25 @@ footer .wrap{padding-block:22px 96px;display:flex;justify-content:space-between;
   footer .wrap{padding-bottom:90px}
 }
 
+/* related products + reviews on product page */
+.pp-more{grid-column:1/-1;padding:4px 22px 26px;border-top:1px solid var(--line);min-width:0}
+.pp-more > h3{font-size:19px;font-weight:700;margin:18px 0 10px}
+.pp-more .rail-track{padding-bottom:8px}
+.rbadge{display:inline-flex;align-items:center;gap:3px;background:var(--deal);color:#fff;font-size:12px;font-weight:700;border-radius:4px;padding:1px 6px;font-family:var(--f-brand);line-height:1.5}
+.rbadge.low{background:#C07A12}.rbadge.bad{background:var(--danger)}
+.rline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.rv-sum{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;margin-bottom:12px}
+.rv-avg{text-align:center}.rv-avg b{display:block;font-family:var(--f-brand);font-size:34px;line-height:1}
+.rv-bars{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.rv-bar{display:grid;grid-template-columns:24px minmax(0,1fr) 28px;gap:8px;align-items:center}
+.rv-bar i{display:block;height:6px;border-radius:9px;background:var(--line);overflow:hidden}.rv-bar i s{display:block;height:100%;background:var(--deal)}
+.rv{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:4px}
+.rv .meta{font-size:13px;color:var(--muted)}
+.rv-stars{display:flex;gap:4px}
+.rv-stars button{width:44px;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;font-size:22px;color:var(--muted)}
+.rv-stars button[aria-pressed="true"]{color:#E3A008;border-color:#E3A008}
+.card .rbadge{align-self:flex-start}
+@media (max-width:820px){ .pp-more{padding:4px 16px 26px} }
 .tract{display:flex;flex-direction:column;gap:10px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
 </style>
 <div id="app"></div>
@@ -922,6 +941,7 @@ function renderGrid(){
       el('div',{'class':'body'},[
         el('div',{'class':'sku',text:t.item_no+p.code}),
         el('h3',{text:p.name}),
+        rateBadge(p.id, true),
         pricing(p),
         isM(p) ? el('div',{'class':'sizes',text:fmtM(p.stockM)+t.m_stock}) : sz.length ? el('div',{'class':'sizes',text:t.sizes_lbl+(sz.length>3? sz[0]+' – '+sz[sz.length-1] : sz.join(', '))}) : null
       ])
@@ -934,10 +954,10 @@ function renderGrid(){
 /* ---------- Flipkart-style layer ---------- */
 var FKS = {
   en:{u1:'Cash on Delivery',u1s:'or pay by UPI',u2:'{d}-day returns',u2s:'Easy return & exchange',u3:'Tailoring',u3s:'Ladies & gents stitching',home:'Home',cats:'Categories',track:'Track',acct:'Account',cart:'Cart',
-      deals:'Deals for you',all:'View all',off:'% off',from:'From ',r_women:"Women's wear",r_men:"Men's wear",r_kids:'Kids & baby', r_foot:'Footwear', r_jw:'Artificial jewellery', r_beauty:'Beauty & makeup', r_cook:'Kitchen & cookware',r_fab:'Fabric by metre',
+      deals:'Deals for you', similar:'Similar products', alsolike:'You may also like', ratings:' ratings',all:'View all',off:'% off',from:'From ',r_women:"Women's wear",r_men:"Men's wear",r_kids:'Kids & baby', r_foot:'Footwear', r_jw:'Artificial jewellery', r_beauty:'Beauty & makeup', r_cook:'Kitchen & cookware',r_fab:'Fabric by metre',
       b1t:'New suits & sarees',b1s:'Fresh styles for every occasion',b2t:'Ladies & gents tailoring',b2s:'Perfect fitting, on time',b3t:'Fabric by the metre',b3s:'Buy exactly how much you need',b4t:'Cash on Delivery',b4s:'Order online, pay at your door. Easy {d}-day returns.',shop:'Shop now',book:'Book now',upto:'Up to {p}% off',video:'VIDEO'},
   hi:{u1:'कैश ऑन डिलीवरी',u1s:'या UPI से पेमेंट',u2:'{d} दिन में वापसी',u2s:'आसान वापसी और बदलाव',u3:'सिलाई',u3s:'लेडीज़ और जेंट्स सिलाई',home:'होम',cats:'कैटेगरी',track:'ट्रैक',acct:'खाता',cart:'कार्ट',
-      deals:'आपके लिए ऑफ़र',all:'सब देखें',off:'% छूट',from:'शुरू ',r_women:'महिलाओं के कपड़े',r_men:'पुरुषों के कपड़े',r_kids:'बच्चों के कपड़े', r_foot:'जूते-चप्पल', r_jw:'आर्टिफ़िशियल ज्वेलरी', r_beauty:'ब्यूटी और मेकअप', r_cook:'बर्तन और किचन',r_fab:'मीटर से कपड़ा',
+      deals:'आपके लिए ऑफ़र', similar:'इसी तरह का सामान', alsolike:'ये भी पसंद आ सकते हैं', ratings:' रेटिंग',all:'सब देखें',off:'% छूट',from:'शुरू ',r_women:'महिलाओं के कपड़े',r_men:'पुरुषों के कपड़े',r_kids:'बच्चों के कपड़े', r_foot:'जूते-चप्पल', r_jw:'आर्टिफ़िशियल ज्वेलरी', r_beauty:'ब्यूटी और मेकअप', r_cook:'बर्तन और किचन',r_fab:'मीटर से कपड़ा',
       b1t:'नए सूट और साड़ियाँ',b1s:'हर मौके के लिए नए डिज़ाइन',b2t:'लेडीज़ और जेंट्स सिलाई',b2s:'सही फिटिंग, समय पर',b3t:'मीटर से कपड़ा',b3s:'जितना चाहिए उतना लें',b4t:'कैश ऑन डिलीवरी',b4s:'ऑनलाइन ऑर्डर करें, घर पर पैसे दें। {d} दिन में आसान वापसी।',shop:'अभी खरीदें',book:'बुक करें',upto:'{p}% तक छूट',video:'वीडियो'}
 };
 function FK(){ return FKS[lang] || FKS.en; }
@@ -1014,6 +1034,22 @@ function renderBanners(){
     }, 5000);
   }
 }
+function rateOf(id){ var r = window.DF && DF.ratings ? DF.ratings[id] : null; return r && r.count ? r : null; }
+function rateBadge(id, withCount){
+  var r = rateOf(id); if (!r) return null;
+  var b = el('span',{'class':'rbadge'+(r.avg < 2.5 ? ' bad' : r.avg < 3.5 ? ' low' : ''),text:r.avg.toFixed(1)+' ★'});
+  return withCount ? el('span',{'class':'rline'},[ b, el('span',{text:r.count+FK().ratings}) ]) : b;
+}
+function relatedOf(p){
+  var others = products.filter(function(x){ return x.id !== p.id && avail(x) !== false; });
+  var score = function(x){ return (x.photos.length ? 2 : 0) + (rateOf(x.id) ? rateOf(x.id).avg / 5 : 0) + discountOf(x) / 100; };
+  var same = others.filter(function(x){ return x.cat === p.cat; }).sort(function(a,b){ return score(b) - score(a); });
+  var near = {women:['jewellery','beauty','footwear','girls'], men:['footwear','women'], boys:['girls','kids','footwear'], girls:['boys','kids','jewellery'], kids:['boys','girls'],
+    footwear:['women','men'], jewellery:['women','beauty'], beauty:['jewellery','women'], cookware:['women','beauty']}[p.cat] || [];
+  var also = others.filter(function(x){ return x.cat !== p.cat; }).sort(function(a,b){
+    var na = near.indexOf(a.cat) >= 0 ? 0 : 1, nb = near.indexOf(b.cat) >= 0 ? 0 : 1; return na - nb || score(b) - score(a); });
+  return {same:same, also:also};
+}
 function railOf(title, list, catKey){
   if (!list.length) return null;
   var f = FK();
@@ -1023,6 +1059,7 @@ function railOf(title, list, catKey){
     var dsc = discountOf(p);
     tr.appendChild(el('button',{type:'button','class':'mini','aria-label':p.name,onclick:function(e){ openProduct(p.id, e.currentTarget); }},[ im, el('div',{'class':'b'},[
       el('span',{'class':'n',text:p.name}),
+      rateBadge(p.id) ? el('span',null,[ rateBadge(p.id) ]) : null,
       dsc ? el('span',{'class':'o',text:dsc+f.off}) : null,
       el('span',{'class':'pr',text: p.price ? rupees(p.price)+(isM(p)?'/m':'') : T().ask_price})
     ]) ]));
@@ -1161,6 +1198,7 @@ function openProduct(id, from){
   var info = el('div',{'class':'info'},[
     el('div',{'class':'catline',text:t.cats[p.cat]}),
     el('h2',{id:'pp-title',text:p.name}),
+    el('div',{id:'pp-rating'},[ rateBadge(p.id, true) ]),
     el('div',{'class':'sku',id:'pp-sku',text:t.item_no+skuFor(p,size)}),
     pricing(p),
     el('div',{'class':'stockline'+(avail(p)?'':' out'),text:avail(p)?t.in_stock:t.out_stock}),
@@ -1173,7 +1211,21 @@ function openProduct(id, from){
     el('ul',{'class':'facts',html:'<li>'+icoRet+'<span><b>'+D(t.b_ret)+'</b></span></li>'+(SHOP.cod?'<li>'+icoCash+'<span><b>'+t.b_cod+'</b></span></li>':'')+'<li>'+check+'<span>'+t.f_pick+'</span></li><li>'+check+'<span>'+t.f_tailor+'</span></li>'})
   ]);
   var closeB = el('button',{type:'button','class':'pp-close','aria-label':t.close,html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',onclick:closeProduct});
-  var pp = el('div',{'class':'pp',role:'dialog','aria-modal':'true','aria-labelledby':'pp-title'},[closeB, gal, info]);
+  var rel = relatedOf(p), fk = FK();
+  var more = el('div',{'class':'pp-more'},[ el('div',{id:'pp-reviews','data-pid':p.id}) ]);
+  [[fk.similar, rel.same],[fk.alsolike, rel.also]].forEach(function(r){
+    if (!r[1].length) return;
+    var tr = el('div',{'class':'rail-track'});
+    r[1].slice(0, 12).forEach(function(x){
+      var im = el('div',{'class':'im'}); if (x.photos && x.photos[0]) im.appendChild(el('img',{src:x.photos[0],alt:'',loading:'lazy'})); else im.innerHTML = artSvg(x.art);
+      var dsc = discountOf(x);
+      tr.appendChild(el('button',{type:'button','class':'mini','aria-label':x.name,onclick:function(){ openProduct(x.id, from); var sc = document.getElementById('pp-scrim'); if (sc) sc.scrollTop = 0; }},[ im, el('div',{'class':'b'},[
+        el('span',{'class':'n',text:x.name}), rateBadge(x.id) ? el('span',null,[ rateBadge(x.id) ]) : null,
+        dsc ? el('span',{'class':'o',text:dsc+fk.off}) : null, el('span',{'class':'pr',text: x.price ? rupees(x.price)+(isM(x)?'/m':'') : t.ask_price}) ]) ]));
+    });
+    more.appendChild(el('h3',{text:r[0]})); more.appendChild(tr);
+  });
+  var pp = el('div',{'class':'pp',role:'dialog','aria-modal':'true','aria-labelledby':'pp-title'},[closeB, gal, info, more]);
   var scrim = el('div',{'class':'scrim',id:'pp-scrim',onclick:function(e){ if (e.target===scrim) closeProduct(); }},[pp]);
   scrim.addEventListener('keydown', function(e){
     if (e.key==='Escape'){ e.preventDefault(); closeProduct(); }
@@ -1190,6 +1242,7 @@ function openProduct(id, from){
   document.body.style.overflow = 'hidden';
   mark();
   closeB.focus();
+  try { window.dispatchEvent(new CustomEvent('df-product-open',{detail:{id:p.id, code:p.code, name:p.name}})); } catch(e){}
 }
 
 /* ---------- cart ---------- */
@@ -1589,6 +1642,8 @@ window.DF = {
   cartCount: function(){ return cart.length; },
   getTrack: function(id){ return TRACK[id]; },
   setBanners: function(list){ BANNERS = list || null; renderBanners(); },
+  ratings: {},
+  setRatings: function(map){ DF.ratings = map || {}; if (adminMode) return; try { renderGrid(); } catch(e){} var pr = document.getElementById('pp-rating'); if (pr && openId){ pr.innerHTML = ''; var b = rateBadge(openId, true); if (b) pr.appendChild(b); } },
   setProducts: function(list){ if (!list || !list.length || adminMode) return; try { captureForms(); } catch(e){}
     products = list.filter(function(p){ return !p.hidden; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }).map(normalize); renderAll(); },
   setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); },
@@ -2322,6 +2377,79 @@ renderAll();
         uid:user ? user.uid : '', status:'new', created:new Date().toISOString()}), 12000);
     };
   }
+  /* ---------- ratings & reviews ---------- */
+  var RV = {en:{h:'Ratings & Reviews',write:'Write a review',login:'Login to write a review',none:'No reviews yet. Be the first to review this item.',your:'Your rating',txt:'Your review (optional)',ph:'What did you like or not like?',send:'Submit review',sent:'Thank you! Your review is live.',pick:'Please choose stars.',verified:'Verified buyer',ratings:' ratings',reviews:' reviews',more:'Show more',err:'Could not save. Please try again.',del:'Delete'},
+            hi:{h:'रेटिंग और रिव्यू',write:'रिव्यू लिखें',login:'रिव्यू लिखने के लिए लॉग-इन करें',none:'अभी कोई रिव्यू नहीं। सबसे पहले रिव्यू लिखें।',your:'आपकी रेटिंग',txt:'आपका रिव्यू (ज़रूरी नहीं)',ph:'क्या अच्छा लगा, क्या नहीं?',send:'रिव्यू भेजें',sent:'धन्यवाद! आपका रिव्यू दिख रहा है।',pick:'स्टार चुनें।',verified:'ख़रीदार',ratings:' रेटिंग',reviews:' रिव्यू',more:'और देखें',err:'सेव नहीं हुआ। फिर कोशिश करें।',del:'हटाएँ'}};
+  function RT(){ return RV[(document.documentElement.lang||'en').slice(0,2)==='hi' ? 'hi' : 'en']; }
+  var reviews = [], byPid = {};
+  function loadReviews(){
+    return fs.collection('reviews').orderBy('created','desc').limit(1500).get().then(function(s){
+      reviews = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; });
+      byPid = {}; var map = {};
+      reviews.forEach(function(r){ (byPid[r.pid] = byPid[r.pid] || []).push(r); });
+      Object.keys(byPid).forEach(function(k){ var l = byPid[k], sum = 0; l.forEach(function(r){ sum += r.rating||0; }); map[k] = {avg: sum / l.length, count: l.length}; });
+      if (window.DF) DF.setRatings(map);
+      var box = document.getElementById('pp-reviews'); if (box) drawReviews(box);
+    }, function(){});
+  }
+  function starsTxt(n){ return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
+  function drawReviews(box){
+    var t = RT(), pid = box.getAttribute('data-pid'), list = byPid[pid] || [];
+    box.innerHTML = '';
+    box.appendChild(mk('h3',{text:t.h}));
+    if (list.length){
+      var sum = 0, dist = [0,0,0,0,0,0]; list.forEach(function(r){ sum += r.rating; dist[r.rating]++; });
+      var avg = sum / list.length;
+      box.appendChild(mk('div',{'class':'rv-sum'},[
+        mk('div',{'class':'rv-avg'},[ mk('b',{text:avg.toFixed(1)+' ★'}), mk('span',{'class':'meta',style:'font-size:13px;color:var(--muted)',text:list.length+t.ratings}) ]),
+        mk('div',{'class':'rv-bars'}, [5,4,3,2,1].map(function(n){ return mk('div',{'class':'rv-bar'},[ mk('span',{text:n+'★'}), mk('i',{html:'<s style="width:'+Math.round(dist[n]/list.length*100)+'%"></s>'}), mk('span',{text:String(dist[n])}) ]); }))
+      ]));
+    }
+    var formBox = mk('div');
+    box.appendChild(mk('div',{'class':'acct-row',style:'margin:6px 0 10px'},[ mk('button',{type:'button','class':'btn btn-line',text: user ? t.write : t.login,onclick:function(){
+      if (!user){ openModal('login'); return; }
+      drawForm(formBox, pid);
+    }}) ]));
+    box.appendChild(formBox);
+    if (!list.length){ box.appendChild(mk('p',{'class':'hint',text:t.none})); return; }
+    var shown = 0, wrap = mk('div');
+    var more = mk('button',{type:'button','class':'acct-link',text:t.more,onclick:function(){ page(); }});
+    function page(){ list.slice(shown, shown + 5).forEach(function(r){
+        var when = r.created ? new Date(r.created).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
+        var row = mk('div',{'class':'rv'},[ mk('div',{'class':'rline'},[ mk('span',{'class':'rbadge'+(r.rating<3?' bad':''),text:r.rating+' ★'}), r.verified ? mk('span',{text:'✓ '+t.verified,style:'color:var(--deal);font-weight:600'}) : null ]),
+          r.text ? mk('p',{style:'margin:0',text:r.text}) : null, mk('span',{'class':'meta',text:[r.name||'Customer', when].filter(Boolean).join(' · ')}) ]);
+        if (user && r.uid === user.uid) row.appendChild(mk('button',{type:'button','class':'acct-link',style:'color:var(--danger)',text:t.del,onclick:function(){ fs.collection('reviews').doc(r._id).delete().then(loadReviews); }}));
+        wrap.appendChild(row); });
+      shown += 5; more.hidden = shown >= list.length; }
+    box.appendChild(wrap); box.appendChild(more); page();
+  }
+  function drawForm(box, pid){
+    var t = RT(), rating = 0;
+    box.innerHTML = '';
+    var stars = mk('div',{'class':'rv-stars',role:'group','aria-label':t.your});
+    for (var i = 1; i <= 5; i++) (function(n){ stars.appendChild(mk('button',{type:'button','aria-pressed':'false','aria-label':n+' ★',text:'★',onclick:function(){ rating = n; Array.prototype.forEach.call(stars.children, function(b, k){ b.setAttribute('aria-pressed', String(k < n)); }); }})); })(i);
+    var ta = mk('textarea',{id:'rv-text',maxlength:'800',placeholder:t.ph,style:'min-height:80px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%;font:inherit;color:inherit'});
+    var m = msgEl();
+    var send = mk('button',{type:'button','class':'btn btn-gold',text:t.send,onclick:function(){
+      if (!rating){ setMsg(m, t.pick, 'err'); return; }
+      send.disabled = true;
+      var p = (window.DF && DF.productBySku) ? null : null;
+      checkBought(pid).then(function(v){
+        return fs.collection('reviews').add({pid:pid, rating:rating, text:ta.value.trim().slice(0,800), name:(prof && prof.name) || (user.displayName||'').split(' ')[0] || 'Customer', uid:user.uid, verified:!!v, created:new Date().toISOString()});
+      }).then(function(){ setMsg(m, t.sent, 'ok'); box.innerHTML = ''; loadReviews(); }, function(){ send.disabled = false; setMsg(m, t.err, 'err'); });
+    }});
+    box.appendChild(mk('div',{'class':'field'},[ mk('label',{text:t.your}), stars ]));
+    box.appendChild(mk('div',{'class':'field'},[ mk('label',{'for':'rv-text',text:t.txt}), ta ]));
+    box.appendChild(send); box.appendChild(m);
+  }
+  function checkBought(pid){
+    var code = '';
+    try { var all = JSON.parse(document.getElementById('shop-data').textContent).products || []; all.forEach(function(x){ if (x.id === pid) code = x.code; }); } catch(e){}
+    if (!code) return Promise.resolve(false);
+    return userDoc().collection('orders').get().then(function(s){ var ok = false; s.forEach(function(d){ (d.data().items||[]).forEach(function(i){ if (String(i.sku||'').indexOf(code) === 0) ok = true; }); }); return ok; }, function(){ return false; });
+  }
+  window.addEventListener('df-product-open', function(){ var box = document.getElementById('pp-reviews'); if (box && fs) drawReviews(box); });
+
   function withTimeout(p, ms){ return new Promise(function(res, rej){ var t = setTimeout(function(){ rej(new Error('timeout')); }, ms); p.then(function(v){ clearTimeout(t); res(v); }, function(e){ clearTimeout(t); rej(e); }); }); }
 
   /* ---------- start ---------- */
@@ -2330,12 +2458,12 @@ renderAll();
   }).then(function(){
     firebase.initializeApp(CFG);
     auth = firebase.auth(); fs = firebase.firestore();
-    startLive();
+    startLive(); loadReviews();
     auth.getRedirectResult().catch(function(){});
     auth.onAuthStateChanged(function(u){
       user = u; prof = null;
       var after = function(){
-        ready = true; placeButton(); fillCheckout(true);
+        ready = true; placeButton(); fillCheckout(true); var rvb = document.getElementById('pp-reviews'); if (rvb) drawReviews(rvb);
         if (user && modal && (view === 'login')) openModal();
         else if (user && !modal && !(prof && prof.name && prof.phone && (prof.addresses||[]).length) && (function(){ try { return sessionStorage.getItem('df-asked'); } catch(e){ return ''; } })() !== user.uid){
           try { sessionStorage.setItem('df-asked', user.uid); } catch(e){}
