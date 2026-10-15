@@ -383,6 +383,53 @@ footer .wrap{padding-block:22px 96px;display:flex;justify-content:space-between;
   footer .wrap{padding-bottom:90px}
 }
 
+/* tailoring studio */
+.tl{display:flex;flex-direction:column;gap:14px}
+.tl-hero{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;background:linear-gradient(115deg,#0B1626,#16305A 70%,#6E5420 140%);color:#F2EEE6;border-radius:16px;padding:20px 22px}
+.tl-hero h3{font-family:var(--f-hi-display);font-weight:400;font-size:clamp(24px,3vw,32px);color:#fff}
+.tl-hero p{margin:4px 0 0;color:#D3CEC2;max-width:52ch}
+.tl-badges{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:14px;color:var(--sign-gold)}
+.tl-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:0 1px 0 rgba(11,22,38,.03)}
+.tl-step{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;margin-bottom:12px}
+.tl-step b{width:30px;height:30px;border-radius:50%;background:var(--navy);color:var(--sign-gold);display:flex;align-items:center;justify-content:center;font-family:var(--f-brand);font-size:15px;flex:none}
+.tl-grp{font-family:var(--f-brand);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:10px 0 8px}
+.tl-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.tl-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px 8px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);cursor:pointer;font-weight:600;font-size:13px;line-height:1.25;color:var(--ink);text-align:center;transition:border-color .15s, transform .15s}
+.tl-tile:hover{border-color:var(--gold);transform:translateY(-1px)}
+.tl-tile.on{border-color:var(--sign-gold);background:var(--gold-soft)}
+.tl-tile .ic svg,.tl-ih .ic svg{width:32px;height:44px;color:var(--art-line)}
+.tl-plus,.tl-n{position:absolute;top:6px;right:8px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.tl-plus{border:1px solid var(--line);color:var(--muted)}.tl-n{background:var(--navy);color:var(--sign-gold)}
+.tl-item,.tl-hero,.tl-card{scroll-margin-top:150px}
+.tl-item{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:var(--bg);display:flex;flex-direction:column;gap:8px}
+.tl-ih{display:flex;align-items:center;gap:10px}
+.tl-ih .ic svg{width:30px;height:42px}
+.tl-ih b{display:block;font-size:17px}
+.tl-for{width:100%;min-height:38px;margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 10px;font-size:14px}
+.tl-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:20px;color:var(--danger);flex:none}
+.tl-item .qty button{width:34px;height:34px}
+.tl-seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.tl-seg button{min-height:42px;border:0;background:none;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);padding:0 8px}
+.tl-seg button[aria-checked="true"]{background:var(--navy);color:var(--sign-gold)}
+.tl-sel,.tl-grid select{width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 10px}
+.tl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tl-meas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.tl-meas{grid-template-columns:repeat(2,minmax(0,1fr))}.tl-grid{grid-template-columns:minmax(0,1fr)}.tl-hero{padding:16px}}
+.tl-m{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted);font-weight:600}
+.tl-in{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.tl-in input{flex:1;min-width:0;min-height:42px;border:0;background:none;padding:0 10px;font-size:17px;font-weight:600;color:var(--ink);font-family:var(--f-brand)}
+.tl-in input:focus{outline:none}.tl-in:focus-within{border-color:var(--sign-gold);box-shadow:0 0 0 2px rgba(205,170,92,.3)}
+.tl-in i{font-style:normal;font-size:12px;color:var(--muted);padding:0 10px;border-left:1px solid var(--line);align-self:stretch;display:flex;align-items:center;background:var(--bg)}
+.tl-link{border:0;background:none;color:var(--gold);font-weight:700;cursor:pointer;padding:2px 0;text-align:left;text-decoration:underline;font-size:14px}
+.tl-ph{position:relative;display:inline-block}.tl-ph img{width:72px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--line);display:block}
+.tl-ph button{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:0;background:var(--danger);color:#fff;cursor:pointer}
+.tl-notes{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:8px 10px;font:inherit;resize:vertical}
+.tl-list{list-style:none;margin:0 0 8px;padding:0}.tl-list li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)}
+.tl-acts{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+@media (max-width:640px){.tl-acts{grid-template-columns:minmax(0,1fr)}}
+.tl-done{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.tl-done h3{font-size:24px}
+
 /* related products + reviews on product page */
 .pp-more{grid-column:1/-1;padding:4px 22px 26px;border-top:1px solid var(--line);min-width:0}
 .pp-more > h3{font-size:19px;font-weight:700;margin:18px 0 10px}
@@ -806,17 +853,7 @@ function renderFrame(){
    '<div class="panel"><h3>'+t.t_ladies+'</h3><ul>'+lis(t.t_ladies_items)+'</ul></div>' +
    '<div class="panel"><h3>'+t.t_gents+'</h3><ul>'+lis(t.t_gents_items)+'</ul></div>' +
   '</div>' +
-  '<form class="panel form" id="t-form" novalidate>' +
-   '<div class="two"><div class="field"><label for="t-name">'+t.t_name+'</label><input id="t-name" autocomplete="name"></div>' +
-   '<div class="field"><label for="t-phone">'+t.t_phone+'</label><input id="t-phone" inputmode="tel" autocomplete="tel"></div></div>' +
-   '<div class="two"><div class="field"><label for="t-for">'+t.t_for+'</label><select id="t-for">'+opts(t.t_for_opts)+'</select></div>' +
-   '<div class="field"><label for="t-what">'+t.t_what+'</label><select id="t-what">'+opts(t.t_what_opts)+'</select></div></div>' +
-   '<div class="two"><div class="field"><label for="t-date">'+t.t_date+'</label><input id="t-date" type="date"></div>' +
-   '<div class="field"><label for="t-cloth">'+t.t_cloth+'</label><select id="t-cloth">'+opts(t.t_cloth_opts)+'</select></div></div>' +
-   '<div class="field"><label for="t-note">'+t.t_note+'</label><textarea id="t-note"></textarea></div>' +
-   '<p class="error" id="t-err" role="alert"></p>' +
-   '<a class="btn btn-wa" id="t-send" target="_blank" rel="noopener">'+t.t_send+'</a>' +
-  '</form>' +
+  '<div class="tl" id="tl"></div>' +
  '</div></section>' +
  '<section class="block" id="visit"><div class="wrap">' +
   '<div class="sec-head"><div><div class="eyebrow">'+t.eb_visit+'</div><h2>'+t.sec_visit+'</h2></div></div>' +
@@ -874,16 +911,7 @@ function renderFrame(){
     sendRequest(rd, msg, formUrlFor(rid, kind, {phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')}), null, document.getElementById('r-send'),
       {orderId:rid, kind:kind.toLowerCase(), phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')});
   });
-  ['t-name','t-phone','t-for','t-what','t-date','t-cloth','t-note'].forEach(function(id){
-    var n=document.getElementById(id); n.addEventListener('input', updateTailorLink); n.addEventListener('change', updateTailorLink);
-  });
-  document.getElementById('t-send').addEventListener('click', function(e){
-    var err = document.getElementById('t-err');
-    if (!val('t-name') || val('t-phone').replace(/\D/g,'').length < 10){ e.preventDefault(); err.textContent=T().t_err; return; }
-    err.textContent='';
-  });
   document.getElementById('order-form').addEventListener('submit', function(e){ e.preventDefault(); placeOrder(); });
-  document.getElementById('t-form').addEventListener('submit', function(e){ e.preventDefault(); });
   document.getElementById('owner-btn').addEventListener('click', function(){
     if (!canEdit) return;
     adminMode = true; admTab = 'products'; renderAll(); window.scrollTo(0,0); return;
@@ -1116,6 +1144,191 @@ function wireBottomNav(){
   var nav = document.querySelector('.bnav'); if (!nav) return;
   var mark = function(){ var h = location.hash || '#shop'; Array.prototype.forEach.call(nav.querySelectorAll('a'), function(x){ x.classList.toggle('on', x.getAttribute('href') === h || (h==='#chips' && x.id==='bn-cat')); }); };
   mark(); window.addEventListener('hashchange', mark);
+}
+
+/* ---------- Tailoring studio: several garments, style, fabric and measurements per garment ---------- */
+var TLX = {
+  en:{h1:'Book your stitching',sub:'Add one or more garments, choose fabric and style, and give measurements now or at the shop.',b1:'Perfect fitting',b2:'On-time delivery',b3:'Measurements saved for next time',
+    s1:'Your details',s2:'Choose garments',s2h:'Tap to add. You can add as many as you like.',s3:'Fabric, style & measurements',s4:'Review & book',
+    name:'Your name',phone:'Mobile number',visit:'Shop visit for measurement (optional)',need:'Need it by (optional)',
+    ladies:'Ladies',gents:'Gents',kids:'Kids & more',forwho:'For whom (e.g. Myself, Wife, Son)',qty:'Qty',remove:'Remove',
+    fabric:'Fabric',own:'I have my own cloth',shop:'Buy cloth from shop',pickfab:'Choose fabric',helpme:'Help me choose at the shop',
+    style:'Style',meas:'Measurements (inches)',now:'Enter now',atshop:'Give at shop',tip:'Tip: measure over a well-fitting garment. All in inches.',
+    last:'Fill my last saved measurements',photo:'Design photo (optional)',addphoto:'+ Add design photo',notes:'Design notes',notesph:'Neck design, lace, buttons, pockets, lining…',
+    empty:'No garments yet. Tap a garment above to start.',items:' garments',price:'Stitching charge is confirmed after measurement.',book:'Book stitching',wa:'Or send on WhatsApp',
+    err:'Please write your name, a 10-digit mobile number and add at least one garment.',sending:'Booking…',done:'Booking confirmed!',doneid:'Booking ID: ',done2:'The shop will call you to confirm the date and charges.',again:'Book another',fail:'Could not book online. Please send it on WhatsApp:',
+    wa_h:'Hello Diamond Fashions! I want to book stitching:',wa_visit:'Shop visit',wa_need:'Need by',choose:'Choose'},
+  hi:{h1:'सिलाई बुक करें',sub:'एक या कई कपड़े जोड़ें, कपड़ा और डिज़ाइन चुनें, नाप अभी लिखें या दुकान पर दें।',b1:'परफ़ेक्ट फिटिंग',b2:'समय पर डिलीवरी',b3:'नाप अगली बार के लिए सेव',
+    s1:'आपकी जानकारी',s2:'क्या सिलवाना है',s2h:'दबाकर जोड़ें। जितने चाहें उतने जोड़ सकते हैं।',s3:'कपड़ा, डिज़ाइन और नाप',s4:'देखें और बुक करें',
+    name:'आपका नाम',phone:'मोबाइल नंबर',visit:'नाप देने दुकान कब आएँगे (चाहें तो)',need:'कब तक चाहिए (चाहें तो)',
+    ladies:'लेडीज़',gents:'जेंट्स',kids:'बच्चे और बाकी',forwho:'किसके लिए (जैसे खुद, पत्नी, बेटा)',qty:'संख्या',remove:'हटाएँ',
+    fabric:'कपड़ा',own:'मेरे पास कपड़ा है',shop:'दुकान से कपड़ा लूँगा/लूँगी',pickfab:'कपड़ा चुनें',helpme:'दुकान पर चुनने में मदद करें',
+    style:'डिज़ाइन',meas:'नाप (इंच में)',now:'अभी लिखें',atshop:'दुकान पर दूँगा/दूँगी',tip:'सलाह: अच्छी फिटिंग वाले कपड़े से नाप लें। सब इंच में।',
+    last:'पिछली बार वाला नाप भरें',photo:'डिज़ाइन की फ़ोटो (चाहें तो)',addphoto:'+ डिज़ाइन फ़ोटो जोड़ें',notes:'डिज़ाइन की बातें',notesph:'गले का डिज़ाइन, लेस, बटन, जेब, अस्तर…',
+    empty:'अभी कुछ नहीं जोड़ा। ऊपर किसी कपड़े पर दबाएँ।',items:' कपड़े',price:'सिलाई का चार्ज नाप के बाद बताया जाएगा।',book:'सिलाई बुक करें',wa:'या WhatsApp पर भेजें',
+    err:'नाम, 10 अंक का मोबाइल नंबर लिखें और कम से कम एक कपड़ा जोड़ें।',sending:'बुक हो रहा है…',done:'बुकिंग हो गई!',doneid:'बुकिंग नंबर: ',done2:'दुकान आपको फ़ोन करके तारीख और चार्ज बताएगी।',again:'एक और बुक करें',fail:'ऑनलाइन बुक नहीं हुआ। कृपया WhatsApp पर भेजें:',
+    wa_h:'नमस्ते डायमंड फैशन्स! मुझे सिलाई बुक करनी है:',wa_visit:'दुकान आएँगे',wa_need:'कब तक चाहिए',choose:'चुनें'}
+};
+function TX(){ return TLX[lang] || TLX.en; }
+var ML = {len:['Length','लंबाई'],chest:['Chest / Bust','छाती'],waist:['Waist','कमर'],hip:['Hip / Seat','हिप'],shoulder:['Shoulder','कंधा'],slen:['Sleeve length','आस्तीन लंबाई'],
+  sround:['Sleeve round','आस्तीन गोलाई'],arm:['Armhole','आर्महोल'],fneck:['Front neck depth','आगे गला'],bneck:['Back neck depth','पीछे गला'],ubust:['Under bust','अंडर बस्ट'],
+  blen:['Bottom length','नीचे की लंबाई'],bwaist:['Bottom waist','नीचे कमर'],thigh:['Thigh','जांघ'],knee:['Knee','घुटना'],mohri:['Bottom / Mohri','मोहरी'],rise:['Rise / Fly','सीट (राइज़)'],
+  neck:['Collar / Neck','कॉलर / गला'],cuff:['Cuff','कफ़'],plen:['Pajama length','पायजामा लंबाई'],pwaist:['Pajama waist','पायजामा कमर'],llen:['Lehenga length','लहंगा लंबाई'],lwaist:['Lehenga waist','लहंगा कमर']};
+var ST_OPT = {neckL:[['Round','गोल'],['V-neck','V-गला'],['Boat','बोट'],['Square','चौकोर'],['Sweetheart','स्वीटहार्ट'],['Collar','कॉलर'],['Custom (write in notes)','अपना डिज़ाइन (नोट में लिखें)']],
+  sleeve:[['Sleeveless','बिना आस्तीन'],['Short','छोटी'],['Elbow','कोहनी तक'],['3/4','3/4'],['Full','पूरी']],
+  fit:[['Regular','रेगुलर'],['Slim','स्लिम'],['Loose','ढीला']],
+  bottom:[['Salwar','सलवार'],['Churidar','चूड़ीदार'],['Pant / Palazzo','पैंट / प्लाज़ो'],['Patiala','पटियाला']],
+  lining:[['With lining','अस्तर के साथ'],['No lining','बिना अस्तर']],
+  pad:[['Padded','पैडेड'],['Non-padded','बिना पैड']],
+  collar:[['Regular collar','रेगुलर कॉलर'],['Chinese collar','चाइनीज़ कॉलर'],['Button-down','बटन-डाउन']],
+  pleat:[['Flat front','फ्लैट'],['Pleated','प्लीट वाला']]};
+var GT = [
+  {k:'suit',g:'ladies',art:'suit',n:['Salwar Suit','सलवार सूट'],m:['len','chest','waist','hip','shoulder','slen','sround','arm','fneck','bneck','blen','bwaist','thigh','knee','mohri'],s:['neckL','sleeve','bottom','lining']},
+  {k:'kurti',g:'ladies',art:'kurta',n:['Kurti / Top','कुर्ती / टॉप'],m:['len','chest','waist','hip','shoulder','slen','sround','arm','fneck','bneck'],s:['neckL','sleeve','lining']},
+  {k:'blouse',g:'ladies',art:'blouse',n:['Blouse','ब्लाउज़'],m:['len','chest','ubust','waist','shoulder','slen','sround','arm','fneck','bneck'],s:['neckL','sleeve','pad','lining']},
+  {k:'lehenga',g:'ladies',art:'lehenga',n:['Lehenga Choli','लहंगा चोली'],m:['llen','lwaist','hip','len','chest','waist','shoulder','slen','sround','fneck','bneck'],s:['neckL','sleeve','lining']},
+  {k:'petticoat',g:'ladies',art:'leggings',n:['Petticoat','पेटीकोट'],m:['len','waist'],s:[]},
+  {k:'fallpico',g:'ladies',art:'saree',n:['Saree Fall-Pico','साड़ी फॉल-पीको'],m:[],s:[]},
+  {k:'shirt',g:'gents',art:'shirt',n:['Shirt','शर्ट'],m:['len','chest','waist','hip','shoulder','slen','cuff','neck'],s:['sleeve','fit','collar']},
+  {k:'pant',g:'gents',art:'pant',n:['Pant / Trouser','पैंट'],m:['len','waist','hip','thigh','knee','mohri','rise'],s:['fit','pleat']},
+  {k:'kurtapj',g:'gents',art:'kurta',n:['Kurta Pajama','कुर्ता पायजामा'],m:['len','chest','waist','hip','shoulder','slen','neck','plen','pwaist','mohri'],s:['sleeve','fit']},
+  {k:'sherwani',g:'gents',art:'jacket',n:['Sherwani / Coat','शेरवानी / कोट'],m:['len','chest','waist','hip','shoulder','slen','neck'],s:['fit']},
+  {k:'frock',g:'kids',art:'frock',n:['Kids Frock','बच्चों की फ्रॉक'],m:['len','chest','waist','shoulder','slen'],s:['sleeve']},
+  {k:'kidskurta',g:'kids',art:'kidset',n:['Kids Kurta / Set','बच्चों का कुर्ता / सेट'],m:['len','chest','waist','shoulder','slen','plen','pwaist'],s:['sleeve']},
+  {k:'alter',g:'kids',art:'tshirt',n:['Alteration / Fitting','ऑल्टरेशन / फिटिंग'],m:[],s:[]}
+];
+var STL = {neckL:['Neck','गला'],sleeve:['Sleeves','आस्तीन'],fit:['Fit','फिटिंग'],bottom:['Bottom','नीचे'],lining:['Lining','अस्तर'],pad:['Padding','पैड'],collar:['Collar','कॉलर'],pleat:['Front','आगे']};
+var TL = {items:[], seq:0, booked:null};
+function li(){ return lang === 'hi' ? 1 : 0; }
+function gt(k){ return GT.filter(function(x){ return x.k === k; })[0]; }
+function savedMeas(){ try { return JSON.parse(localStorage.getItem('df-meas') || '{}'); } catch(e){ return {}; } }
+function tlPhoto(file){ return new Promise(function(res){ var r = new FileReader(); r.onload = function(){ var im = new Image(); im.onload = function(){ var k = Math.min(1, 700/Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width*k); c.height = Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height); res(c.toDataURL('image/jpeg', .6)); }; im.onerror = function(){ res(''); }; im.src = r.result; }; r.readAsDataURL(file); }); }
+function tlWaText(){
+  var x = TX(), L = li(), lines = [x.wa_h, ''];
+  TL.items.forEach(function(it, i){
+    var g = gt(it.k);
+    lines.push((i+1)+'. '+g.n[L]+(it.qty>1?' × '+it.qty:'')+(it.forWho?' ('+it.forWho+')':''));
+    lines.push('   '+x.fabric+': '+(it.fab==='shop' ? (it.fabName || x.helpme) : x.own));
+    Object.keys(it.style).forEach(function(k){ if (it.style[k]) lines.push('   '+STL[k][L]+': '+it.style[k]); });
+    if (it.measMode === 'now'){ var ms = g.m.filter(function(k){ return it.meas[k]; }).map(function(k){ return ML[k][L]+' '+it.meas[k]; }); if (ms.length) lines.push('   '+x.meas+': '+ms.join(', ')); }
+    else if (g.m.length) lines.push('   '+x.meas+': '+x.atshop);
+    if (it.notes) lines.push('   '+x.notes+': '+it.notes);
+  });
+  lines.push('');
+  if (val('t-date')) lines.push(x.wa_visit+': '+val('t-date').split('-').reverse().join('-'));
+  if (val('t-need')) lines.push(x.wa_need+': '+val('t-need').split('-').reverse().join('-'));
+  lines.push(T().wa_name+': '+val('t-name'), T().wa_mobile+': '+val('t-phone'));
+  return lines.join('\n');
+}
+function renderTailor(){
+  var box = document.getElementById('tl'); if (!box) return;
+  var x = TX(), L = li();
+  var keep = {}; ['t-name','t-phone','t-date','t-need'].forEach(function(id){ var n = document.getElementById(id); if (n) keep[id] = n.value; });
+  box.innerHTML = '';
+  if (TL.booked){
+    box.appendChild(el('div',{'class':'tl-card tl-done'},[ el('div',{'class':'done-tick',html:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>'}),
+      el('h3',{text:x.done}), el('p',{'class':'num',style:'font-size:20px;margin:0',text:x.doneid+TL.booked}), el('p',{'class':'hint',text:x.done2}),
+      el('a',{'class':'btn btn-line',target:'_blank',rel:'noopener',href:waLink(TL.waText||''),text:x.wa}),
+      el('button',{type:'button','class':'btn btn-gold',text:x.again,onclick:function(){ TL = {items:[], seq:0, booked:null}; renderTailor(); }}) ]));
+    return;
+  }
+  box.appendChild(el('div',{'class':'tl-hero'},[ el('div',null,[ el('h3',{text:x.h1}), el('p',{text:x.sub}) ]),
+    el('div',{'class':'tl-badges'},[x.b1,x.b2,x.b3].map(function(b){ return el('span',{text:'✓ '+b}); })) ]));
+  // step 1
+  var s1 = el('div',{'class':'tl-card'},[ el('div',{'class':'tl-step'},[ el('b',{text:'1'}), el('span',{text:x.s1}) ]),
+    el('div',{'class':'two'},[ el('div',{'class':'field'},[ el('label',{'for':'t-name',text:x.name}), el('input',{id:'t-name',autocomplete:'name'}) ]), el('div',{'class':'field'},[ el('label',{'for':'t-phone',text:x.phone}), el('input',{id:'t-phone',inputmode:'tel',autocomplete:'tel'}) ]) ]),
+    el('div',{'class':'two'},[ el('div',{'class':'field'},[ el('label',{'for':'t-date',text:x.visit}), el('input',{id:'t-date',type:'date'}) ]), el('div',{'class':'field'},[ el('label',{'for':'t-need',text:x.need}), el('input',{id:'t-need',type:'date'}) ]) ]) ]);
+  box.appendChild(s1);
+  Object.keys(keep).forEach(function(id){ document.getElementById(id).value = keep[id]; });
+  // step 2
+  var s2 = el('div',{'class':'tl-card'},[ el('div',{'class':'tl-step'},[ el('b',{text:'2'}), el('span',{text:x.s2}) ]), el('p',{'class':'hint',style:'margin:-4px 0 10px',text:x.s2h}) ]);
+  ['ladies','gents','kids'].forEach(function(grp){
+    s2.appendChild(el('div',{'class':'tl-grp',text:x[grp]}));
+    var row = el('div',{'class':'tl-tiles'});
+    GT.filter(function(g){ return g.g === grp; }).forEach(function(g){
+      var n = TL.items.filter(function(it){ return it.k === g.k; }).length;
+      row.appendChild(el('button',{type:'button','class':'tl-tile'+(n?' on':''),onclick:function(){
+        TL.items.push({id:++TL.seq, k:g.k, qty:1, forWho:'', fab:'own', fabName:'', style:{}, measMode:g.m.length?'now':'shop', meas:{}, notes:'', photo:''}); renderTailor();
+        setTimeout(function(){ var c = document.getElementById('tl-i'+TL.seq); if (c) c.scrollIntoView({behavior:'smooth', block:'center'}); }, 60);
+      }},[ el('span',{'class':'ic',html:artSvg(g.art)}), el('span',{text:g.n[L]}), n ? el('span',{'class':'tl-n',text:String(n)}) : el('span',{'class':'tl-plus',text:'+'}) ]));
+    });
+    s2.appendChild(row);
+  });
+  box.appendChild(s2);
+  // step 3
+  var s3 = el('div',{'class':'tl-card'},[ el('div',{'class':'tl-step'},[ el('b',{text:'3'}), el('span',{text:x.s3}) ]) ]);
+  if (!TL.items.length) s3.appendChild(el('p',{'class':'hint',text:x.empty}));
+  var fabrics = products.filter(function(p){ return isM(p); });
+  var saved = savedMeas();
+  TL.items.forEach(function(it, idx){
+    var g = gt(it.k);
+    var card = el('div',{'class':'tl-item',id:'tl-i'+it.id});
+    card.appendChild(el('div',{'class':'tl-ih'},[ el('span',{'class':'ic',html:artSvg(g.art)}), el('div',{style:'flex:1;min-width:0'},[ el('b',{text:(idx+1)+'. '+g.n[L]}),
+      el('input',{'class':'tl-for','aria-label':x.forwho,placeholder:x.forwho,value:it.forWho,oninput:function(e){ it.forWho = e.target.value; }}) ]),
+      el('div',{'class':'qty','aria-label':x.qty},[ el('button',{type:'button','aria-label':'−',text:'−',onclick:function(){ if (it.qty>1){ it.qty--; renderTailor(); } }}), el('span',{text:String(it.qty)}), el('button',{type:'button','aria-label':'+',text:'+',onclick:function(){ it.qty++; renderTailor(); }}) ]),
+      el('button',{type:'button','class':'tl-x','aria-label':x.remove,title:x.remove,text:'×',onclick:function(){ TL.items.splice(idx,1); renderTailor(); }}) ]));
+    // fabric
+    var seg = function(name, val, opts, on){ return el('div',{'class':'tl-seg',role:'radiogroup','aria-label':name}, opts.map(function(o){ return el('button',{type:'button',role:'radio','aria-checked':String(val===o[0]),text:o[1],onclick:function(){ on(o[0]); renderTailor(); }}); })); };
+    if (it.k !== 'alter'){
+      card.appendChild(el('div',{'class':'lbl',text:x.fabric}));
+      card.appendChild(seg(x.fabric, it.fab, [['own',x.own],['shop',x.shop]], function(v){ it.fab = v; }));
+      if (it.fab === 'shop'){
+        var fs = el('select',{'class':'tl-sel','aria-label':x.pickfab},[ el('option',{value:'',text:x.helpme}) ].concat(fabrics.map(function(p){ return el('option',{value:p.code+' '+p.name,text:p.name+(p.price?' · '+rupees(p.price)+'/m':'')}); })));
+        fs.value = it.fabName; fs.onchange = function(){ it.fabName = fs.value; }; card.appendChild(fs);
+      }
+    }
+    // style
+    if (g.s.length){
+      card.appendChild(el('div',{'class':'lbl',text:x.style}));
+      var sg = el('div',{'class':'tl-grid'});
+      g.s.forEach(function(sk){ var sel = el('select',{'aria-label':STL[sk][L]},[ el('option',{value:'',text:STL[sk][L]+': '+x.choose}) ].concat(ST_OPT[sk].map(function(o){ return el('option',{value:o[L],text:STL[sk][L]+': '+o[L]}); })));
+        sel.value = it.style[sk] || ''; sel.onchange = function(){ it.style[sk] = sel.value; }; sg.appendChild(sel); });
+      card.appendChild(sg);
+    }
+    // measurements
+    if (g.m.length){
+      card.appendChild(el('div',{'class':'lbl',text:x.meas}));
+      card.appendChild(seg(x.meas, it.measMode, [['now',x.now],['shop',x.atshop]], function(v){ it.measMode = v; }));
+      if (it.measMode === 'now'){
+        if (saved[it.k]) card.appendChild(el('button',{type:'button','class':'tl-link',text:'↺ '+x.last,onclick:function(){ it.meas = Object.assign({}, saved[it.k]); renderTailor(); }}));
+        var mg = el('div',{'class':'tl-meas'});
+        g.m.forEach(function(mk){ var id = 'm'+it.id+mk;
+          mg.appendChild(el('label',{'class':'tl-m','for':id},[ el('span',{text:ML[mk][L]}), el('span',{'class':'tl-in'},[ el('input',{id:id,inputmode:'decimal',value:it.meas[mk]||'',placeholder:'—',oninput:function(e){ it.meas[mk] = e.target.value.replace(/[^\d.]/g,''); }}), el('i',{text:'in'}) ]) ])); });
+        card.appendChild(mg);
+        card.appendChild(el('p',{'class':'hint',style:'margin:6px 0 0',text:x.tip}));
+      }
+    }
+    // photo + notes
+    var ph = el('div',{'class':'row',style:'margin-top:10px'});
+    if (it.photo) ph.appendChild(el('span',{'class':'tl-ph'},[ el('img',{src:it.photo,alt:''}), el('button',{type:'button','aria-label':x.remove,text:'×',onclick:function(){ it.photo = ''; renderTailor(); }}) ]));
+    else { var fi = el('input',{type:'file',accept:'image/*'}); fi.onchange = function(){ if (fi.files[0]) tlPhoto(fi.files[0]).then(function(d){ it.photo = d; renderTailor(); }); };
+      ph.appendChild(el('label',{'class':'btn btn-line',style:'position:relative;overflow:hidden;min-height:40px;font-size:14px'},[ x.addphoto, Object.assign(fi,{style:'position:absolute;inset:0;opacity:0;cursor:pointer'}) ])); }
+    card.appendChild(ph);
+    card.appendChild(el('textarea',{'class':'tl-notes','aria-label':x.notes,placeholder:x.notes+' — '+x.notesph,oninput:function(e){ it.notes = e.target.value; }},[it.notes]));
+    s3.appendChild(card);
+  });
+  box.appendChild(s3);
+  // step 4
+  var err = el('p',{'class':'error',role:'alert'}), msg = el('p',{'class':'hint','aria-live':'polite',style:'margin:0;font-weight:600'});
+  var total = TL.items.reduce(function(a, it){ return a + it.qty; }, 0);
+  var bookB = el('button',{type:'button','class':'btn btn-gold',style:'min-height:52px;font-size:17px',text:x.book+(total?' ('+total+x.items+')':''),onclick:function(){
+    if (!val('t-name') || val('t-phone').replace(/\D/g,'').length < 10 || !TL.items.length){ err.textContent = x.err; return; }
+    err.textContent = '';
+    var sv = savedMeas(); TL.items.forEach(function(it){ if (it.measMode === 'now' && Object.keys(it.meas).some(function(k){ return it.meas[k]; })) sv[it.k] = it.meas; }); try { localStorage.setItem('df-meas', JSON.stringify(sv)); } catch(e){}
+    var d = new Date(), id = 'DF-T' + String(d.getFullYear()).slice(2) + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2) + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+    TL.waText = tlWaText();
+    var req = {kind:'tailoring', bookingId:id, orderId:id, name:val('t-name'), phone:val('t-phone'), visit:val('t-date'), needBy:val('t-need'), lang:lang,
+      items: TL.items.map(function(it){ var g = gt(it.k), meas = {}; g.m.forEach(function(k){ if (it.measMode==='now' && it.meas[k]) meas[ML[k][0]] = it.meas[k]; });
+        return {type:g.n[0], forWho:it.forWho, qty:it.qty, fabric: it.fab==='shop' ? ('Shop: '+(it.fabName||'help choose')) : 'Own cloth', style:it.style, measAt: it.measMode==='now' ? 'given' : 'at shop', meas:meas, notes:it.notes, photo:it.photo}; })};
+    bookB.disabled = true; msg.textContent = x.sending;
+    var go = (window.DF && DF.saveTailor) ? DF.saveTailor(req) : Promise.reject();
+    go.then(function(){ TL.booked = id; renderTailor(); var s = document.getElementById('tailor'); if (s) s.scrollIntoView({behavior:'smooth'}); },
+      function(){ bookB.disabled = false; msg.textContent = x.fail; wa.className = 'btn btn-wa'; });
+  }});
+  var wa = el('a',{'class':'btn btn-line',target:'_blank',rel:'noopener',href:'#',text:x.wa,onclick:function(e){ if (!val('t-name') || val('t-phone').replace(/\D/g,'').length < 10 || !TL.items.length){ e.preventDefault(); err.textContent = x.err; return; } wa.href = waLink(tlWaText()); }});
+  box.appendChild(el('div',{'class':'tl-card tl-sum'},[ el('div',{'class':'tl-step'},[ el('b',{text:'4'}), el('span',{text:x.s4}) ]),
+    TL.items.length ? el('ul',{'class':'tl-list'}, TL.items.map(function(it){ var g = gt(it.k); return el('li',null,[ el('span',{text:g.n[L]+(it.forWho?' · '+it.forWho:'')}), el('b',{text:'× '+it.qty}) ]); })) : null,
+    el('p',{'class':'hint',text:x.price}), err, el('div',{'class':'tl-acts'},[ bookB, wa ]), msg ]));
 }
 
 /* ---------- product page ---------- */
@@ -1482,14 +1695,7 @@ function updateReturnLink(){
   lines.push('', t.wa_mobile+': '+val('r-phone'));
   a.href = waLink(lines.join('\n'));
 }
-function updateTailorLink(){
-  var t = T();
-  var lines = [t.wa_t_head,'', t.wa_t_for+': '+optText('t-for'), t.wa_t_what+': '+optText('t-what'), t.wa_t_cloth+': '+optText('t-cloth')];
-  if (val('t-date')) lines.push(t.wa_t_date+': '+val('t-date').split('-').reverse().join('-'));
-  if (val('t-note')) lines.push(t.wa_t_note+': '+val('t-note'));
-  lines.push('', t.wa_name+': '+val('t-name'), t.wa_mobile+': '+val('t-phone'));
-  document.getElementById('t-send').href = waLink(lines.join('\n'));
-}
+function updateTailorLink(){}
 
 /* ---------- owner editing ---------- */
 function resizePhoto(file, cb){
@@ -1993,7 +2199,7 @@ function prefillReturn(){
 function renderAll(){
   if (adminMode && canEdit){ closeProduct(); renderAdmin(); return; }
   var reopen = openId; closeProduct();
-  renderFrame(); renderBanners(); wireBottomNav(); restoreForms(); prefillReturn(); renderChips(); renderGrid(); renderCart(); renderDone(); updateTailorLink(); updateReturnLink(); renderOwner();
+  renderFrame(); renderBanners(); renderTailor(); wireBottomNav(); restoreForms(); prefillReturn(); renderChips(); renderGrid(); renderCart(); renderDone(); updateTailorLink(); updateReturnLink(); renderOwner();
   var tf = document.getElementById('tr-form');
   tf.addEventListener('submit', function(e){ e.preventDefault(); var v = document.getElementById('tr-id').value.trim().toUpperCase(); var er=document.getElementById('tr-err'); if (!v){ er.textContent = T().tr_err; return; } er.textContent=''; trMode=''; trackId = v; renderTrack(); });
   var trPick = function(mode){ var v = document.getElementById('tr-id').value.trim().toUpperCase() || trackId; var er=document.getElementById('tr-err'); if (!v){ er.textContent = T().tr_need; document.getElementById('tr-id').focus(); return; } er.textContent=''; trackId = v; trMode = mode; if (mode==='return'){ var r=TRACK[v]; var ok = r && r.s==='delivered' && r.at && r.at.delivered && (Date.now()-new Date(r.at.delivered).getTime())/86400000 <= SHOP.returnDays; if (ok){ goReturn(v); return; } } renderTrack(); };
@@ -2402,6 +2608,7 @@ renderAll();
         uid:user ? user.uid : '', email:user ? (user.email||'') : '', status:'new', created:new Date().toISOString(), log:[{at:new Date().toISOString(), s:'new'}]};
       return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000);
     };
+    DF.saveTailor = function(r){ return withTimeout(fs.collection('requests').add(Object.assign({}, r, {uid:user ? user.uid : '', status:'new', created:new Date().toISOString()})), 15000); };
     DF.saveRequest = function(r){
       return withTimeout(fs.collection('requests').add({orderId:r.orderId||'', kind:r.kind||'return', phone:r.phone||'', item:r.item||'', reason:r.reason||'', details:r.details||'',
         uid:user ? user.uid : '', status:'new', created:new Date().toISOString()}), 12000);
@@ -2506,4 +2713,5 @@ renderAll();
   }).catch(function(){ /* SDK blocked: page keeps working as guest checkout */ });
 })();
 </script>
+
 </body></html>
