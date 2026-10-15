@@ -2466,7 +2466,7 @@ renderAll();
       var p = (window.DF && DF.productBySku) ? null : null;
       checkBought(pid).then(function(v){
         return fs.collection('reviews').add({pid:pid, rating:rating, text:ta.value.trim().slice(0,800), name:(prof && prof.name) || (user.displayName||'').split(' ')[0] || 'Customer', uid:user.uid, verified:!!v, created:new Date().toISOString()});
-      }).then(function(){ setMsg(m, t.sent, 'ok'); box.innerHTML = ''; loadReviews(); }, function(){ send.disabled = false; setMsg(m, t.err, 'err'); });
+      }).then(function(){ setMsg(m, t.sent, 'ok'); box.innerHTML = ''; loadReviews(); }, function(e){ send.disabled = false; setMsg(m, t.err + (e && e.code ? ' (' + e.code + ')' : ''), 'err'); });
     }});
     box.appendChild(mk('div',{'class':'field'},[ mk('label',{text:t.your}), stars ]));
     box.appendChild(mk('div',{'class':'field'},[ mk('label',{'for':'rv-text',text:t.txt}), ta ]));
