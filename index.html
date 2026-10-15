@@ -450,7 +450,7 @@ var S = {
   co_place:'Place order', co_hint:'After you place the order, WhatsApp opens with your order. Press Send so the shop receives it.',
   err_addr:'For home delivery, write your address and 6-digit PIN code.', err_pay:'Choose a payment method.',
   conf_title:'Order placed!', conf_id:'Order ID: ', conf_step:'Last step: send your order to the shop on WhatsApp. Your order is confirmed only after the shop receives it.',
-  conf_send:'Send order to shop on WhatsApp', conf_step_form:'Last step: tap “Send order” and press Submit on the form that opens. Your order is confirmed only after the shop receives it.', conf_send_form:'Send order', conf_or_wa:'Or send on WhatsApp', conf_pay_title:'Pay by UPI', conf_amt:'Amount to pay', conf_upi_id:'UPI ID', conf_copy:'Copy UPI ID', conf_copied:'UPI ID copied',
+  conf_send:'Send order to shop on WhatsApp', conf_step_form:'Last step: tap “Send order” and press Submit on the form that opens. Your order is confirmed only after the shop receives it.', conf_send_form:'Send order', conf_or_wa:'Or send on WhatsApp', conf_sending:'Sending your order to the shop…', conf_sent:'Your order has been sent to the shop. The shop will call or WhatsApp you to confirm. Keep your order ID to track it.', conf_failed:'Could not send automatically. Tap “Send order” below to send it.', conf_pay_title:'Pay by UPI', conf_amt:'Amount to pay', conf_upi_id:'UPI ID', conf_copy:'Copy UPI ID', conf_copied:'UPI ID copied',
   conf_scan:'Scan this QR with any UPI app', conf_open:'Open UPI app', conf_after:'After paying, send the payment screenshot on WhatsApp.', conf_after_np:'The shop will tell you the final amount on WhatsApp. Then pay to this UPI ID.',
   conf_cod:'Pay cash when your order arrives.', conf_new:'Continue shopping',
   wa_oid:'Order ID', wa_pay:'Payment', wa_pin:'PIN', wa_land:'Landmark', wa_cod:'Cash on Delivery', wa_upi:'UPI (online)',
@@ -541,7 +541,7 @@ var S = {
   co_place:'ऑर्डर करें', co_hint:'ऑर्डर करने पर WhatsApp में आपका ऑर्डर खुलेगा। Send दबाएं ताकि दुकान तक पहुंचे।',
   err_addr:'घर पर डिलीवरी के लिए पता और 6 अंकों का पिन कोड लिखें।', err_pay:'पेमेंट का तरीका चुनें।',
   conf_title:'ऑर्डर हो गया!', conf_id:'ऑर्डर नंबर: ', conf_step:'आखिरी काम: अपना ऑर्डर WhatsApp पर दुकान को भेजें। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।',
-  conf_send:'WhatsApp पर दुकान को ऑर्डर भेजें', conf_step_form:'आखिरी काम: “ऑर्डर भेजें” दबाएँ और जो फॉर्म खुले उसमें Submit दबाएँ। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।', conf_send_form:'ऑर्डर भेजें', conf_or_wa:'या WhatsApp पर भेजें', conf_pay_title:'UPI से पेमेंट करें', conf_amt:'देने वाली रकम', conf_upi_id:'UPI ID', conf_copy:'UPI ID कॉपी करें', conf_copied:'UPI ID कॉपी हो गई',
+  conf_send:'WhatsApp पर दुकान को ऑर्डर भेजें', conf_step_form:'आखिरी काम: “ऑर्डर भेजें” दबाएँ और जो फॉर्म खुले उसमें Submit दबाएँ। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।', conf_send_form:'ऑर्डर भेजें', conf_or_wa:'या WhatsApp पर भेजें', conf_sending:'आपका ऑर्डर दुकान को भेजा जा रहा है…', conf_sent:'आपका ऑर्डर दुकान को भेज दिया गया है। दुकान आपको फ़ोन या WhatsApp करके पक्का करेगी। ट्रैक करने के लिए ऑर्डर नंबर संभालकर रखें।', conf_failed:'अपने-आप नहीं भेजा जा सका। नीचे “ऑर्डर भेजें” दबाकर भेजें।', conf_pay_title:'UPI से पेमेंट करें', conf_amt:'देने वाली रकम', conf_upi_id:'UPI ID', conf_copy:'UPI ID कॉपी करें', conf_copied:'UPI ID कॉपी हो गई',
   conf_scan:'किसी भी UPI ऐप से यह QR स्कैन करें', conf_open:'UPI ऐप खोलें', conf_after:'पेमेंट के बाद उसका स्क्रीनशॉट WhatsApp पर भेजें।', conf_after_np:'दुकान WhatsApp पर पूरी रकम बताएगी, फिर इस UPI ID पर पेमेंट करें।',
   conf_cod:'ऑर्डर मिलने पर नकद पैसे दें।', conf_new:'और खरीदारी करें',
   wa_oid:'ऑर्डर नंबर', wa_pay:'पेमेंट', wa_pin:'पिन', wa_land:'लैंडमार्क', wa_cod:'कैश ऑन डिलीवरी', wa_upi:'UPI (ऑनलाइन)',
@@ -1059,6 +1059,7 @@ function placeOrder(){
     addr: val('o-addr'), pin: val('o-pin'), land: val('o-land'), note: val('o-note') };
   try { var hist = JSON.parse(localStorage.getItem('df-orders')||'[]'); hist.unshift({id:order.id, phone:order.phone, items:order.items.map(function(i){return i.sku+' '+i.name;}).join(', ')}); localStorage.setItem('df-orders', JSON.stringify(hist.slice(0,10))); } catch(e) {}
   placed = order;
+  if (orderFormUrl(order)){ order.sent = 'sending'; sendOrderDirect(order); }
   cart = []; saveCart(); renderCart();
   renderDone();
   document.getElementById('order').scrollIntoView({behavior:'smooth'});
@@ -1074,6 +1075,21 @@ function fillFormLink(u, vals){
     return k+'='+encodeURIComponent(v);
   }).filter(function(x){ return x !== null; });
   return u.slice(0,q+1) + parts.join('&');
+}
+/* Sends a filled form link straight to Google Forms in the background (customer never sees the form). */
+function submitFilledForm(filled){
+  var q = filled.indexOf('?'); if (q < 0) return Promise.reject();
+  var action = filled.slice(0,q).replace(/\/viewform$/, '/formResponse');
+  var body = filled.slice(q+1).split('&').filter(function(p){ return /^entry\./.test(p); }).join('&');
+  if (!window.fetch) return Promise.reject();
+  return new Promise(function(res, rej){
+    var done = false, timer = setTimeout(function(){ if (!done){ done = true; rej(); } }, 15000);
+    fetch(action, {method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body})
+      .then(function(){ if (!done){ done = true; clearTimeout(timer); res(); } }, function(){ if (!done){ done = true; clearTimeout(timer); rej(); } });
+  });
+}
+function sendOrderDirect(o){
+  submitFilledForm(orderFormUrl(o)).then(function(){ o.sent = 'ok'; if (placed === o) renderDone(); }, function(){ o.sent = 'fail'; if (placed === o) renderDone(); });
 }
 function orderFormUrl(o){
   var u = String(SHOP.orderFormUrl || '');
@@ -1113,9 +1129,9 @@ function renderDone(){
       el('span',{'class':'done-tick',html:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'}),
       el('div',null,[ el('h3',{text:t.conf_title}), el('div',{'class':'num',text:t.conf_id+o.id}) ])
     ]),
-    el('p',{'class':'done-step',text:orderFormUrl(o) ? t.conf_step_form : t.conf_step}),
-    orderFormUrl(o) ? el('a',{'class':'btn btn-gold',href:orderFormUrl(o),target:'_blank',rel:'noopener',text:t.conf_send_form}) : null,
-    el('a',{'class':orderFormUrl(o) ? 'btn btn-line' : 'btn btn-wa',href:waLink(orderMessage(o)),target:'_blank',rel:'noopener',text:orderFormUrl(o) ? t.conf_or_wa : t.conf_send}),
+    el('p',{'class':'done-step','aria-live':'polite',text: o.sent==='ok' ? t.conf_sent : o.sent==='sending' ? t.conf_sending : o.sent==='fail' ? t.conf_failed : (orderFormUrl(o) ? t.conf_step_form : t.conf_step)}),
+    (orderFormUrl(o) && o.sent !== 'ok' && o.sent !== 'sending') ? el('a',{'class':'btn btn-gold',href:orderFormUrl(o),target:'_blank',rel:'noopener',text:t.conf_send_form}) : null,
+    o.sent === 'sending' ? null : el('a',{'class':orderFormUrl(o) ? 'btn btn-line' : 'btn btn-wa',href:waLink(orderMessage(o)),target:'_blank',rel:'noopener',text:orderFormUrl(o) ? t.conf_or_wa : t.conf_send}),
     el('a',{'class':'btn btn-line',href:'#track',text:t.conf_track,onclick:function(){ trackId = o.id; setTimeout(renderTrack, 0); }}),
     el('p',{'class':'hint',text:SHOP.display})
   ];
@@ -1654,4 +1670,5 @@ readTrackHash(); readAdminHash();
 window.addEventListener('hashchange', function(){ readTrackHash(); if (readAdminHash() && canEdit){ renderAll(); return; } if (!adminMode) renderTrack(); });
 renderAll();
 })();
-</script></body></html>
+</script>
+</body></html>
