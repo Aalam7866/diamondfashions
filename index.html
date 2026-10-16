@@ -422,7 +422,7 @@ footer.ft{background:#060D18;color:#C9C4B8;padding:34px 0 calc(90px + env(safe-a
 
 /* header social buttons */
 .pill.soc{display:inline-flex;align-items:center;gap:6px;color:#fff;border-color:transparent}
-.pill.soc.fb{background:#1877F2}.pill.soc.wa{background:#1C8F52}.top #top-wa.soc{display:inline-flex}.pill.soc.ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF)}
+.pill.soc.fb{background:#1877F2}.pill.soc.bell{background:#CDAA5C;color:#0B1626}.pill.soc.bell.on{background:transparent;color:#CDAA5C;border-color:#CDAA5C}.pill.soc.wa{background:#1C8F52}.top #top-wa.soc{display:inline-flex}.pill.soc.ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF)}
 .pill.soc[hidden]{display:none}
 @media (max-width:640px){.pill.soc{width:40px;height:40px;min-height:40px;padding:0;justify-content:center;border-radius:50%}.pill.soc span{display:none}}
 /* follow us */
@@ -838,6 +838,7 @@ function renderFrame(){
   '<a class="pill" href="#track">'+t.nav_track+'</a>' +
   '<a class="pill" href="#returns">'+t.nav_ret+'</a>' +
   '<a class="pill" href="#order">'+t.nav_order+' <span class="count" id="top-count">0</span></a>' +
+  '<a class="pill soc bell" id="tp-bell" href="#" title="'+t.bell_btn+'" aria-label="'+t.bell_btn+'" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span>'+t.bell_btn+'</span></a>' +
   '<a class="pill soc fb" id="tp-fb" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V8.8c0-.5.3-.8.8-.8z"/></svg><span>Facebook</span></a>' +
   '<a class="pill soc ig" id="tp-ig" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>Instagram</span></a>' +
   '<a class="pill soc wa" id="top-wa" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 1.8 1.9 3.6 3.9 4.3l1.3-1.2 1.8.9-.4 1.6c-3.4.4-7.1-3.2-6.7-6.6L10.5 8l.9 1.8z" fill="currentColor" stroke="none"/></svg><span>WhatsApp</span></a>' +
@@ -2358,12 +2359,12 @@ try {
   }
 } catch(e){}
 function updateBell(){
-  var b = document.getElementById('fl-bell'); if (!b) return;
   var on = false; try { on = window.OneSignal && OneSignal.Notifications && OneSignal.Notifications.permission && OneSignal.User.PushSubscription.optedIn; } catch(e){}
-  b.hidden = !onLive || !('Notification' in window);
-  b.querySelector('span').textContent = on ? T().bell_on : T().bell_btn; b.classList.toggle('on', !!on);
+  ['fl-bell','tp-bell'].forEach(function(id){ var b = document.getElementById(id); if (!b) return;
+    b.hidden = !onLive || !('Notification' in window);
+    b.querySelector('span').textContent = on ? T().bell_on : T().bell_btn; b.title = b.querySelector('span').textContent; b.classList.toggle('on', !!on); });
 }
-document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('#fl-bell'); if (!b) return; e.preventDefault();
+document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('#fl-bell,#tp-bell'); if (!b) return; e.preventDefault();
   if (!window.OneSignal || !OneSignal.Notifications){ alert(T().bell_wait); return; }
   try { if (OneSignal.Notifications.permission){ OneSignal.User.PushSubscription.optIn().then(updateBell); } else OneSignal.Notifications.requestPermission().then(updateBell); } catch(err){} });
 setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
