@@ -2350,7 +2350,7 @@ try {
   if (onLive){
     // OneSignal: offer / new-item notifications; it registers our /sw.js (which also keeps the app working offline)
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(function(OneSignal){ return OneSignal.init({appId:OS_APP, serviceWorkerPath:'sw.js', serviceWorkerParam:{scope:'/'}, allowLocalhostAsSecureOrigin:false,
+    OneSignalDeferred.push(function(OneSignal){ return OneSignal.init({appId:OS_APP, allowLocalhostAsSecureOrigin:false,
       notifyButton:{enable:false}, promptOptions:{slidedown:{prompts:[{type:'push', autoPrompt:false, text:{actionMessage:'Get new arrivals and offers from Diamond Fashions / नए माल और ऑफ़र की सूचना पाएँ', acceptButton:'Allow', cancelButton:'Later'}}]}}, welcomeNotification:{title:'Diamond Fashions', message:'Thank you! You will now get our new arrivals and offers. / अब आपको नए माल और ऑफ़र की सूचना मिलेगी।'}}).then(function(){ window.__osReady = true; updateBell(); try { OneSignal.Notifications.addEventListener('permissionChange', updateBell); } catch(e){}
       // gentle ask after 20 s, at most once every 3 days, only if the visitor has not decided yet
       try { var last = +localStorage.getItem('df-bell-ask') || 0; if (Notification.permission === 'default' && Date.now() - last > 3*864e5) setTimeout(function(){ try { localStorage.setItem('df-bell-ask', Date.now()); OneSignal.Slidedown.promptPush(); } catch(e){} }, 20000); } catch(e){} }); });
