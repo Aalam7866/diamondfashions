@@ -113,6 +113,8 @@ section.block{padding-block:44px}
 .field input,.field select,.field textarea{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
 .field textarea{min-height:80px;resize:vertical}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.fee-note{font-size:14px;margin:6px 0 0;padding:8px 10px;border-radius:8px;background:rgba(205,170,92,.14);border:1px solid rgba(205,170,92,.45)}
+.total.sub{font-weight:500;font-size:15px;border-top:0;margin-top:2px;padding-top:6px}
 .error{color:var(--danger);font-size:14px;font-weight:600;min-height:1.2em;margin:0}
 
 /* tailoring */
@@ -642,7 +644,7 @@ var S = {
   conf_send:'Send order to shop on WhatsApp', conf_step_form:'Last step: tap “Send order” and press Submit on the form that opens. Your order is confirmed only after the shop receives it.', conf_send_form:'Send order', conf_or_wa:'Or send on WhatsApp', conf_sending:'Sending your order to the shop…', conf_sent:'Your order has been sent to the shop. The shop will call or WhatsApp you to confirm. Keep your order ID to track it.', conf_failed:'Could not send automatically. Tap “Send order” below to send it.', conf_pay_title:'Pay by UPI', conf_amt:'Amount to pay', conf_upi_id:'UPI ID', conf_copy:'Copy UPI ID', conf_copied:'UPI ID copied',
   conf_scan:'Scan this QR with any UPI app', conf_open:'Open UPI app', conf_after:'After paying, send the payment screenshot on WhatsApp.', conf_after_np:'The shop will tell you the final amount on WhatsApp. Then pay to this UPI ID.',
   conf_cod:'Pay cash when your order arrives.', conf_new:'Continue shopping',
-  o_loc:'📍 Share my location on map', o_loc_hint:'Optional — helps our delivery person reach your home easily.', o_loc_wait:'Finding your location…', o_loc_ok:'Location added ✓', o_loc_acc:'accuracy about {m} m', o_loc_view:'See on map', o_loc_again:'Update', o_loc_rm:'Remove', o_loc_den:'Location permission is off. Allow location for this site in your browser settings, then try again.', o_loc_err:'Could not get your location. Turn on GPS/location and try again.', o_loc_unsup:'This browser cannot share location.', wa_loc:'Location (map)', wa_oid:'Order ID', wa_pay:'Payment', wa_pin:'PIN', wa_land:'Landmark', wa_cod:'Cash on Delivery', wa_upi:'UPI (online)',
+  o_loc:'📍 Share my location on map', o_loc_hint:'Optional — helps our delivery person reach your home easily.', o_loc_wait:'Finding your location…', o_loc_ok:'Location added ✓', o_loc_acc:'accuracy about {m} m', o_loc_view:'See on map', o_loc_again:'Update', o_loc_rm:'Remove', o_loc_den:'Location permission is off. Allow location for this site in your browser settings, then try again.', o_loc_err:'Could not get your location. Turn on GPS/location and try again.', o_loc_unsup:'This browser cannot share location.', wa_loc:'Location (map)', items_l:'Items', fee_line:'Delivery charge', fee_free:'FREE', fee_tbd:'as per distance', fee_ok:'Home delivery: about {k} km from our shop → {f}', fee_need:'Home delivery is free up to {d} km. After that ₹{f} (+₹{s} for every extra {sk} km). Share your location so we can show the exact charge.', wa_fee:'Delivery charge', wa_dist:'Distance from shop', wa_oid:'Order ID', wa_pay:'Payment', wa_pin:'PIN', wa_land:'Landmark', wa_cod:'Cash on Delivery', wa_upi:'UPI (online)',
   ret_eb:'Returns', ret_title:'Easy {d}-day return & exchange',
   ret_points:['Return or exchange within {d} days of delivery','Item must be unused, unwashed and with tags','Stitched or altered clothes and innerwear cannot be returned','After the item is checked: exchange for another size, or refund by UPI / cash'],
   ret_order:'Order ID', ret_phone:'Mobile number', ret_item:'Which item', ret_reason:'Reason', ret_reasons:['Size does not fit','Damaged or defective','Different from photo','Changed my mind','Other'],
@@ -737,7 +739,7 @@ var S = {
   conf_send:'WhatsApp पर दुकान को ऑर्डर भेजें', conf_step_form:'आखिरी काम: “ऑर्डर भेजें” दबाएँ और जो फॉर्म खुले उसमें Submit दबाएँ। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।', conf_send_form:'ऑर्डर भेजें', conf_or_wa:'या WhatsApp पर भेजें', conf_sending:'आपका ऑर्डर दुकान को भेजा जा रहा है…', conf_sent:'आपका ऑर्डर दुकान को भेज दिया गया है। दुकान आपको फ़ोन या WhatsApp करके पक्का करेगी। ट्रैक करने के लिए ऑर्डर नंबर संभालकर रखें।', conf_failed:'अपने-आप नहीं भेजा जा सका। नीचे “ऑर्डर भेजें” दबाकर भेजें।', conf_pay_title:'UPI से पेमेंट करें', conf_amt:'देने वाली रकम', conf_upi_id:'UPI ID', conf_copy:'UPI ID कॉपी करें', conf_copied:'UPI ID कॉपी हो गई',
   conf_scan:'किसी भी UPI ऐप से यह QR स्कैन करें', conf_open:'UPI ऐप खोलें', conf_after:'पेमेंट के बाद उसका स्क्रीनशॉट WhatsApp पर भेजें।', conf_after_np:'दुकान WhatsApp पर पूरी रकम बताएगी, फिर इस UPI ID पर पेमेंट करें।',
   conf_cod:'ऑर्डर मिलने पर नकद पैसे दें।', conf_new:'और खरीदारी करें',
-  o_loc:'📍 मैप पर मेरी लोकेशन भेजें', o_loc_hint:'चाहें तो — इससे डिलीवरी वाले भैया आसानी से घर पहुँच जाएँगे।', o_loc_wait:'आपकी लोकेशन ढूँढ रहे हैं…', o_loc_ok:'लोकेशन जुड़ गई ✓', o_loc_acc:'लगभग {m} मीटर तक सही', o_loc_view:'मैप पर देखें', o_loc_again:'दोबारा लें', o_loc_rm:'हटाएँ', o_loc_den:'लोकेशन की इजाज़त बंद है। ब्राउज़र सेटिंग में इस साइट के लिए Location “Allow” करें, फिर दोबारा दबाएँ।', o_loc_err:'लोकेशन नहीं मिली। फ़ोन का GPS/Location चालू करके दोबारा दबाएँ।', o_loc_unsup:'यह ब्राउज़र लोकेशन नहीं भेज सकता।', wa_loc:'लोकेशन (मैप)', wa_oid:'ऑर्डर नंबर', wa_pay:'पेमेंट', wa_pin:'पिन', wa_land:'लैंडमार्क', wa_cod:'कैश ऑन डिलीवरी', wa_upi:'UPI (ऑनलाइन)',
+  o_loc:'📍 मैप पर मेरी लोकेशन भेजें', o_loc_hint:'चाहें तो — इससे डिलीवरी वाले भैया आसानी से घर पहुँच जाएँगे।', o_loc_wait:'आपकी लोकेशन ढूँढ रहे हैं…', o_loc_ok:'लोकेशन जुड़ गई ✓', o_loc_acc:'लगभग {m} मीटर तक सही', o_loc_view:'मैप पर देखें', o_loc_again:'दोबारा लें', o_loc_rm:'हटाएँ', o_loc_den:'लोकेशन की इजाज़त बंद है। ब्राउज़र सेटिंग में इस साइट के लिए Location “Allow” करें, फिर दोबारा दबाएँ।', o_loc_err:'लोकेशन नहीं मिली। फ़ोन का GPS/Location चालू करके दोबारा दबाएँ।', o_loc_unsup:'यह ब्राउज़र लोकेशन नहीं भेज सकता।', wa_loc:'लोकेशन (मैप)', items_l:'सामान', fee_line:'डिलीवरी चार्ज', fee_free:'फ़्री', fee_tbd:'दूरी के हिसाब से', fee_ok:'घर डिलीवरी: दुकान से लगभग {k} km → {f}', fee_need:'{d} km तक घर डिलीवरी फ़्री है। उससे दूर ₹{f} (और हर {sk} km पर +₹{s})। सही चार्ज देखने के लिए अपनी लोकेशन भेजें।', wa_fee:'डिलीवरी चार्ज', wa_dist:'दुकान से दूरी', wa_oid:'ऑर्डर नंबर', wa_pay:'पेमेंट', wa_pin:'पिन', wa_land:'लैंडमार्क', wa_cod:'कैश ऑन डिलीवरी', wa_upi:'UPI (ऑनलाइन)',
   ret_eb:'Returns', ret_title:'{d} दिन में आसान वापसी और बदलाव',
   ret_points:['डिलीवरी के {d} दिन के अंदर वापसी या बदलाव','कपड़ा बिना पहना, बिना धुला और टैग के साथ हो','सिले हुए या ऑल्टर किए कपड़े और इनरवियर वापस नहीं होंगे','जांच के बाद: दूसरे साइज़ से बदलाव, या UPI / नकद में पैसे वापस'],
   ret_order:'ऑर्डर नंबर', ret_phone:'मोबाइल नंबर', ret_item:'कौन सा कपड़ा', ret_reason:'कारण', ret_reasons:['साइज़ ठीक नहीं','कपड़ा खराब या फटा है','फोटो से अलग है','पसंद बदल गई','कुछ और'],
@@ -795,7 +797,8 @@ var canEdit = false;
 var formVals = {};
 var query = '', sortBy = '0', openId = null, lastFocus = null, payMethod = '', placed = null;
 try { var saved = JSON.parse(localStorage.getItem('df-cart') || '[]'); if (Array.isArray(saved)) cart = saved; } catch(e) {}
-function saveCart(){ try { localStorage.setItem('df-cart', JSON.stringify(cart)); } catch(e) {} }
+var cartHold = [];
+function saveCart(){ try { localStorage.setItem('df-cart', JSON.stringify(cart.concat(cartHold))); } catch(e) {} }
 try { filter = localStorage.getItem('df-filter') || 'all'; } catch(e) {}
 if (CAT_KEYS.indexOf(filter) < 0) filter = 'all';
 
@@ -875,7 +878,7 @@ function renderFrame(){
    '<div class="field"><label for="o-addr">'+t.o_addr+'</label><input id="o-addr" autocomplete="street-address"></div>' +
    '<div class="two"><div class="field"><label for="o-pin">'+t.o_pin+'</label><input id="o-pin" inputmode="numeric" autocomplete="postal-code" maxlength="6"></div>' +
    '<div class="field"><label for="o-land">'+t.o_land+'</label><input id="o-land"></div></div>' +
-   '<div class="field locf"><button type="button" class="btn btn-line" id="o-loc">'+t.o_loc+'</button><p class="hint" id="o-loc-st" aria-live="polite">'+locStatus()+'</p></div>' +
+   '<div class="field locf"><button type="button" class="btn btn-line" id="o-loc">'+t.o_loc+'</button><p class="hint" id="o-loc-st" aria-live="polite">'+locStatus()+'</p><p class="fee-note" id="o-fee" aria-live="polite" hidden></p></div>' +
    '<div class="field"><label for="o-note">'+t.o_note+'</label><textarea id="o-note"></textarea></div>' +
    '<h3 class="step">'+t.co_pay+'</h3>' +
    '<div class="paylist" role="radiogroup" aria-label="'+t.co_pay+'" id="paylist"></div>' +
@@ -1575,7 +1578,8 @@ function openProduct(id, from){
 /* ---------- cart ---------- */
 function renderCart(){
   var t = T();
-  cart = cart.filter(function(c){ return findP(c.id); });
+  /* items not known yet (products still loading from the shop's database) are held, not thrown away */
+  var unknown = cart.filter(function(c){ return !findP(c.id); }); if (unknown.length){ cartHold = cartHold.concat(unknown); cart = cart.filter(function(c){ return findP(c.id); }); }
   var list = document.getElementById('cart-list'); list.innerHTML='';
   var n = cartCount();
   document.getElementById('top-count').textContent = n;
@@ -1603,6 +1607,7 @@ function renderCart(){
     ]));
   });
   if (cart.length) totalBox.appendChild(el('div',{'class':'total'},[ el('span',{text:priced?t.total:t.total_part}), el('span',{'class':'num',text:rupees(total)}) ]));
+  try { updateFee(); } catch(e){}
   updateOrderLink();
 }
 var orderLoc = null;
@@ -1612,7 +1617,32 @@ function locStatus(){
   return '<b style="color:var(--ok,#1d7a3a)">'+t.o_loc_ok+'</b> '+(orderLoc.acc ? '('+t.o_loc_acc.replace('{m}', orderLoc.acc)+') ' : '')+
     '<a href="'+mapLink(orderLoc)+'" target="_blank" rel="noopener">'+t.o_loc_view+'</a> · <a href="#" data-loc="rm">'+t.o_loc_rm+'</a>';
 }
-function showLoc(msg){ var st = document.getElementById('o-loc-st'), b = document.getElementById('o-loc'); if (st) st.innerHTML = msg || locStatus(); if (b){ b.disabled = false; b.textContent = orderLoc ? '📍 '+T().o_loc_again : T().o_loc; } }
+function isHome(){ var h = document.getElementById('o-how'); return !!(h && h.value === '1'); }
+function distKm(a, b){ var R = 6371, r = Math.PI/180, dLa = (b.lat-a.lat)*r, dLo = (b.lng-a.lng)*r, x = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)*Math.sin(dLo/2); return 2*R*Math.asin(Math.sqrt(x)); }
+/* Home delivery: free up to delKm; then delFee; then +delStepFee for every further delStepKm (or part of it). */
+function deliveryInfo(){
+  if (!isHome()) return null;
+  var free = +SHOP.delKm || 5, fee = SHOP.delFee != null ? +SHOP.delFee : 50, sk = +SHOP.delStepKm || 2, sf = SHOP.delStepFee != null ? +SHOP.delStepFee : 20;
+  var cfg = {free:free, fee:fee, sk:sk, sf:sf};
+  if (!orderLoc || !SHOP.shopLat) return cfg;
+  var km = Math.round(distKm({lat:+SHOP.shopLat, lng:+SHOP.shopLng}, orderLoc) * 1.25 * 10) / 10; /* straight line × 1.25 ≈ road distance */
+  cfg.km = km; cfg.charge = km <= free ? 0 : fee + Math.max(0, Math.ceil((km - free - sk) / sk - 1e-9)) * sf;
+  return cfg;
+}
+function updateFee(){
+  var t = T(), d = deliveryInfo(), n = document.getElementById('o-fee'), tb = document.getElementById('cart-total');
+  if (n){ n.hidden = !d; if (d) n.innerHTML = d.km != null ? t.fee_ok.replace('{k}', d.km).replace('{f}', '<b>'+(d.charge ? rupees(d.charge) : t.fee_free)+'</b>') : t.fee_need.replace(/\{d\}/g, d.free).replace('{f}', d.fee).replace('{s}', d.sf).replace('{sk}', d.sk); }
+  if (!tb) return; var old = tb.querySelector('.fee-rows'); if (old) old.remove();
+  var ct = cartTotal(), first = tb.querySelector(':scope > .total > span');
+  if (first) first.textContent = (d && d.charge) ? t.items_l : (ct.allPriced ? t.total : t.total_part);
+  if (!d || !cart.length) return;
+  var rows = el('div',{'class':'fee-rows'},[
+    el('div',{'class':'total sub'},[ el('span',{text:t.fee_line+(d.km != null ? ' ('+d.km+' km)' : '')}), el('span',{'class':'num',text: d.km == null ? t.fee_tbd : d.charge ? rupees(d.charge) : t.fee_free}) ]) ]);
+  if (d.charge) rows.appendChild(el('div',{'class':'total'},[ el('span',{text:ct.allPriced ? t.total : t.total_part}), el('span',{'class':'num',text:rupees(ct.total + d.charge)}) ]));
+  tb.appendChild(rows);
+}
+document.addEventListener('change', function(e){ if (e.target && e.target.id === 'o-how') updateFee(); });
+function showLoc(msg){ var st = document.getElementById('o-loc-st'), b = document.getElementById('o-loc'); if (st) st.innerHTML = msg || locStatus(); if (b){ b.disabled = false; b.textContent = orderLoc ? '📍 '+T().o_loc_again : T().o_loc; } updateFee(); }
 document.addEventListener('click', function(e){
   var rm = e.target.closest && e.target.closest('[data-loc="rm"]');
   if (rm){ e.preventDefault(); orderLoc = null; showLoc(); return; }
@@ -1660,10 +1690,11 @@ function placeOrder(){
   if (home && (!val('o-addr') || !/^\d{6}$/.test(val('o-pin')))){ err.textContent = t.err_addr; document.getElementById(val('o-addr')?'o-pin':'o-addr').focus(); return; }
   if (!payMethod){ err.textContent = t.err_pay; return; }
   err.textContent = '';
-  var ct = cartTotal();
+  var ct = cartTotal(), dl = deliveryInfo();
+  if (dl && dl.charge) ct.total += dl.charge;
   var order = { id:newOrderId(), items: cart.map(function(c){ var p=findP(c.id); return c.m ? {name:p.name+' – '+fmtM(c.m)+' m',sku:p.code,size:'',qty:1,price:lineTotal(p,c)} : {name:p.name,sku:skuFor(p,c.size),size:c.size,qty:c.qty,price:p.price}; }),
     total: ct.total, allPriced: ct.allPriced, pay: payMethod, name: val('o-name'), phone: val('o-phone'), how: optText('o-how'),
-    addr: val('o-addr'), pin: val('o-pin'), land: val('o-land'), note: val('o-note'), loc: orderLoc };
+    addr: val('o-addr'), pin: val('o-pin'), land: val('o-land'), note: val('o-note'), loc: orderLoc, delivery: dl ? (dl.km != null ? dl.charge : null) : null, distKm: dl && dl.km != null ? dl.km : null };
   try { var hist = JSON.parse(localStorage.getItem('df-orders')||'[]'); hist.unshift({id:order.id, phone:order.phone, items:order.items.map(function(i){return i.sku+' '+i.name;}).join(', ')}); localStorage.setItem('df-orders', JSON.stringify(hist.slice(0,10))); } catch(e) {}
   placed = order;
   try { window.dispatchEvent(new CustomEvent('df-order',{detail:order})); } catch(e){}
@@ -1739,6 +1770,8 @@ function orderMessage(o){
   if (o.pin) lines.push(t.wa_pin+': '+o.pin);
   if (o.land) lines.push(t.wa_land+': '+o.land);
   if (o.loc) lines.push(t.wa_loc+': '+mapLink(o.loc));
+  if (o.distKm != null) lines.push(t.wa_dist+': ~'+o.distKm+' km');
+  if (o.delivery != null) lines.push(t.wa_fee+': '+(o.delivery ? rupees(o.delivery) : t.fee_free)); else if (/deliver|घर/i.test(o.how||'')) lines.push(t.wa_fee+': '+t.fee_tbd);
   if (o.note) lines.push(t.wa_note+': '+o.note);
   return lines.join('\n');
 }
@@ -1985,9 +2018,9 @@ window.DF = {
   setBanners: function(list){ BANNERS = list || null; renderBanners(); },
   ratings: {},
   setRatings: function(map){ DF.ratings = map || {}; if (adminMode) return; try { renderGrid(); } catch(e){} var pr = document.getElementById('pp-rating'); if (pr && openId){ pr.innerHTML = ''; var b = rateBadge(openId, true); if (b) pr.appendChild(b); } },
-  setProducts: function(list){ if (!list || !list.length || adminMode) return; try { captureForms(); } catch(e){}
+  setProducts: function(list){ if (!list || !list.length || adminMode) return; try { captureForms(); } catch(e){} if (cartHold.length){ cart = cart.concat(cartHold); cartHold = []; }
     products = list.filter(function(p){ return !p.hidden; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }).map(normalize); renderAll(); openFromHash(); },
-  setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place','igUrl','fbUrl'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); var hb = JSON.stringify(c.hideBnr||[]); if (hb !== JSON.stringify(SHOP.hideBnr||[])){ SHOP.hideBnr = c.hideBnr||[]; try { renderBanners(); } catch(e){} } try { renderSocial(); } catch(e){} },
+  setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place','igUrl','fbUrl','shopLat','shopLng','delKm','delFee','delStepKm','delStepFee'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); try { updateFee(); } catch(e){} var hb = JSON.stringify(c.hideBnr||[]); if (hb !== JSON.stringify(SHOP.hideBnr||[])){ SHOP.hideBnr = c.hideBnr||[]; try { renderBanners(); } catch(e){} } try { renderSocial(); } catch(e){} },
   setTrack: function(map){ Object.keys(TRACK).forEach(function(k){ if (!map[k]) return; }); Object.keys(map).forEach(function(k){ TRACK[k] = map[k]; }); try { renderTrack(); } catch(e){} },
   rupees: rupees
 };
@@ -2796,12 +2829,12 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     DF.saveOrder = function(o){
       var doc = {id:o.id, items:(o.items||[]).map(function(i){ return {sku:i.sku||'', name:i.name||'', size:i.size||'', qty:i.qty||1, price:i.price||0}; }),
         total:o.total||0, allPriced:!!o.allPriced, pay:o.pay||'cod', paid:false, name:o.name||'', phone:o.phone||'', how:o.how||'', home:/deliver|घर/i.test(o.how||''),
-        addr:o.addr||'', pin:o.pin||'', land:o.land||'', note:o.note||'', loc:o.loc ? {lat:o.loc.lat, lng:o.loc.lng, acc:o.loc.acc||0} : null, lang:(document.documentElement.lang||'en').slice(0,2),
+        addr:o.addr||'', pin:o.pin||'', land:o.land||'', note:o.note||'', loc:o.loc ? {lat:o.loc.lat, lng:o.loc.lng, acc:o.loc.acc||0} : null, delivery:o.delivery != null ? o.delivery : null, distKm:o.distKm != null ? o.distKm : null, lang:(document.documentElement.lang||'en').slice(0,2),
         uid:user ? user.uid : '', email:user ? (user.email||'') : '', status:'new', created:new Date().toISOString(), log:[{at:new Date().toISOString(), s:'new'}]};
       return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000).catch(function(e){
         if (!doc.loc || !/permission/i.test((e && (e.code||e.message)) || '')) throw e;
         /* older security rules may not allow the new 'loc' field: keep the map link in the note instead */
-        doc.note = [doc.note, 'Map: https://maps.google.com/?q='+doc.loc.lat+','+doc.loc.lng].filter(Boolean).join(' | '); delete doc.loc;
+        doc.note = [doc.note, 'Map: https://maps.google.com/?q='+doc.loc.lat+','+doc.loc.lng, doc.distKm != null ? '~'+doc.distKm+' km' : '', doc.delivery != null ? 'Delivery Rs '+doc.delivery : ''].filter(Boolean).join(' | '); delete doc.loc; delete doc.delivery; delete doc.distKm;
         return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000);
       });
     };

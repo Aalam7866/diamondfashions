@@ -224,6 +224,7 @@ function orderCard(o){
     (o.loc && o.loc.lat) ? el('span',null,[ el('a',{'class':'btn b-sm b-gold',target:'_blank',rel:'noopener',href:'https://www.google.com/maps/search/?api=1&query='+o.loc.lat+','+o.loc.lng,text:'📍 '+L('मैप पर देखें')}), ' ',
       el('a',{'class':'btn b-sm b-line',target:'_blank',rel:'noopener',href:'https://www.google.com/maps/dir/?api=1&destination='+o.loc.lat+','+o.loc.lng,text:'🧭 '+L('रास्ता')}),
       o.loc.acc ? el('span',{'class':'muted small',text:' ±'+o.loc.acc+' m'}) : null ]) : null,
+    o.delivery != null ? el('span',{text:L('डिलीवरी')}) : null, o.delivery != null ? el('span',{text:(o.delivery ? rupees(o.delivery) : L('फ़्री'))+(o.distKm ? ' · '+o.distKm+' km' : '')}) : null,
     el('span',{text:L('पेमेंट')}), el('span',null,[ o.pay==='upi' ? 'UPI ' : 'COD ', o.pay==='upi' ? el('span',{'class':'st '+(o.paid?'ok':''),text:o.paid?L('पैसे मिले'):L('पैसे बाकी')}) : null ]),
     o.note ? el('span',{text:L('नोट')}) : null, o.note ? el('span',{text:o.note}) : null
   ]));
@@ -761,6 +762,39 @@ function drawStock(main){
 }
 
 /* ---------- settings ---------- */
+function parseLatLng(x){ var m = /(-?\d{1,2}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})/.exec(String(x||'')); return m ? {lat:+(+m[1]).toFixed(6), lng:+(+m[2]).toFixed(6)} : null; }
+function drawDelivery(main){
+  var m = el('p',{'class':'msg'});
+  var ll = el('input',{id:'d-ll',value:cfg.shopLat ? cfg.shopLat+', '+cfg.shopLng : '',placeholder:'26.12345, 83.12345'});
+  var view = el('a',{'class':'small',target:'_blank',rel:'noopener',text:'📍 '+L('मैप पर देखें')});
+  var sync = function(){ var p = parseLatLng(ll.value); view.hidden = !p; if (p) view.href = 'https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng; };
+  ll.oninput = sync; sync();
+  var here = el('button',{'class':'btn b-sm b-line',type:'button',text:'📍 '+L('अभी की जगह लें (दुकान पर खड़े होकर दबाएँ)'),onclick:function(){
+    if (!navigator.geolocation){ m.textContent = L('यह ब्राउज़र लोकेशन नहीं दे सकता'); m.className = 'msg err'; return; }
+    here.disabled = true; m.textContent = L('लोकेशन ढूँढ रहे हैं…'); m.className = 'msg';
+    navigator.geolocation.getCurrentPosition(function(pos){ here.disabled = false; ll.value = pos.coords.latitude.toFixed(6)+', '+pos.coords.longitude.toFixed(6); sync(); m.textContent = L('मिल गई ✓ (लगभग ')+Math.round(pos.coords.accuracy)+L(' मीटर तक सही) — अब “सेव करें” दबाएँ'); m.className = 'msg ok'; },
+      function(e){ here.disabled = false; m.textContent = e && e.code === 1 ? L('लोकेशन की इजाज़त बंद है — ब्राउज़र में Allow करें') : L('लोकेशन नहीं मिली, GPS चालू करें'); m.className = 'msg err'; }, {enableHighAccuracy:true, timeout:20000});
+  }});
+  setTimeout(function(){ var ex = document.getElementById('d-ex'); if (!ex) return; var upd = function(){ var g = function(id){ return parseFloat(document.getElementById(id).value)||0; }, k = g('d-km'), f = g('d-fee'), sk = g('d-skm')||2, sf = g('d-sfee');
+    ex.textContent = L('उदाहरण: ')+k+L(' km तक फ़्री · ')+k+'–'+(k+sk)+' km = ₹'+f+' · '+(k+sk)+'–'+(k+2*sk)+' km = ₹'+(f+sf)+' · '+(k+2*sk)+'–'+(k+3*sk)+' km = ₹'+(f+2*sf); };
+    ['d-km','d-fee','d-skm','d-sfee'].forEach(function(id){ document.getElementById(id).oninput = upd; }); upd(); }, 0);
+  main.appendChild(el('h2',{style:'margin-top:22px',text:L('घर डिलीवरी चार्ज')}));
+  main.appendChild(el('div',{'class':'card'},[
+    el('p',{'class':'muted small',text:L('ग्राहक ऑर्डर में अपनी लोकेशन भेजेगा तो वेबसाइट दुकान से दूरी नापकर अपने-आप चार्ज जोड़ देगी।')}),
+    el('div',{'class':'field'},[ el('label',{'for':'d-ll',text:L('दुकान की लोकेशन (lat, lng — या Google Maps लिंक पेस्ट करें)')}), ll, el('div',{'class':'row',style:'margin-top:6px'},[ here, view ]) ]),
+    el('div',{'class':'two'},[
+      el('div',{'class':'field'},[ el('label',{'for':'d-km',text:L('कितने km तक फ़्री')}), el('input',{id:'d-km',value:cfg.delKm!=null?cfg.delKm:5,inputmode:'decimal'}) ]),
+      el('div',{'class':'field'},[ el('label',{'for':'d-fee',text:L('उससे दूर हो तो चार्ज (₹)')}), el('input',{id:'d-fee',value:cfg.delFee!=null?cfg.delFee:50,inputmode:'numeric'}) ]) ]),
+    el('div',{'class':'two'},[
+      el('div',{'class':'field'},[ el('label',{'for':'d-skm',text:L('फिर हर कितने km पर')}), el('input',{id:'d-skm',value:cfg.delStepKm!=null?cfg.delStepKm:2,inputmode:'decimal'}) ]),
+      el('div',{'class':'field'},[ el('label',{'for':'d-sfee',text:L('और कितने ₹ जुड़ें')}), el('input',{id:'d-sfee',value:cfg.delStepFee!=null?cfg.delStepFee:20,inputmode:'numeric'}) ]) ]),
+    el('p',{'class':'muted small',id:'d-ex'}),
+    el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){
+      var p = parseLatLng(ll.value); if (!p){ m.textContent = L('दुकान की लोकेशन सही लिखें, जैसे 26.12345, 83.12345'); m.className = 'msg err'; return; }
+      var upd = {shopLat:p.lat, shopLng:p.lng, delKm:parseFloat(document.getElementById('d-km').value)||5, delFee:parseInt(document.getElementById('d-fee').value,10)||0, delStepKm:parseFloat(document.getElementById('d-skm').value)||2, delStepFee:parseInt(document.getElementById('d-sfee').value,10)||0};
+      db.collection('config').doc('shop').set(upd, {merge:true}).then(function(){ m.textContent = L('सेव हो गया ✓'); m.className = 'msg ok'; }, function(e){ m.textContent = L('नहीं हुआ: ')+e.message; m.className = 'msg err'; });
+    }}), m ]));
+}
 function drawSettings(main){
   var m = el('p',{'class':'msg'});
   main.appendChild(el('h2',{text:L('दुकान की सेटिंग')}));
@@ -776,6 +810,7 @@ function drawSettings(main){
       db.collection('config').doc('shop').set(upd, {merge:true}).then(function(){ m.textContent=L('सेव हो गया ✓'); m.className='msg ok'; }, function(e){ m.textContent=L('नहीं हुआ: ')+e.message; m.className='msg err'; });
     }}), m ]);
   main.appendChild(f);
+  drawDelivery(main);
   // fill the website's social links from the connected accounts the first time
   if (meta && meta.pageId && (!cfg.fbUrl || (!cfg.igUrl && meta.igUser))){ var su = {}; if (!cfg.fbUrl) su.fbUrl = 'https://www.facebook.com/' + meta.pageId; if (!cfg.igUrl && meta.igUser) su.igUrl = 'https://www.instagram.com/' + meta.igUser + '/';
     db.collection('config').doc('shop').set(su, {merge:true}).then(function(){ Object.assign(cfg, su); var a = document.getElementById('s-fb'), b = document.getElementById('s-ig'); if (a && su.fbUrl) a.value = su.fbUrl; if (b && su.igUrl) b.value = su.igUrl; }); }
