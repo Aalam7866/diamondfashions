@@ -786,8 +786,16 @@ function drawSocial(main){
 }
 
 /* ---------- product video (Reel) from photos ---------- */
-var VID_TYPES = ['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1.4D401F','video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+var VID_TYPES = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1.4D401F','video/mp4;codecs=avc1','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
 function vidType(){ if (!window.MediaRecorder) return ''; for (var i = 0; i < VID_TYPES.length; i++) if (MediaRecorder.isTypeSupported(VID_TYPES[i])) return VID_TYPES[i]; return ''; }
+/* canvas video + a silent sound track (Instagram rejects some videos that have no audio at all) */
+function avStream(c){
+  var st = c.captureStream(30);
+  try { var AC = window.AudioContext || window.webkitAudioContext, ac = new AC(), o = ac.createOscillator(), g = ac.createGain(), d = ac.createMediaStreamDestination();
+    g.gain.value = 0.0001; o.connect(g); g.connect(d); o.start(); if (ac.resume) ac.resume();
+    d.stream.getAudioTracks().forEach(function(t){ st.addTrack(t); }); setTimeout(function(){ try { o.stop(); ac.close(); } catch(e){} }, 120000); } catch(e){}
+  return st;
+}
 function canReel(t){ return /avc1/.test(t || vidType()); } // Instagram needs H.264 MP4
 /* 720x1280 vertical slideshow: intro, each photo with slow zoom + crossfade, end card. Plays in real time while it records. */
 function makeVideo(p, kind, onProgress){
@@ -859,7 +867,7 @@ function makeVideo(p, kind, onProgress){
       x.textAlign = 'left'; brand(1160, 52); x.globalAlpha = 1;
     }
     return new Promise(function(resolve, reject){
-      var stream = c.captureStream(30), chunks = [], rec;
+      var stream = avStream(c), chunks = [], rec;
       try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:3500000}); } catch(e){ reject(e); return; }
       rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
       rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
@@ -882,10 +890,10 @@ function postVideo(p, kind, vid){
   return gfetch(meta.pageId + '/videos', {}, 'POST', fd).then(function(r){
     out.fb = meta.fb === false ? '' : r.id;
     if (!meta.igId || meta.ig === false) return;
-    if (!canReel(vid.type)) throw new Error(SL('Facebook पर वीडियो गया। Instagram के लिए MP4 चाहिए, फ़ोन के Chrome में Admin खोलें।','Video posted on Facebook. Instagram needs MP4: open Admin in Chrome on your phone.'));
+    // Instagram gets Facebook's own converted MP4 (source URL), so any recorded format works
     var tries = 0;
     function src(){ return gfetch(r.id, {fields:'source,status', access_token:tok}).then(function(v){
-      if (v.source) return v.source; if (++tries > 40) throw new Error('Facebook is still processing the video'); return wait(4000).then(src); }); }
+      if (v.source) return v.source; if (++tries > 75) throw new Error('Facebook is still processing the video'); return wait(4000).then(src); }); }
     return src().then(function(url){ return gfetch(meta.igId + '/media', {media_type:'REELS', video_url:url, caption:igCaption(cap, p), share_to_feed:'true', access_token:tok}, 'POST'); })
       .then(function(cr){ var n = 0;
         function ready(){ return gfetch(cr.id, {fields:'status_code', access_token:tok}).then(function(st){
@@ -987,7 +995,7 @@ function makeCameraVideo(p, kind, len, onProgress){
       lower(la);
     }
     return new Promise(function(resolve, reject){
-      var stream = c.captureStream(30), chunks = [], rec;
+      var stream = avStream(c), chunks = [], rec;
       try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:4000000}); } catch(e){ reject(e); return; }
       rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
       rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
