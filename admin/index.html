@@ -1178,18 +1178,30 @@ function videoDialog(p){
   var vSel = el('select',{style:'min-height:40px;border-radius:8px;width:100%;margin-bottom:6px'}, [
     el('option',{value:'none',text:'🔇 '+SL('बिना आवाज़ (सिर्फ़ संगीत)','No voice (music only)')}),
     el('option',{value:'ai',text:'🤖 '+SL('AI लेडी आवाज़ (हिंदी)','AI ladies voice (Hindi)')+((meta && meta.ttsKey) ? '' : SL(' — सेटिंग में key चाहिए',' — needs key in Settings'))}),
-    el('option',{value:'mic',text:'🎙 '+SL('अपनी आवाज़ रिकॉर्ड करें','Record your own voice')}) ]);
+    el('option',{value:'mic',text:'🎙 '+SL('अपनी आवाज़ रिकॉर्ड करें','Record your own voice')}),
+    el('option',{value:'file',text:'📁 '+SL('आवाज़ की फ़ाइल डालें (फ़्री वेबसाइट से बनी)','Upload a voice file (made on a free website)')}) ]);
   vSel.value = (meta && meta.voice === 'ai' && meta.ttsKey) ? 'ai' : 'none';
   var vBox = el('div'), micRec = null, scriptTa = el('textarea',{style:'width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;margin-top:4px'});
   scriptTa.value = voiceScript(p, kind);
   function drawVoice(){ vBox.innerHTML = ''; micRec = null;
     if (vSel.value === 'ai'){ vBox.appendChild(el('p',{'class':'muted small',text:SL('AI यही पढ़ेगी (बदल सकते हैं):','The AI will read this (you can edit):')})); vBox.appendChild(scriptTa); }
-    if (vSel.value === 'mic') micRecorder(vBox, scriptTa.value, function(v){ micRec = v; }); }
+    if (vSel.value === 'mic') micRecorder(vBox, scriptTa.value, function(v){ micRec = v; });
+    if (vSel.value === 'file'){
+      var fst = el('p',{'class':'small muted',html:SL('1. नीचे का टेक्स्ट कॉपी करें। 2. किसी फ़्री वेबसाइट पर (जैसे <b>ttsmaker.com</b>) भाषा <b>Hindi</b> और कोई <b>Female</b> आवाज़ चुनकर पेस्ट करें और MP3 डाउनलोड करें। 3. वह फ़ाइल यहाँ डालें।','1. Copy the text below. 2. On a free website (e.g. <b>ttsmaker.com</b>) pick <b>Hindi</b> and a <b>Female</b> voice, paste, and download the MP3. 3. Add that file here.')});
+      vBox.appendChild(fst); vBox.appendChild(scriptTa);
+      vBox.appendChild(el('div',{'class':'row',style:'margin:6px 0'},[ el('button',{'class':'btn b-sm b-line',type:'button',text:'📋 '+SL('टेक्स्ट कॉपी करें','Copy text'),onclick:function(e){ try { navigator.clipboard.writeText(scriptTa.value); e.target.textContent = '✓ ' + SL('कॉपी हो गया','Copied'); } catch(x){ scriptTa.select(); document.execCommand('copy'); } }}) ]));
+      var fi = el('input',{type:'file',accept:'audio/*,.mp3,.wav,.m4a,.ogg'}), fmsg = el('p',{'class':'small'});
+      fi.onchange = function(){ var f = fi.files[0]; if (!f) return; fmsg.textContent = '…';
+        f.arrayBuffer().then(measure).then(function(v){ micRec = v; fmsg.textContent = SL('आवाज़ जुड़ गई ✓ ','Voice added ✓ ') + Math.round(v.dur) + 's'; var au = el('audio',{controls:'',src:URL.createObjectURL(f),style:'width:100%'}); var o = vBox.querySelector('audio'); if (o) o.remove(); vBox.appendChild(au); },
+          function(){ fmsg.textContent = SL('यह फ़ाइल नहीं चली, MP3 डालें','This file did not play, use an MP3'); }); };
+      vBox.appendChild(el('label',{'class':'btn btn-line b-line',style:'position:relative;overflow:hidden'},[ '🎵 '+SL('आवाज़ की फ़ाइल चुनें','Choose voice file'), Object.assign(fi,{style:'position:absolute;inset:0;opacity:0;cursor:pointer'}) ]));
+      vBox.appendChild(fmsg);
+    } }
   vSel.onchange = drawVoice;
   box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('प्रोडक्ट की जानकारी बोलने वाली आवाज़','Voice-over with product details')})); box.appendChild(vSel); box.appendChild(vBox); drawVoice();
   box.appendChild(el('p',{'class':'muted small',text:SL('कैसा वीडियो चाहिए?','Which kind of video?')}));
   [['cam60', SL('🎥 कैमरा स्टाइल · 1 मिनट','🎥 Camera style · 1 min')], ['cam30', SL('🎥 कैमरा स्टाइल · 30 सेकंड','🎥 Camera style · 30 sec')], ['slide', SL('🖼 स्लाइड शो · 20 सेकंड','🖼 Slideshow · 20 sec')]].forEach(function(o){
-    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ if (vSel.value === 'mic' && !micRec){ alert(SL('पहले आवाज़ रिकॉर्ड करें, या "बिना आवाज़" चुनें','Record the voice first, or choose "No voice"')); return; } var mv = musSel.value, vo = {mode:vSel.value, rec:micRec, text:scriptTa.value}; pickRow.remove(); musSel.disabled = true; vSel.disabled = true; vBox.remove(); box.appendChild(msg); go(o[0], mv, vo); }})); });
+    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ if ((vSel.value === 'mic' || vSel.value === 'file') && !micRec){ alert(SL('पहले आवाज़ रिकॉर्ड करें, या "बिना आवाज़" चुनें','Record the voice first, or choose "No voice"')); return; } var mv = musSel.value, vo = {mode:vSel.value === 'file' ? 'mic' : vSel.value, rec:micRec, text:scriptTa.value}; pickRow.remove(); musSel.disabled = true; vSel.disabled = true; vBox.remove(); box.appendChild(msg); go(o[0], mv, vo); }})); });
   box.appendChild(pickRow);
   msg.textContent = SL('बनते समय यह स्क्रीन खुली रखें, फ़ोन लॉक न करें।','Keep this screen open while it is made; do not lock the phone.');
   function go(style, music, vo){
