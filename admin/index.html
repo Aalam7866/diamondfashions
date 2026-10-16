@@ -442,7 +442,8 @@ function editProduct(p0){
       keep(); var lft = pcsLeft(p);
       postProduct(p, lft !== null && lft > 0 && lft <= ((meta && meta.low) || 3) ? 'low' : 'new').then(function(){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓'); msg.className = 'msg ok'; postB.disabled = false; },
         function(e){ msg.textContent = SL('पोस्ट नहीं हुआ: ','Could not post: ') + (e.message||e); msg.className = 'msg err'; postB.disabled = false; }); }});
-    box.appendChild(el('div',{'class':'row'},[ save, postB, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
+    var vidB = isNew || (p.photos||[]).length < 2 ? null : el('button',{'class':'btn b-line',type:'button',text:'🎬 '+SL('वीडियो बनाएँ','Make video'),onclick:function(){ keep(); videoDialog(p); }});
+    box.appendChild(el('div',{'class':'row'},[ save, postB, vidB, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
     box.appendChild(msg);
     ['e-unit','e-sizes'].forEach(function(id){ var n = document.getElementById(id); if (n) n.addEventListener('change', function(){ keep(); render(); }); });
   }
@@ -717,7 +718,7 @@ function socialWatch(){
     if (!job) return;
     socialBusy[p.id] = true;
     socialQueue = socialQueue.then(function(){
-      return db.collection('products').doc(p.id).update(mark).then(function(){ return postProduct(p, job); })
+      return db.collection('products').doc(p.id).update(mark).then(function(){ return (job === 'new' && meta.video !== false && (p.photos||[]).length >= 3 && vidType()) ? makeVideo(p, job).then(function(vd){ return postVideo(p, job, vd); }) : postProduct(p, job); })
         .then(function(){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram')); },
               function(e){ toast('⚠ ' + p.name + ': ' + (e.message||e), true); });
     }).then(function(){ delete socialBusy[p.id]; });
@@ -736,17 +737,18 @@ function drawSocial(main){
     var chk = function(key, label){ return el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:meta[key]!==false?'checked':null,onchange:function(e){ var u = {}; u[key] = e.target.checked; metaRef().set(u,{merge:true}); }}), ' '+label ]); };
     card.appendChild(chk('autoNew', SL('नया सामान (फ़ोटो के साथ) सेव होते ही पोस्ट करें','Post new items (with a photo) as soon as they are saved')));
     card.appendChild(chk('autoLow', SL('जब किसी सामान के कम पीस बचें तो पोस्ट करें','Post when an item is running low')));
+    card.appendChild(chk('video', SL('3 या ज़्यादा फ़ोटो हों तो फ़ोटो की जगह वीडियो (Reel) बनाकर पोस्ट करें','If an item has 3 or more photos, make and post a video (Reel) instead of a photo')));
     card.appendChild(chk('fb', SL('Facebook पेज पर पोस्ट','Post on Facebook Page')));
     card.appendChild(chk('ig', SL('Instagram पर पोस्ट','Post on Instagram')));
     card.appendChild(el('div',{'class':'field',style:'max-width:260px;margin-top:8px'},[ el('label',{text:SL('कितने पीस बचने पर पोस्ट हो','Post when pieces left are at or below')}),
       el('input',{inputmode:'numeric',value:meta.low||3,onchange:function(e){ metaRef().set({low:Math.max(1, parseInt(e.target.value,10)||3)},{merge:true}); }}) ]));
-    card.appendChild(el('p',{'class':'muted small',text:SL('हर सामान एक बार "नया माल" के रूप में पोस्ट होता है। कम स्टॉक वाली पोस्ट दोबारा तभी होगी जब स्टॉक बढ़ाकर फिर कम हो। अपने-आप पोस्ट तभी होती है जब यह Admin खुला हो (ऑर्डर मंज़ूर करते या सामान सेव करते समय)।','Each item is posted once as a new arrival. A low-stock post repeats only after you restock and it runs low again. Auto-posting runs while this Admin is open (when you save items or accept orders).')}));
+    card.appendChild(el('p',{'class':'muted small',text:SL('हर सामान एक बार "नया माल" के रूप में पोस्ट होता है (3+ फ़ोटो हों तो वीडियो बनकर, इसमें 20–30 सेकंड लगते हैं)। कम स्टॉक वाली पोस्ट दोबारा तभी होगी जब स्टॉक बढ़ाकर फिर कम हो। अपने-आप पोस्ट तभी होती है जब यह Admin खुला हो (ऑर्डर मंज़ूर करते या सामान सेव करते समय)।','Each item is posted once as a new arrival (as a video when it has 3+ photos; making it takes 20–30 seconds). A low-stock post repeats only after you restock and it runs low again. Auto-posting runs while this Admin is open (when you save items or accept orders).')}));
     card.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-line b-sm',type:'button',text:SL('कनेक्शन हटाएँ','Disconnect'),onclick:function(){ if (confirm(SL('Facebook/Instagram कनेक्शन हटाएँ?','Disconnect Facebook/Instagram?'))) metaRef().set({pageToken:'', pageId:'', igId:''},{merge:true}); }}) ]));
     var log = meta.log || [];
     if (log.length){
       card.appendChild(el('h4',{style:'margin:14px 0 6px',text:SL('हाल की पोस्ट','Recent posts')}));
       log.slice(0, 12).forEach(function(g){ card.appendChild(el('div',{'class':'small',style:'padding:5px 0;border-bottom:1px dashed var(--line)'},[
-        el('b',{text:(g.ok?'✅ ':'⚠ ')+(g.kind==='low'?SL('कम स्टॉक','Low stock'):SL('नया माल','New'))+' · '}), (g.code||'')+' '+(g.name||'')+' · '+when(g.at),
+        el('b',{text:(g.ok?'✅ ':'⚠ ')+(g.video?'🎬 ':'')+(g.kind==='low'?SL('कम स्टॉक','Low stock'):SL('नया माल','New'))+' · '}), (g.code||'')+' '+(g.name||'')+' · '+when(g.at),
         g.ok ? el('span',null,[ g.fb ? el('a',{href:'https://facebook.com/'+g.fb,target:'_blank',text:' FB'}) : null, g.ig ? el('span',{text:' · IG ✓'}) : null ]) : el('div',{style:'color:var(--bad)',text:g.err||''}) ])); });
     }
     return;
@@ -778,6 +780,138 @@ function drawSocial(main){
       }).catch(function(e){ btn.disabled = false; m.textContent = SL('नहीं जुड़ा: ','Could not connect: ') + (e.message||e); m.className = 'msg err'; });
   }});
   card.appendChild(btn); card.appendChild(pick); card.appendChild(m);
+}
+
+/* ---------- product video (Reel) from photos ---------- */
+var VID_TYPES = ['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1.4D401F','video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+function vidType(){ if (!window.MediaRecorder) return ''; for (var i = 0; i < VID_TYPES.length; i++) if (MediaRecorder.isTypeSupported(VID_TYPES[i])) return VID_TYPES[i]; return ''; }
+function canReel(t){ return /avc1/.test(t || vidType()); } // Instagram needs H.264 MP4
+/* 720x1280 vertical slideshow: intro, each photo with slow zoom + crossfade, end card. Plays in real time while it records. */
+function makeVideo(p, kind, onProgress){
+  var type = vidType();
+  if (!type) return Promise.reject(new Error(SL('यह ब्राउज़र वीडियो नहीं बना सकता। Chrome में Admin खोलें।','This browser cannot make videos. Open Admin in Chrome.')));
+  return Promise.all((p.photos||[]).slice(0, 10).map(loadImg)).then(function(imgs){
+    imgs = imgs.filter(Boolean);
+    if (!imgs.length) throw new Error(SL('फ़ोटो नहीं है','No photos'));
+    var W = 720, H = 1280, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
+    var INTRO = 1.6, PER = 2.3, FADE = .5, END = 3.2, total = INTRO + imgs.length * PER + END;
+    var left = pcsLeft(p);
+    var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') + (p.unit === 'm' ? ' / m' : '') : 'Ask for price';
+    var tag = kind === 'low' ? ('ONLY ' + left + ' LEFT · सिर्फ़ ' + left + ' बचे') : 'NEW ARRIVAL · नया माल';
+    function cover(im, zoom, alpha){
+      x.globalAlpha = alpha;
+      var k = Math.max(W/im.width, H/im.height) * 1.1, w = im.width*k, h = im.height*k;
+      x.filter = 'blur(28px) brightness(.55)'; x.drawImage(im, (W-w)/2, (H-h)/2, w, h); x.filter = 'none';
+      var f = Math.min(W/im.width, (H-150)/im.height) * zoom, fw = im.width*f, fh = im.height*f;
+      x.drawImage(im, (W-fw)/2, Math.max(0, (H-330-fh)/2 + 40), fw, fh);
+      x.globalAlpha = 1;
+    }
+    function band(a){
+      x.globalAlpha = a; var g = x.createLinearGradient(0, H-330, 0, H); g.addColorStop(0,'rgba(11,22,38,0)'); g.addColorStop(.35,'rgba(11,22,38,.85)'); g.addColorStop(1,'rgba(11,22,38,.97)'); x.fillStyle = g; x.fillRect(0, H-330, W, 330);
+      x.fillStyle = kind === 'low' ? '#C0392B' : '#CDAA5C'; x.font = 'bold 26px Arial, sans-serif'; var tw = x.measureText(tag).width + 36;
+      x.beginPath(); if (x.roundRect) x.roundRect(36, H-250, tw, 46, 23); else x.rect(36, H-250, tw, 46); x.fill();
+      x.fillStyle = kind === 'low' ? '#fff' : '#0B1626'; x.fillText(tag, 54, H-218);
+      x.fillStyle = '#fff'; x.font = 'bold 40px Arial, sans-serif'; wrapText(x, p.name, 36, H-150, W-72, 46, 1);
+      x.fillStyle = '#CDAA5C'; x.font = 'bold 44px Arial, sans-serif'; x.fillText(price, 36, H-90);
+      if (p.mrp && p.price && p.mrp > p.price){ var pw = x.measureText(price).width; x.font = '28px Arial, sans-serif'; x.fillStyle = '#9AA3B2'; var mt = '₹' + Number(p.mrp).toLocaleString('en-IN'); x.fillText(mt, 56+pw, H-90); x.fillRect(56+pw, H-100, x.measureText(mt).width, 3);
+        x.fillStyle = '#4CC27A'; x.font = 'bold 28px Arial, sans-serif'; x.fillText(Math.round((1-p.price/p.mrp)*100)+'% OFF', 76+pw+x.measureText(mt).width, H-90); }
+      x.fillStyle = '#D3CEC2'; x.font = '22px Arial, sans-serif'; x.fillText('diamondfashions.in · WhatsApp ' + (cfg.display || '+91 88741 29818'), 36, H-40);
+      x.globalAlpha = 1;
+    }
+    function brand(y, size){ x.textAlign = 'center'; x.fillStyle = '#F2EEE6'; x.font = '600 ' + size + 'px Georgia, serif'; x.fillText('DIAMOND', W/2, y); x.fillStyle = '#CDAA5C'; x.font = (size*.42|0) + 'px Arial, sans-serif'; x.fillText('F A S H I O N S', W/2, y + size*.62); x.textAlign = 'left'; }
+    function frame(t){
+      x.fillStyle = '#0B1626'; x.fillRect(0, 0, W, H);
+      if (t < INTRO){ // intro card
+        var a = Math.min(1, t/.4); x.globalAlpha = a; brand(H/2 - 60, 84);
+        x.textAlign = 'center'; x.fillStyle = kind === 'low' ? '#E0787B' : '#CDAA5C'; x.font = 'bold 34px Arial, sans-serif'; x.fillText(kind === 'low' ? 'HURRY! LIMITED STOCK' : 'NEW ARRIVAL', W/2, H/2 + 80);
+        x.fillStyle = '#D3CEC2'; x.font = '28px Arial, sans-serif'; x.fillText(kind === 'low' ? 'जल्दी करें, कुछ ही पीस बचे' : 'नया माल आ गया है', W/2, H/2 + 128); x.textAlign = 'left'; x.globalAlpha = 1;
+        // fade into first photo
+        if (t > INTRO - FADE) cover(imgs[0], 1, (t - (INTRO - FADE)) / FADE);
+        return;
+      }
+      var tp = t - INTRO, i = Math.floor(tp / PER);
+      if (i < imgs.length){
+        var lt = tp - i*PER, z = 1 + .08 * (lt / PER);
+        cover(imgs[i], z, 1);
+        if (lt > PER - FADE){ var nx = imgs[i+1]; var fa = (lt - (PER - FADE)) / FADE;
+          if (nx) cover(nx, 1, fa); else { x.globalAlpha = fa; x.fillStyle = '#0B1626'; x.fillRect(0,0,W,H); x.globalAlpha = 1; } }
+        band(Math.min(1, tp/.5));
+        // photo counter dots
+        for (var d = 0; d < imgs.length; d++){ x.fillStyle = d === i ? '#CDAA5C' : 'rgba(255,255,255,.5)'; x.beginPath(); x.arc(W/2 - (imgs.length-1)*9 + d*18, 40, d === i ? 6 : 4, 0, 7); x.fill(); }
+        return;
+      }
+      // end card
+      var et = tp - imgs.length*PER, ea = Math.min(1, et/.4); x.globalAlpha = ea;
+      var thumb = imgs[0], tw = 360, th = 450, k = Math.max(tw/thumb.width, th/thumb.height);
+      x.save(); x.beginPath(); if (x.roundRect) x.roundRect((W-tw)/2, 150, tw, th, 20); else x.rect((W-tw)/2, 150, tw, th); x.clip();
+      x.drawImage(thumb, (W - thumb.width*k)/2, 150 + (th - thumb.height*k)/2, thumb.width*k, thumb.height*k); x.restore();
+      x.strokeStyle = '#CDAA5C'; x.lineWidth = 4; x.strokeRect((W-tw)/2 - 2, 148, tw + 4, th + 4);
+      x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = 'bold 44px Arial, sans-serif'; x.fillText(p.name.length > 26 ? p.name.slice(0,25)+'…' : p.name, W/2, 680);
+      x.fillStyle = '#CDAA5C'; x.font = 'bold 60px Arial, sans-serif'; x.fillText(price, W/2, 760);
+      if (p.mrp && p.price && p.mrp > p.price){ x.fillStyle = '#4CC27A'; x.font = 'bold 32px Arial, sans-serif'; x.fillText('MRP ₹' + Number(p.mrp).toLocaleString('en-IN') + ' · ' + Math.round((1-p.price/p.mrp)*100) + '% OFF', W/2, 812); }
+      x.fillStyle = '#D3CEC2'; x.font = '28px Arial, sans-serif'; x.fillText('Code: ' + p.code + (p.sizes ? '  ·  Sizes: ' + p.sizes : ''), W/2, 866);
+      x.fillStyle = '#CDAA5C'; x.beginPath(); if (x.roundRect) x.roundRect(110, 920, W-220, 76, 38); else x.rect(110, 920, W-220, 76); x.fill();
+      x.fillStyle = '#0B1626'; x.font = 'bold 32px Arial, sans-serif'; x.fillText('Order: diamondfashions.in', W/2, 970);
+      x.fillStyle = '#F2EEE6'; x.font = '30px Arial, sans-serif'; x.fillText('WhatsApp ' + (cfg.display || '+91 88741 29818'), W/2, 1050);
+      x.textAlign = 'left'; brand(1160, 52); x.globalAlpha = 1;
+    }
+    return new Promise(function(resolve, reject){
+      var stream = c.captureStream(30), chunks = [], rec;
+      try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:3500000}); } catch(e){ reject(e); return; }
+      rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
+      frame(0); rec.start(500);
+      var t0 = performance.now(), timer = setInterval(function(){
+        var t = (performance.now() - t0) / 1000;
+        if (t >= total){ clearInterval(timer); frame(total - .01); setTimeout(function(){ rec.stop(); }, 150); return; }
+        frame(t); if (onProgress) onProgress(Math.min(99, Math.round(t / total * 100)));
+      }, 1000/30);
+    });
+  });
+}
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+/* upload the video to the Facebook Page, then reuse it as an Instagram Reel */
+function postVideo(p, kind, vid){
+  if (!meta || !meta.pageToken) return Promise.reject(new Error(SL('पहले Facebook जोड़ें (सेटिंग में)', 'Connect Facebook first (in Settings)')));
+  var tok = meta.pageToken, cap = postCaption(p, kind, pcsLeft(p)), out = {fb:'', ig:''};
+  var fd = new FormData(); fd.append('source', vid.blob, /mp4/.test(vid.type) ? 'reel.mp4' : 'reel.webm');
+  fd.append('description', cap); fd.append('published', meta.fb === false ? 'false' : 'true'); fd.append('access_token', tok);
+  return gfetch(meta.pageId + '/videos', {}, 'POST', fd).then(function(r){
+    out.fb = meta.fb === false ? '' : r.id;
+    if (!meta.igId || meta.ig === false) return;
+    if (!canReel(vid.type)) throw new Error(SL('Facebook पर वीडियो गया। Instagram के लिए MP4 चाहिए, फ़ोन के Chrome में Admin खोलें।','Video posted on Facebook. Instagram needs MP4: open Admin in Chrome on your phone.'));
+    var tries = 0;
+    function src(){ return gfetch(r.id, {fields:'source,status', access_token:tok}).then(function(v){
+      if (v.source) return v.source; if (++tries > 40) throw new Error('Facebook is still processing the video'); return wait(4000).then(src); }); }
+    return src().then(function(url){ return gfetch(meta.igId + '/media', {media_type:'REELS', video_url:url, caption:igCaption(cap, p), share_to_feed:'true', access_token:tok}, 'POST'); })
+      .then(function(cr){ var n = 0;
+        function ready(){ return gfetch(cr.id, {fields:'status_code', access_token:tok}).then(function(st){
+          if (st.status_code === 'FINISHED') return; if (st.status_code === 'ERROR' || ++n > 45) throw new Error('Instagram could not process the video');
+          return wait(4000).then(ready); }); }
+        return ready().then(function(){ return gfetch(meta.igId + '/media_publish', {creation_id:cr.id, access_token:tok}, 'POST'); }); })
+      .then(function(pub){ out.ig = pub.id; });
+  }).then(function(){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, video:true, fb:out.fb, ig:out.ig, ok:true}); return out; },
+     function(e){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, video:true, fb:out.fb, ok:false, err:String(e.message||e).slice(0,200)}); throw e; });
+}
+/* preview window: make, watch, download, post */
+function videoDialog(p){
+  var sc = el('div',{'class':'scrim'}), box = el('div',{'class':'modal',style:'max-width:460px'}); sc.appendChild(box); document.body.appendChild(sc);
+  var msg = el('p',{'class':'msg',text:SL('वीडियो बन रहा है… यह स्क्रीन खुली रखें','Making the video… keep this screen open')});
+  var close = function(){ sc.remove(); };
+  box.appendChild(el('div',{'class':'row',style:'justify-content:space-between'},[ el('h3',{style:'margin:0',text:'🎬 '+p.name}), el('button',{'class':'btn b-line b-sm',type:'button',text:'×',onclick:close}) ]));
+  box.appendChild(msg);
+  var lft = pcsLeft(p), kind = lft !== null && lft > 0 && lft <= ((meta && meta.low) || 3) ? 'low' : 'new';
+  makeVideo(p, kind, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }).then(function(vid){
+    var url = URL.createObjectURL(vid.blob);
+    msg.textContent = SL('वीडियो तैयार ✓','Video ready ✓') + ' (' + Math.round(vid.blob.size/1024/1024*10)/10 + ' MB)'; msg.className = 'msg ok';
+    box.appendChild(el('video',{src:url,controls:'',autoplay:'',muted:'',playsinline:'',style:'width:100%;max-height:60vh;border-radius:10px;background:#000;margin:8px 0'}));
+    var acts = el('div',{'class':'row'});
+    acts.appendChild(el('a',{'class':'btn b-line',href:url,download:p.code + (/mp4/.test(vid.type) ? '.mp4' : '.webm'),text:SL('⬇ डाउनलोड (WhatsApp स्टेटस के लिए)','⬇ Download (for WhatsApp status)')}));
+    if (meta && meta.pageToken){ var pb = el('button',{'class':'btn b-gold',type:'button',text:'📣 '+SL('FB/Instagram पर पोस्ट','Post to FB / Instagram'),onclick:function(){
+      pb.disabled = true; msg.textContent = SL('अपलोड हो रहा है… 1–3 मिनट','Uploading… 1–3 minutes'); msg.className = 'msg';
+      postVideo(p, kind, vid).then(function(){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓'); msg.className = 'msg ok'; }, function(e){ msg.textContent = (e.message||e); msg.className = 'msg err'; pb.disabled = false; }); }}); acts.appendChild(pb); }
+    box.appendChild(acts);
+  }, function(e){ msg.textContent = e.message || e; msg.className = 'msg err'; });
 }
 
 /* ---------- live data ---------- */
