@@ -486,7 +486,8 @@ function ytId(u){ var m = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|sho
 function drawBanners(main){
   main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin-bottom:6px'},[ el('h2',{style:'margin:0',text:L('बैनर / विज्ञापन')}), el('button',{'class':'btn b-gold',type:'button',text:L('+ नया बैनर'),onclick:function(){ editBanner(null); }}) ]));
   main.appendChild(el('p',{'class':'muted small',text:L('ये बैनर वेबसाइट पर सबसे ऊपर स्लाइड होते हैं। फ़ोटो या वीडियो (YouTube या MP4 लिंक) लगा सकते हैं। कोई बैनर न हो तो वेबसाइट अपने-आप बैनर दिखाती है।')}));
-  if (!banners.length){ main.appendChild(el('p',{'class':'muted',text:L('अभी कोई बैनर नहीं।')})); return; }
+  if (!banners.length) main.appendChild(el('p',{'class':'muted',text:L('अभी आपका कोई बैनर नहीं।')}));
+  drawDefBanners(main);
   banners.forEach(function(b, i){
     var prev = el('div',{style:'aspect-ratio:16/6;border-radius:10px;overflow:hidden;background:#0B1626;position:relative;margin-bottom:8px'});
     if (b.type === 'video' && ytId(b.video)) prev.appendChild(el('img',{src:'https://i.ytimg.com/vi/'+ytId(b.video)+'/hqdefault.jpg',alt:'',style:'width:100%;height:100%;object-fit:cover'}));
@@ -502,6 +503,21 @@ function drawBanners(main){
       el('div',{'class':'row'},[ el('button',{'class':'btn b-sm b-line',type:'button',text:'↑ '+L('ऊपर'),onclick:function(){ move(-1); }}), el('button',{'class':'btn b-sm b-line',type:'button',text:'↓ '+L('नीचे'),onclick:function(){ move(1); }}),
         el('button',{'class':'btn b-sm b-gold',type:'button',text:L('बदलें'),onclick:function(){ editBanner(b); }}),
         el('button',{'class':'btn b-sm b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(L('बैनर हटाएँ?'))) db.collection('config').doc(b._id).delete(); }}) ]) ]) ]));
+  });
+}
+var DEF_BNR = [['d1','ऑफ़र बैनर','सबसे ज़्यादा छूट वाले सामान की फ़ोटो के साथ'],['d2','सिलाई बुकिंग बैनर','“अपने नाप से सिलवाएँ”'],['d3','कपड़ा (मीटर) बैनर','कपड़े की फ़ोटो और दाम के साथ'],['d4','आसान वापसी बैनर','“{d} दिन में वापसी”']];
+function drawDefBanners(main){
+  var hide = (cfg && cfg.hideBnr) || [];
+  main.appendChild(el('h3',{style:'margin:18px 0 4px',text:L('वेबसाइट के अपने बैनर')}));
+  main.appendChild(el('p',{'class':'muted small',text:L('ये बैनर वेबसाइट अपने-आप बनाती है और आपके बैनरों के बाद दिखते हैं। नया बैनर जोड़ने से ये नहीं हटते — सिर्फ़ “हटाएँ” दबाने पर हटते हैं।')}));
+  DEF_BNR.forEach(function(d){
+    var off = hide.indexOf(d[0]) >= 0;
+    var setHide = function(h){ var n = hide.filter(function(k){ return k !== d[0]; }); if (h) n.push(d[0]); db.collection('config').doc('shop').set({hideBnr:n}, {merge:true}); };
+    main.appendChild(el('div',{'class':'card row',style:'justify-content:space-between;'+(off?'opacity:.6':'')},[
+      el('div',{},[ el('b',{text:L(d[1])}), el('div',{'class':'muted small',text:L(d[2])}) ]),
+      el('div',{'class':'row'},[ el('span',{'class':'st '+(off?'bad':'ok'),text:off?L('हटाया हुआ'):L('चालू')}),
+        off ? el('button',{'class':'btn b-sm b-gold',type:'button',text:L('वापस लाएँ'),onclick:function(){ setHide(false); }})
+            : el('button',{'class':'btn b-sm b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(L('यह बैनर हटाएँ?'))) setHide(true); }}) ]) ]));
   });
 }
 function editBanner(b0){
@@ -1486,7 +1502,7 @@ function listen(){
   unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); socialWatch(); }));
   unsubs.push(metaRef().onSnapshot(function(s){ meta = s.exists ? s.data() : null; metaLoaded = true; if (tab === 'settings') redraw(); socialWatch(); }, function(){ metaLoaded = false; }));
   unsubs.push(db.collection('track').onSnapshot(function(s){ track = {}; s.docs.forEach(function(d){ track[d.id] = d.data(); }); }));
-  unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ cfg = s.exists ? s.data() : {}; }));
+  unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ cfg = s.exists ? s.data() : {}; if (tab === 'banners') redraw(); }));
   unsubs.push(db.collection('reviews').orderBy('created','desc').limit(500).onSnapshot(function(s){ reviews = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'reviews') redraw(); }, function(){}));
   unsubs.push(db.collection('config').onSnapshot(function(s){ banners = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); if (tab === 'banners') redraw(); }));
 }
