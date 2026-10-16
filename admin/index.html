@@ -741,6 +741,9 @@ function drawSocial(main){
     var vs = el('select',{style:'min-height:40px;border-radius:8px;margin:2px 0 8px 26px',onchange:function(e){ metaRef().set({vstyle:e.target.value},{merge:true}); }},
       [['cam60',SL('कैमरा स्टाइल वीडियो · 1 मिनट','Camera-style video · 1 min')],['cam30',SL('कैमरा स्टाइल वीडियो · 30 सेकंड','Camera-style video · 30 sec')],['slide',SL('स्लाइड शो · 20 सेकंड','Slideshow · 20 sec')]].map(function(o){ return el('option',{value:o[0],text:o[1]}); }));
     vs.value = meta.vstyle || 'cam60'; card.appendChild(vs);
+    var ms = el('select',{style:'min-height:40px;border-radius:8px;margin:0 0 8px 26px',onchange:function(e){ metaRef().set({music:e.target.value},{merge:true}); }},
+      MUSIC_STYLES.map(function(m){ return el('option',{value:m[0],text:'🎵 '+(LANG==='en'?m[1]:m[2])}); }));
+    ms.value = meta.music || 'festive'; card.appendChild(ms);
     card.appendChild(chk('fb', SL('Facebook पेज पर पोस्ट','Post on Facebook Page')));
     card.appendChild(chk('ig', SL('Instagram पर पोस्ट','Post on Instagram')));
     card.appendChild(el('div',{'class':'field',style:'max-width:260px;margin-top:8px'},[ el('label',{text:SL('कितने पीस बचने पर पोस्ट हो','Post when pieces left are at or below')}),
@@ -788,12 +791,73 @@ function drawSocial(main){
 /* ---------- product video (Reel) from photos ---------- */
 var VID_TYPES = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1.4D401F','video/mp4;codecs=avc1','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
 function vidType(){ if (!window.MediaRecorder) return ''; for (var i = 0; i < VID_TYPES.length; i++) if (MediaRecorder.isTypeSupported(VID_TYPES[i])) return VID_TYPES[i]; return ''; }
-/* canvas video + a silent sound track (Instagram rejects some videos that have no audio at all) */
-function avStream(c){
+/* ---------- original background music, made live in the browser (no copyright: nothing is copied) ---------- */
+var MUSIC_STYLES = [['festive', 'Festive (tabla + sitar style)', 'त्योहार (तबला + सितार जैसा)'], ['upbeat', 'Upbeat (party)', 'तेज़ (पार्टी)'], ['soft', 'Soft (calm)', 'धीमा (शांत)'], ['none', 'No music', 'बिना संगीत']];
+function startMusic(ac, out, style, total){
+  if (!style || style === 'none') return function(){};
+  var master = ac.createGain(); master.gain.value = 0; master.connect(out);
+  var t0 = ac.currentTime + .05;
+  master.gain.setValueAtTime(0, t0); master.gain.linearRampToValueAtTime(.8, t0 + 1.5);
+  master.gain.setValueAtTime(.8, t0 + Math.max(2, total - 2.5)); master.gain.linearRampToValueAtTime(0, t0 + total);
+  // echo for plucked notes
+  var dl = ac.createDelay(1), fb = ac.createGain(), wet = ac.createGain(); dl.delayTime.value = .32; fb.gain.value = .3; wet.gain.value = .25;
+  dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(master);
+  var noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), nd = noiseBuf.getChannelData(0); for (var i = 0; i < nd.length; i++) nd[i] = Math.random()*2 - 1;
+  function hz(semi, base){ return (base || 220) * Math.pow(2, semi/12); }
+  function env(g, t, a, peak, d){ g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+  function tone(type, f, t, a, peak, d, echo, fEnd){ var o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (fEnd) o.frequency.exponentialRampToValueAtTime(fEnd, t + d*.6);
+    env(g, t, a, peak, d); o.connect(g); g.connect(master); if (echo) g.connect(dl); o.start(t); o.stop(t + a + d + .05); }
+  function noise(t, f, q, peak, d, type){ var s = ac.createBufferSource(), b = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = noiseBuf; b.type = type || 'bandpass'; b.frequency.value = f; b.Q.value = q;
+    env(g, t, .002, peak, d); s.connect(b); b.connect(g); g.connect(master); s.start(t, Math.random()*.5); s.stop(t + d + .05); }
+  function pad(fs, t, d, peak){ fs.forEach(function(f){ var o = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = (Math.random()-.5)*14;
+    lp.type = 'lowpass'; lp.frequency.value = 900; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + d*.3); g.gain.linearRampToValueAtTime(0.0001, t + d);
+    o.connect(lp); lp.connect(g); g.connect(master); o.start(t); o.stop(t + d + .05); }); }
+  var bpm = style === 'upbeat' ? 118 : style === 'soft' ? 78 : 96, beat = 60 / bpm, step = beat / 2;
+  // tabla bols for an 8-beat keherwa: dha ge na ti na ka dhi na
+  var bols = ['dha','ge','na','ti','na','ka','dhi','na'];
+  var scale = style === 'festive' ? [0,2,4,5,7,9,10,12,14,16] : [0,2,4,7,9,12,14,16]; // khamaj-like / major pentatonic
+  var prog = [[0,4,7],[7,11,14],[9,12,16],[5,9,12]]; // I V vi IV
+  var key = style === 'soft' ? 196 : 220, mel = 4, n = 0, next = t0, stopAt = t0 + total, timer;
+  function schedule(){
+    while (next < ac.currentTime + 1.5 && next < stopAt){
+      if (next < ac.currentTime - .05){ n++; next += step; continue; } // fell behind: skip instead of a burst
+      var s = n % 16, bar = Math.floor(n / 16), t = next, ch = prog[bar % 4];
+      if (style === 'festive'){
+        if (n % 64 === 0){ pad([hz(-12,key), hz(-5,key)], t, step*64, .045); } // tanpura-like drone (Sa + Pa)
+        if (s % 2 === 0){ var bol = bols[(s/2) % 8];
+          if (bol === 'dha' || bol === 'dhi' || bol === 'ge') tone('sine', 110, t, .005, .55, .35, false, 62);        // bayan (low)
+          if (bol !== 'ge') tone('sine', bol === 'ti' || bol === 'ka' ? 880 : 660, t, .002, .28, .16);              // dayan ring
+          if (bol === 'na' || bol === 'ti') noise(t, 3200, 6, .08, .05); }
+        if (n % 4 === 0 && Math.random() < .8){ mel = Math.max(0, Math.min(scale.length-1, mel + [-2,-1,-1,0,1,1,2][Math.random()*7|0]));
+          var f = hz(scale[mel], key*2); tone('triangle', f, t, .004, .22, beat*1.3, true); tone('sawtooth', f*2, t, .002, .03, .25, true); } // sitar-ish pluck
+      } else if (style === 'upbeat'){
+        if (s % 4 === 0) tone('sine', 140, t, .002, .9, .28, false, 45);                 // kick
+        if (s === 4 || s === 12) noise(t, 1800, .8, .35, .14);                          // clap
+        if (s % 2 === 1) noise(t, 8000, 1, .12, .04, 'highpass');                       // hi-hat
+        if (s === 0) pad(ch.map(function(c){ return hz(c, key); }), t, step*16, .035);
+        if (s % 2 === 0) tone('square', hz(ch[(s/2) % 3] + 12, key), t, .003, .06, step*.9, true); // arpeggio
+        if (s === 0 || s === 6 || s === 10) tone('triangle', hz(ch[0] - 12, key), t, .005, .3, step*1.6);
+      } else { // soft
+        if (s === 0) pad(ch.map(function(c){ return hz(c, key); }), t, step*16, .05);
+        if (s % 3 === 0 && Math.random() < .7){ mel = Math.max(0, Math.min(scale.length-1, mel + [-1,0,1,2,-2][Math.random()*5|0])); tone('sine', hz(scale[mel], key*2), t, .01, .18, beat*2, true); }
+        if (s === 0) tone('sine', hz(ch[0] - 12, key), t, .02, .25, beat*3);
+      }
+      n++; next += step;
+    }
+  }
+  schedule(); timer = setInterval(schedule, 100);
+  return function(){ clearInterval(timer); try { master.disconnect(); } catch(e){} };
+}
+var VMUSIC = 'festive';
+/* canvas video + background music (or a silent track: Instagram rejects some videos with no audio) */
+function avStream(c, total){
   var st = c.captureStream(30);
-  try { var AC = window.AudioContext || window.webkitAudioContext, ac = new AC(), o = ac.createOscillator(), g = ac.createGain(), d = ac.createMediaStreamDestination();
-    g.gain.value = 0.0001; o.connect(g); g.connect(d); o.start(); if (ac.resume) ac.resume();
-    d.stream.getAudioTracks().forEach(function(t){ st.addTrack(t); }); setTimeout(function(){ try { o.stop(); ac.close(); } catch(e){} }, 120000); } catch(e){}
+  try { var AC = window.AudioContext || window.webkitAudioContext, ac = new AC(), d = ac.createMediaStreamDestination(), stop;
+    if (ac.resume) ac.resume();
+    if (VMUSIC && VMUSIC !== 'none') stop = startMusic(ac, d, VMUSIC, total);
+    else { var o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(d); o.start(); stop = function(){ try { o.stop(); } catch(e){} }; }
+    d.stream.getAudioTracks().forEach(function(t){ st.addTrack(t); });
+    setTimeout(function(){ try { stop(); ac.close(); } catch(e){} }, (total + 3) * 1000); } catch(e){}
   return st;
 }
 function canReel(t){ return /avc1/.test(t || vidType()); } // Instagram needs H.264 MP4
@@ -867,7 +931,7 @@ function makeVideo(p, kind, onProgress){
       x.textAlign = 'left'; brand(1160, 52); x.globalAlpha = 1;
     }
     return new Promise(function(resolve, reject){
-      var stream = avStream(c), chunks = [], rec;
+      var stream = avStream(c, total), chunks = [], rec;
       try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:3500000}); } catch(e){ reject(e); return; }
       rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
       rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
@@ -995,7 +1059,7 @@ function makeCameraVideo(p, kind, len, onProgress){
       lower(la);
     }
     return new Promise(function(resolve, reject){
-      var stream = avStream(c), chunks = [], rec;
+      var stream = avStream(c, total), chunks = [], rec;
       try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:4000000}); } catch(e){ reject(e); return; }
       rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
       rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
@@ -1008,8 +1072,9 @@ function makeCameraVideo(p, kind, len, onProgress){
     });
   });
 }
-function makeAnyVideo(p, kind, style, onProgress){
+function makeAnyVideo(p, kind, style, onProgress, music){
   style = style || (meta && meta.vstyle) || 'cam60';
+  VMUSIC = music || (meta && meta.music) || 'festive';
   if (style === 'cam60') return makeCameraVideo(p, kind, 60, onProgress);
   if (style === 'cam30') return makeCameraVideo(p, kind, 30, onProgress);
   return makeVideo(p, kind, onProgress);
@@ -1023,13 +1088,16 @@ function videoDialog(p){
   box.appendChild(el('div',{'class':'row',style:'justify-content:space-between'},[ el('h3',{style:'margin:0',text:'🎬 '+p.name}), el('button',{'class':'btn b-line b-sm',type:'button',text:'×',onclick:close}) ]));
   var lft = pcsLeft(p), kind = lft !== null && lft > 0 && lft <= ((meta && meta.low) || 3) ? 'low' : 'new';
   var pickRow = el('div',{'class':'row',style:'margin:8px 0'});
+  var musSel = el('select',{style:'min-height:40px;border-radius:8px;width:100%;margin-bottom:6px'}, MUSIC_STYLES.map(function(m){ return el('option',{value:m[0],text:'🎵 '+(LANG==='en'?m[1]:m[2])}); }));
+  musSel.value = (meta && meta.music) || 'festive';
+  box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('संगीत (हमारा अपना बनाया, कॉपीराइट-फ़्री)','Music (made by us, copyright-free)')})); box.appendChild(musSel);
   box.appendChild(el('p',{'class':'muted small',text:SL('कैसा वीडियो चाहिए?','Which kind of video?')}));
   [['cam60', SL('🎥 कैमरा स्टाइल · 1 मिनट','🎥 Camera style · 1 min')], ['cam30', SL('🎥 कैमरा स्टाइल · 30 सेकंड','🎥 Camera style · 30 sec')], ['slide', SL('🖼 स्लाइड शो · 20 सेकंड','🖼 Slideshow · 20 sec')]].forEach(function(o){
-    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ pickRow.remove(); box.appendChild(msg); go(o[0]); }})); });
+    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ var mv = musSel.value; pickRow.remove(); musSel.disabled = true; box.appendChild(msg); go(o[0], mv); }})); });
   box.appendChild(pickRow);
   msg.textContent = SL('बनते समय यह स्क्रीन खुली रखें, फ़ोन लॉक न करें।','Keep this screen open while it is made; do not lock the phone.');
-  function go(style){
-  makeAnyVideo(p, kind, style, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }).then(function(vid){
+  function go(style, music){
+  makeAnyVideo(p, kind, style, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }, music).then(function(vid){
     var url = URL.createObjectURL(vid.blob);
     msg.textContent = SL('वीडियो तैयार ✓','Video ready ✓') + ' (' + Math.round(vid.blob.size/1024/1024*10)/10 + ' MB)'; msg.className = 'msg ok';
     box.appendChild(el('video',{src:url,controls:'',autoplay:'',muted:'',playsinline:'',style:'width:100%;max-height:60vh;border-radius:10px;background:#000;margin:8px 0'}));
