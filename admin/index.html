@@ -220,6 +220,10 @@ function orderCard(o){
     el('span',{text:L('ग्राहक')}), el('span',null,[ el('b',{text:o.name||''}), ' · ', el('a',{href:'tel:'+digits(o.phone),text:o.phone||''}) ]),
     el('span',{text:L('कैसे')}), el('span',{text:o.how||''}),
     (o.addr||o.pin) ? el('span',{text:L('पता')}) : null, (o.addr||o.pin) ? el('span',{text:[o.addr, o.pin?'PIN '+o.pin:'', o.land].filter(Boolean).join(', ')}) : null,
+    (o.loc && o.loc.lat) ? el('span',{text:L('लोकेशन')}) : null,
+    (o.loc && o.loc.lat) ? el('span',null,[ el('a',{'class':'btn b-sm b-gold',target:'_blank',rel:'noopener',href:'https://www.google.com/maps/search/?api=1&query='+o.loc.lat+','+o.loc.lng,text:'📍 '+L('मैप पर देखें')}), ' ',
+      el('a',{'class':'btn b-sm b-line',target:'_blank',rel:'noopener',href:'https://www.google.com/maps/dir/?api=1&destination='+o.loc.lat+','+o.loc.lng,text:'🧭 '+L('रास्ता')}),
+      o.loc.acc ? el('span',{'class':'muted small',text:' ±'+o.loc.acc+' m'}) : null ]) : null,
     el('span',{text:L('पेमेंट')}), el('span',null,[ o.pay==='upi' ? 'UPI ' : 'COD ', o.pay==='upi' ? el('span',{'class':'st '+(o.paid?'ok':''),text:o.paid?L('पैसे मिले'):L('पैसे बाकी')}) : null ]),
     o.note ? el('span',{text:L('नोट')}) : null, o.note ? el('span',{text:o.note}) : null
   ]));
