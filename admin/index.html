@@ -595,12 +595,17 @@ function drawSettings(main){
     el('div',{'class':'field'},[ el('label',{text:'UPI ID'}), el('input',{id:'s-upi',value:cfg.upi||''}) ]),
     el('div',{'class':'field'},[ el('label',{text:L('WhatsApp नंबर (91 के साथ, जैसे 918874129818)')}), el('input',{id:'s-wa',value:cfg.waNumber||'',inputmode:'tel'}) ]),
     el('div',{'class':'field'},[ el('label',{text:L('वापसी कितने दिन में')}), el('input',{id:'s-days',value:cfg.returnDays||3,inputmode:'numeric'}) ]),
+    el('div',{'class':'field'},[ el('label',{text:SL('Instagram लिंक','Instagram link')}), el('input',{id:'s-ig',value:cfg.igUrl||'',placeholder:'https://www.instagram.com/…'}) ]),
+    el('div',{'class':'field'},[ el('label',{text:SL('Facebook पेज लिंक','Facebook Page link')}), el('input',{id:'s-fb',value:cfg.fbUrl||'',placeholder:'https://www.facebook.com/…'}) ]),
     el('label',{'class':'row',style:'margin-bottom:12px'},[ el('input',{type:'checkbox',id:'s-cod',checked:cfg.cod!==false?'checked':null}), L(' कैश ऑन डिलीवरी (COD) चालू') ]),
     el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){
-      var upd = {upi:document.getElementById('s-upi').value.trim(), waNumber:digits(document.getElementById('s-wa').value), returnDays:parseInt(document.getElementById('s-days').value,10)||3, cod:document.getElementById('s-cod').checked};
+      var upd = {upi:document.getElementById('s-upi').value.trim(), waNumber:digits(document.getElementById('s-wa').value), returnDays:parseInt(document.getElementById('s-days').value,10)||3, cod:document.getElementById('s-cod').checked, igUrl:document.getElementById('s-ig').value.trim(), fbUrl:document.getElementById('s-fb').value.trim()};
       db.collection('config').doc('shop').set(upd, {merge:true}).then(function(){ m.textContent=L('सेव हो गया ✓'); m.className='msg ok'; }, function(e){ m.textContent=L('नहीं हुआ: ')+e.message; m.className='msg err'; });
     }}), m ]);
   main.appendChild(f);
+  // fill the website's social links from the connected accounts the first time
+  if (meta && meta.pageId && (!cfg.fbUrl || (!cfg.igUrl && meta.igUser))){ var su = {}; if (!cfg.fbUrl) su.fbUrl = 'https://www.facebook.com/' + meta.pageId; if (!cfg.igUrl && meta.igUser) su.igUrl = 'https://www.instagram.com/' + meta.igUser + '/';
+    db.collection('config').doc('shop').set(su, {merge:true}).then(function(){ Object.assign(cfg, su); var a = document.getElementById('s-fb'), b = document.getElementById('s-ig'); if (a && su.fbUrl) a.value = su.fbUrl; if (b && su.igUrl) b.value = su.igUrl; }); }
   drawSocial(main);
   main.appendChild(el('p',{'class':'muted small',text:L('लॉग-इन: ')+(me&&me.email)}));
 }
