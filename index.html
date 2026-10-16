@@ -2476,7 +2476,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     if (/unauthorized-domain|operation-not-allowed/.test(c)) return t.e_dom;
     if (/network/.test(c)) return t.e_net;
     if (/popup-closed|cancelled-popup/.test(c)) return '';
-    return t.e_gen;
+    return t.e_gen + (c ? ' (' + c + ')' : '');
   }
 
   /* ---------- header button ---------- */
@@ -2530,7 +2530,13 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
   function saveProfile(p){
     p.email = user.email || p.email || ''; p.updated = new Date().toISOString();
     if (!p.created) p.created = p.updated;
-    return userDoc().set(p, {merge:true}).then(function(){ prof = Object.assign({}, prof||{}, p); });
+    // The phone keeps the change and sends it when the connection is ready, so on a slow network we carry on after a few seconds
+    var w = userDoc().set(p, {merge:true});
+    return new Promise(function(res, rej){
+      var done = false, t = setTimeout(function(){ if (done) return; done = true; prof = Object.assign({}, prof||{}, p); res(); }, 6000);
+      w.then(function(){ if (done) return; done = true; clearTimeout(t); prof = Object.assign({}, prof||{}, p); res(); },
+             function(e){ if (done){ try { console.warn('profile save failed', e); } catch(x){} return; } done = true; clearTimeout(t); rej(e); });
+    });
   }
 
   window.addEventListener('df-order', function(ev){
@@ -2837,6 +2843,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
   }).then(function(){
     firebase.initializeApp(CFG);
     auth = firebase.auth(); fs = firebase.firestore();
+    try { fs.settings({experimentalAutoDetectLongPolling:true, merge:true}); } catch(e){} // some mobile networks block the streaming connection
     startLive(); loadReviews();
     auth.getRedirectResult().catch(function(){});
     auth.onAuthStateChanged(function(u){
