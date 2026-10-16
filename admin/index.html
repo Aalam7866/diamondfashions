@@ -718,7 +718,7 @@ function socialWatch(){
     if (!job) return;
     socialBusy[p.id] = true;
     socialQueue = socialQueue.then(function(){
-      return db.collection('products').doc(p.id).update(mark).then(function(){ return (job === 'new' && meta.video !== false && (p.photos||[]).length >= 3 && vidType()) ? makeVideo(p, job).then(function(vd){ return postVideo(p, job, vd); }) : postProduct(p, job); })
+      return db.collection('products').doc(p.id).update(mark).then(function(){ return (job === 'new' && meta.video !== false && (p.photos||[]).length >= 3 && vidType()) ? makeAnyVideo(p, job).then(function(vd){ return postVideo(p, job, vd); }) : postProduct(p, job); })
         .then(function(){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram')); },
               function(e){ toast('⚠ ' + p.name + ': ' + (e.message||e), true); });
     }).then(function(){ delete socialBusy[p.id]; });
@@ -738,11 +738,14 @@ function drawSocial(main){
     card.appendChild(chk('autoNew', SL('नया सामान (फ़ोटो के साथ) सेव होते ही पोस्ट करें','Post new items (with a photo) as soon as they are saved')));
     card.appendChild(chk('autoLow', SL('जब किसी सामान के कम पीस बचें तो पोस्ट करें','Post when an item is running low')));
     card.appendChild(chk('video', SL('3 या ज़्यादा फ़ोटो हों तो फ़ोटो की जगह वीडियो (Reel) बनाकर पोस्ट करें','If an item has 3 or more photos, make and post a video (Reel) instead of a photo')));
+    var vs = el('select',{style:'min-height:40px;border-radius:8px;margin:2px 0 8px 26px',onchange:function(e){ metaRef().set({vstyle:e.target.value},{merge:true}); }},
+      [['cam60',SL('कैमरा स्टाइल वीडियो · 1 मिनट','Camera-style video · 1 min')],['cam30',SL('कैमरा स्टाइल वीडियो · 30 सेकंड','Camera-style video · 30 sec')],['slide',SL('स्लाइड शो · 20 सेकंड','Slideshow · 20 sec')]].map(function(o){ return el('option',{value:o[0],text:o[1]}); }));
+    vs.value = meta.vstyle || 'cam60'; card.appendChild(vs);
     card.appendChild(chk('fb', SL('Facebook पेज पर पोस्ट','Post on Facebook Page')));
     card.appendChild(chk('ig', SL('Instagram पर पोस्ट','Post on Instagram')));
     card.appendChild(el('div',{'class':'field',style:'max-width:260px;margin-top:8px'},[ el('label',{text:SL('कितने पीस बचने पर पोस्ट हो','Post when pieces left are at or below')}),
       el('input',{inputmode:'numeric',value:meta.low||3,onchange:function(e){ metaRef().set({low:Math.max(1, parseInt(e.target.value,10)||3)},{merge:true}); }}) ]));
-    card.appendChild(el('p',{'class':'muted small',text:SL('हर सामान एक बार "नया माल" के रूप में पोस्ट होता है (3+ फ़ोटो हों तो वीडियो बनकर, इसमें 20–30 सेकंड लगते हैं)। कम स्टॉक वाली पोस्ट दोबारा तभी होगी जब स्टॉक बढ़ाकर फिर कम हो। अपने-आप पोस्ट तभी होती है जब यह Admin खुला हो (ऑर्डर मंज़ूर करते या सामान सेव करते समय)।','Each item is posted once as a new arrival (as a video when it has 3+ photos; making it takes 20–30 seconds). A low-stock post repeats only after you restock and it runs low again. Auto-posting runs while this Admin is open (when you save items or accept orders).')}));
+    card.appendChild(el('p',{'class':'muted small',text:SL('हर सामान एक बार "नया माल" के रूप में पोस्ट होता है (3+ फ़ोटो हों तो वीडियो बनकर; वीडियो जितना लंबा, बनने में उतना ही समय, यानी 1 मिनट वाला 1 मिनट में)। कम स्टॉक वाली पोस्ट दोबारा तभी होगी जब स्टॉक बढ़ाकर फिर कम हो। अपने-आप पोस्ट तभी होती है जब यह Admin खुला हो (ऑर्डर मंज़ूर करते या सामान सेव करते समय)।','Each item is posted once as a new arrival (as a video when it has 3+ photos; a video takes as long to make as it lasts, so a 1-minute video takes 1 minute). A low-stock post repeats only after you restock and it runs low again. Auto-posting runs while this Admin is open (when you save items or accept orders).')}));
     card.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-line b-sm',type:'button',text:SL('कनेक्शन हटाएँ','Disconnect'),onclick:function(){ if (confirm(SL('Facebook/Instagram कनेक्शन हटाएँ?','Disconnect Facebook/Instagram?'))) metaRef().set({pageToken:'', pageId:'', igId:''},{merge:true}); }}) ]));
     var log = meta.log || [];
     if (log.length){
@@ -893,15 +896,132 @@ function postVideo(p, kind, vid){
   }).then(function(){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, video:true, fb:out.fb, ig:out.ig, ok:true}); return out; },
      function(e){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, video:true, fb:out.fb, ok:false, err:String(e.message||e).slice(0,200)}); throw e; });
 }
+/* ---------- "camera style" video: photos filmed like a handheld product video ---------- */
+function makeCameraVideo(p, kind, len, onProgress){
+  var type = vidType();
+  if (!type) return Promise.reject(new Error(SL('यह ब्राउज़र वीडियो नहीं बना सकता। Chrome में Admin खोलें।','This browser cannot make videos. Open Admin in Chrome.')));
+  return Promise.all((p.photos||[]).slice(0, 12).map(loadImg)).then(function(imgs){
+    imgs = imgs.filter(Boolean); if (!imgs.length) throw new Error(SL('फ़ोटो नहीं है','No photos'));
+    var W = 720, H = 1280, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
+    var END = 4, body = Math.max(8, len - END), nShots = Math.max(imgs.length, Math.round(body / 4.6)), SH = body / nShots, WHIP = .32, total = body + END;
+    var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') + (p.unit === 'm' ? ' / m' : '') : 'Ask for price';
+    var left = pcsLeft(p), tag = kind === 'low' ? ('ONLY ' + left + ' LEFT · सिर्फ़ ' + left + ' बचे') : 'NEW ARRIVAL · नया माल';
+    // grain texture
+    var gn = document.createElement('canvas'); gn.width = gn.height = 256; var gx = gn.getContext('2d'), id = gx.createImageData(256, 256);
+    for (var q = 0; q < id.data.length; q += 4){ var v = Math.random()*255|0; id.data[q] = id.data[q+1] = id.data[q+2] = v; id.data[q+3] = 255; } gx.putImageData(id, 0, 0);
+    var moves = ['tilt', 'push', 'slide', 'pull', 'detail'];
+    var shots = []; for (var s = 0; s < nShots; s++) shots.push({img: imgs[s % imgs.length], move: moves[(s + Math.floor(s / imgs.length)) % moves.length], seed: Math.random()*10, focus: s % 2 === 0});
+    function ease(t){ t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); }
+    // camera: cx, cy = point of the photo (0..1) at the screen centre, z = zoom over "cover" size
+    function cam(sh, u){
+      var e = ease(u);
+      switch (sh.move){
+        case 'tilt':   return {cx:.5, cy:.18 + .64*e, z:1.7 - .25*e};
+        case 'push':   return {cx:.5, cy:.5 + .08*e, z:1.0 + .55*e};
+        case 'slide':  return {cx:.3 + .4*e, cy:.45, z:1.55};
+        case 'pull':   return {cx:.5, cy:.62 - .12*e, z:2.1 - 1.05*e};
+        default:       return {cx:.42 + .16*e, cy:.62, z:2.3 + .2*e}; // detail: close-up around pockets / lower half
+      }
+    }
+    function drawShot(sh, u, t, dx, blurPx){
+      var im = sh.img, base = Math.max(W/im.width, H/im.height), cm = cam(sh, u), k = base * cm.z, w = im.width*k, h = im.height*k;
+      // handheld shake
+      var sx = 5*Math.sin(t*1.7 + sh.seed) + 2.5*Math.sin(t*3.9 + sh.seed*2), sy = 4*Math.sin(t*1.3 + sh.seed*3) + 2*Math.sin(t*4.6), rot = .004*Math.sin(t*1.1 + sh.seed);
+      var px = W/2 - cm.cx*w, py = H/2 - cm.cy*h;
+      px = Math.min(0, Math.max(W - w, px)); py = Math.min(0, Math.max(H - h, py));
+      x.save(); x.translate(W/2 + dx + sx, H/2 + sy); x.rotate(rot); x.translate(-W/2, -H/2);
+      if (blurPx > .3) x.filter = 'blur(' + blurPx.toFixed(1) + 'px)';
+      x.drawImage(im, px, py, w, h); x.filter = 'none'; x.restore();
+    }
+    function lower(a, big){
+      if (a <= 0) return; x.globalAlpha = a;
+      var g = x.createLinearGradient(0, H-300, 0, H); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.75)'); x.fillStyle = g; x.fillRect(0, H-300, W, 300);
+      x.fillStyle = kind === 'low' ? '#C0392B' : '#CDAA5C'; x.font = 'bold 24px Arial, sans-serif'; var tw = x.measureText(tag).width + 32;
+      x.beginPath(); if (x.roundRect) x.roundRect(32, H-212, tw, 42, 21); else x.rect(32, H-212, tw, 42); x.fill();
+      x.fillStyle = kind === 'low' ? '#fff' : '#0B1626'; x.fillText(tag, 48, H-183);
+      x.fillStyle = '#fff'; x.font = 'bold 38px Arial, sans-serif'; wrapText(x, p.name, 32, H-120, W-64, 44, 1);
+      x.fillStyle = '#E8C26A'; x.font = 'bold 40px Arial, sans-serif'; x.fillText(price, 32, H-66);
+      if (p.mrp && p.price && p.mrp > p.price){ var pw = x.measureText(price).width; x.fillStyle = '#7CE0A0'; x.font = 'bold 26px Arial, sans-serif'; x.fillText(Math.round((1-p.price/p.mrp)*100)+'% OFF', 52+pw, H-68); }
+      x.globalAlpha = 1;
+    }
+    function bug(){ // small corner watermark like a shop's own video
+      x.globalAlpha = .85; x.fillStyle = 'rgba(0,0,0,.35)'; x.beginPath(); if (x.roundRect) x.roundRect(24, 30, 236, 54, 27); else x.rect(24, 30, 236, 54); x.fill();
+      x.fillStyle = '#fff'; x.font = '600 22px Georgia, serif'; x.fillText('DIAMOND', 46, 64); x.fillStyle = '#E8C26A'; x.font = '14px Arial, sans-serif'; x.fillText('FASHIONS', 160, 63); x.globalAlpha = 1;
+      // recording-style dot
+      x.fillStyle = 'rgba(255,255,255,.8)'; x.font = '18px Arial, sans-serif'; x.textAlign = 'right'; x.fillText('diamondfashions.in', W-28, 64); x.textAlign = 'left';
+    }
+    function finish(t){
+      var vg = x.createRadialGradient(W/2, H/2, H*.3, W/2, H/2, H*.75); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.35)'); x.fillStyle = vg; x.fillRect(0,0,W,H);
+      x.globalAlpha = .045; x.globalCompositeOperation = 'overlay'; x.drawImage(gn, -(Math.random()*256|0), -(Math.random()*256|0), W+256, H+256); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
+      var fl = .025 * Math.sin(t*9); if (fl > 0){ x.globalAlpha = fl; x.fillStyle = '#fff'; x.fillRect(0,0,W,H); x.globalAlpha = 1; } // slight exposure flicker
+    }
+    function endCard(et){
+      x.fillStyle = '#0B1626'; x.fillRect(0,0,W,H); var a = Math.min(1, et/.5); x.globalAlpha = a;
+      var im = imgs[0], tw = 380, th = 500, k = Math.max(tw/im.width, th/im.height) * (1 + .04*et);
+      x.save(); x.beginPath(); if (x.roundRect) x.roundRect((W-tw)/2, 140, tw, th, 22); else x.rect((W-tw)/2, 140, tw, th); x.clip();
+      x.drawImage(im, (W - im.width*k)/2, 140 + (th - im.height*k)/2, im.width*k, im.height*k); x.restore();
+      x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = 'bold 44px Arial, sans-serif'; x.fillText(p.name.length > 26 ? p.name.slice(0,25)+'…' : p.name, W/2, 710);
+      x.fillStyle = '#E8C26A'; x.font = 'bold 62px Arial, sans-serif'; x.fillText(price, W/2, 790);
+      if (p.mrp && p.price && p.mrp > p.price){ x.fillStyle = '#7CE0A0'; x.font = 'bold 30px Arial, sans-serif'; x.fillText('MRP ₹' + Number(p.mrp).toLocaleString('en-IN') + ' · ' + Math.round((1-p.price/p.mrp)*100) + '% OFF', W/2, 840); }
+      x.fillStyle = '#D3CEC2'; x.font = '28px Arial, sans-serif'; x.fillText('Code: ' + p.code + (p.sizes ? '  ·  Sizes: ' + p.sizes : ''), W/2, 892);
+      x.fillStyle = '#CDAA5C'; x.beginPath(); if (x.roundRect) x.roundRect(110, 940, W-220, 76, 38); else x.rect(110, 940, W-220, 76); x.fill();
+      x.fillStyle = '#0B1626'; x.font = 'bold 32px Arial, sans-serif'; x.fillText('Order: diamondfashions.in', W/2, 990);
+      x.fillStyle = '#F2EEE6'; x.font = '30px Arial, sans-serif'; x.fillText('WhatsApp ' + (cfg.display || '+91 88741 29818'), W/2, 1070);
+      x.font = '600 46px Georgia, serif'; x.fillText('DIAMOND', W/2, 1170); x.fillStyle = '#CDAA5C'; x.font = '18px Arial, sans-serif'; x.fillText('F A S H I O N S', W/2, 1198);
+      x.textAlign = 'left'; x.globalAlpha = 1;
+    }
+    function frame(t){
+      x.fillStyle = '#000'; x.fillRect(0,0,W,H);
+      if (t >= body){ endCard(t - body); return; }
+      var i = Math.min(nShots-1, Math.floor(t / SH)), u = (t - i*SH) / SH, sh = shots[i], lt = t - i*SH;
+      var focusBlur = sh.focus ? Math.max(0, 7 * (1 - lt/.6)) : 0;
+      var tEnd = SH - lt;
+      if (tEnd < WHIP && i < nShots - 1){ // whip pan to the next shot
+        var w = 1 - tEnd/WHIP, off = ease(w) * W * 1.1, mb = 14 * Math.sin(Math.PI * w);
+        drawShot(sh, u, t, -off, mb); drawShot(shots[i+1], 0, t, W*1.1 - off, mb);
+      } else if (tEnd < WHIP && i === nShots - 1){ drawShot(sh, u, t, 0, 0); x.globalAlpha = 1 - tEnd/WHIP; x.fillStyle = '#0B1626'; x.fillRect(0,0,W,H); x.globalAlpha = 1; }
+      else drawShot(sh, u, t, 0, focusBlur);
+      finish(t); bug();
+      // name + price shown at the start, the middle and near the end
+      var la = 0; [[.6, 6], [body*.5 - 2, body*.5 + 3], [body - 7, body - .4]].forEach(function(r){ if (t > r[0] && t < r[1]) la = Math.max(la, Math.min(1, (t - r[0])/.5, (r[1] - t)/.5)); });
+      lower(la);
+    }
+    return new Promise(function(resolve, reject){
+      var stream = c.captureStream(30), chunks = [], rec;
+      try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:4000000}); } catch(e){ reject(e); return; }
+      rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
+      frame(0); rec.start(500);
+      var t0 = performance.now(), timer = setInterval(function(){
+        var t = (performance.now() - t0) / 1000;
+        if (t >= total){ clearInterval(timer); frame(total - .01); setTimeout(function(){ rec.stop(); }, 150); return; }
+        frame(t); if (onProgress) onProgress(Math.min(99, Math.round(t / total * 100)));
+      }, 1000/30);
+    });
+  });
+}
+function makeAnyVideo(p, kind, style, onProgress){
+  style = style || (meta && meta.vstyle) || 'cam60';
+  if (style === 'cam60') return makeCameraVideo(p, kind, 60, onProgress);
+  if (style === 'cam30') return makeCameraVideo(p, kind, 30, onProgress);
+  return makeVideo(p, kind, onProgress);
+}
+
 /* preview window: make, watch, download, post */
 function videoDialog(p){
   var sc = el('div',{'class':'scrim'}), box = el('div',{'class':'modal',style:'max-width:460px'}); sc.appendChild(box); document.body.appendChild(sc);
   var msg = el('p',{'class':'msg',text:SL('वीडियो बन रहा है… यह स्क्रीन खुली रखें','Making the video… keep this screen open')});
   var close = function(){ sc.remove(); };
   box.appendChild(el('div',{'class':'row',style:'justify-content:space-between'},[ el('h3',{style:'margin:0',text:'🎬 '+p.name}), el('button',{'class':'btn b-line b-sm',type:'button',text:'×',onclick:close}) ]));
-  box.appendChild(msg);
   var lft = pcsLeft(p), kind = lft !== null && lft > 0 && lft <= ((meta && meta.low) || 3) ? 'low' : 'new';
-  makeVideo(p, kind, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }).then(function(vid){
+  var pickRow = el('div',{'class':'row',style:'margin:8px 0'});
+  box.appendChild(el('p',{'class':'muted small',text:SL('कैसा वीडियो चाहिए?','Which kind of video?')}));
+  [['cam60', SL('🎥 कैमरा स्टाइल · 1 मिनट','🎥 Camera style · 1 min')], ['cam30', SL('🎥 कैमरा स्टाइल · 30 सेकंड','🎥 Camera style · 30 sec')], ['slide', SL('🖼 स्लाइड शो · 20 सेकंड','🖼 Slideshow · 20 sec')]].forEach(function(o){
+    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ pickRow.remove(); box.appendChild(msg); go(o[0]); }})); });
+  box.appendChild(pickRow);
+  msg.textContent = SL('बनते समय यह स्क्रीन खुली रखें, फ़ोन लॉक न करें।','Keep this screen open while it is made; do not lock the phone.');
+  function go(style){
+  makeAnyVideo(p, kind, style, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }).then(function(vid){
     var url = URL.createObjectURL(vid.blob);
     msg.textContent = SL('वीडियो तैयार ✓','Video ready ✓') + ' (' + Math.round(vid.blob.size/1024/1024*10)/10 + ' MB)'; msg.className = 'msg ok';
     box.appendChild(el('video',{src:url,controls:'',autoplay:'',muted:'',playsinline:'',style:'width:100%;max-height:60vh;border-radius:10px;background:#000;margin:8px 0'}));
@@ -911,7 +1031,7 @@ function videoDialog(p){
       pb.disabled = true; msg.textContent = SL('अपलोड हो रहा है… 1–3 मिनट','Uploading… 1–3 minutes'); msg.className = 'msg';
       postVideo(p, kind, vid).then(function(){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓'); msg.className = 'msg ok'; }, function(e){ msg.textContent = (e.message||e); msg.className = 'msg err'; pb.disabled = false; }); }}); acts.appendChild(pb); }
     box.appendChild(acts);
-  }, function(e){ msg.textContent = e.message || e; msg.className = 'msg err'; });
+  }, function(e){ msg.textContent = e.message || e; msg.className = 'msg err'; });  }
 }
 
 /* ---------- live data ---------- */
