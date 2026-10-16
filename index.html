@@ -425,6 +425,7 @@ footer.ft{background:#060D18;color:#C9C4B8;padding:34px 0 calc(90px + env(safe-a
 .pill.soc.fb{background:#1877F2}.pill.soc.bell{background:#CDAA5C;color:#0B1626}.pill.soc.bell.on{background:transparent;color:#CDAA5C;border-color:#CDAA5C}.pill.soc.wa{background:#1C8F52}.top #top-wa.soc{display:inline-flex}.pill.soc.ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF)}
 .pill.soc[hidden]{display:none}
 @media (max-width:640px){.pill.soc{width:40px;height:40px;min-height:40px;padding:0;justify-content:center;border-radius:50%}.pill.soc span{display:none}}
+@media (max-width:480px){.top .top-actions{gap:6px}.top .pill{padding:0 10px;font-size:13px}.pill.soc{width:36px;height:36px;min-height:36px}.pill.soc svg{width:16px;height:16px}#acct-btn span{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}.top .pill.lang{padding:0 8px}.top #top-wa.soc{display:none}}
 /* follow us */
 .follow{background:linear-gradient(115deg,#0B1626,#16305A);color:#F2EEE6;padding:26px 0;margin-top:20px}
 .follow .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -571,7 +572,7 @@ var S = {
   hc:[['Women','Suit · Saree · Lehenga · Kurti'],['Men','Shirt · Jeans · Kurta · Sherwani'],['Boys &amp; Girls','T-Shirt · Jeans · Frock · Gown'],['Kids &amp; Baby','Romper · Baby Set · Winter Wear']],
   hc_call:'Call / WhatsApp', hc_route:'Directions to shop',
   eb_shop:'Collection', sec_shop:'Shop our collection', cat_aria:'Choose a category',
-  bell_btn:'Get offer alerts', bell_on:'Alerts on ✓', bell_wait:'Please wait a moment and try again.',
+  bell_btn:'Get offer alerts', bell_on:'Alerts on ✓', bell_wait:'Please wait a moment and try again.', bell_ok:'✓ Done! You will get our new arrivals and offers.', bell_ok_wait:'✓ Allowed. Alerts will start in a moment.', bell_denied:'Notifications are blocked for this site. In Chrome tap ⋮ → Settings → Site settings → Notifications → diamondfashions.in → Allow.', bell_unsup:'This browser does not support notifications. Please open the site in Chrome.', bell_err:'Could not turn on alerts. Please try again.',
   app_h:'Get the Diamond Fashions app', app_sub:'Shop faster from your home screen', app_btn:'Install app', app_ios:'On iPhone: tap Share ⬆ then “Add to Home Screen”', app_later:'Not now',
   follow_h:'Follow us', follow_sub:'New arrivals, offers and videos every week', follow_ig:'Instagram', follow_fb:'Facebook', follow_wa:'WhatsApp',
   cats:{all:'All',women:'Women',men:'Men',boys:'Boys',girls:'Girls',kids:'Kids & Baby',footwear:'Footwear',jewellery:'Jewellery',beauty:'Beauty',cookware:'Kitchen',stationery:'Stationery'},
@@ -666,7 +667,7 @@ var S = {
   hc:[['महिला','सूट · साड़ी · लहंगा · कुर्ती'],['पुरुष','शर्ट · जींस · कुर्ता · शेरवानी'],['लड़के और लड़कियाँ','टी-शर्ट · जींस · फ्रॉक · गाउन'],['बच्चे','रोम्पर · बेबी सेट · सर्दी के कपड़े']],
   hc_call:'कॉल / WhatsApp', hc_route:'दुकान का रास्ता',
   eb_shop:'Collection', sec_shop:'हमारा सामान', cat_aria:'कैटेगरी चुनें',
-  bell_btn:'ऑफ़र की सूचना पाएँ', bell_on:'सूचना चालू ✓', bell_wait:'एक पल रुककर फिर दबाएँ।',
+  bell_btn:'ऑफ़र की सूचना पाएँ', bell_on:'सूचना चालू ✓', bell_wait:'एक पल रुककर फिर दबाएँ।', bell_ok:'✓ हो गया! अब आपको नए माल और ऑफ़र की सूचना मिलेगी।', bell_ok_wait:'✓ इजाज़त मिल गई। सूचना थोड़ी देर में चालू हो जाएगी।', bell_denied:'इस वेबसाइट की सूचना ब्लॉक है। Chrome में ⋮ → Settings → Site settings → Notifications → diamondfashions.in → Allow करें।', bell_unsup:'इस ब्राउज़र में सूचना नहीं चलती। वेबसाइट Chrome में खोलें।', bell_err:'सूचना चालू नहीं हुई, फिर कोशिश करें।',
   app_h:'डायमंड फैशन्स का ऐप लें', app_sub:'होम स्क्रीन से जल्दी खरीदारी करें', app_btn:'ऐप इंस्टॉल करें', app_ios:'iPhone पर: Share ⬆ दबाएँ, फिर “Add to Home Screen”', app_later:'अभी नहीं',
   follow_h:'हमें फ़ॉलो करें', follow_sub:'हर हफ़्ते नया माल, ऑफ़र और वीडियो', follow_ig:'Instagram', follow_fb:'Facebook', follow_wa:'WhatsApp',
   cats:{all:'सभी',women:'महिला',men:'पुरुष',boys:'लड़के',girls:'लड़कियाँ',kids:'बच्चे',footwear:'जूते-चप्पल',jewellery:'ज्वेलरी',beauty:'ब्यूटी',cookware:'बर्तन',stationery:'स्टेशनरी'},
@@ -2350,12 +2351,14 @@ try {
     // OneSignal: offer / new-item notifications; it registers our /sw.js (which also keeps the app working offline)
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(function(OneSignal){ return OneSignal.init({appId:OS_APP, serviceWorkerPath:'sw.js', serviceWorkerParam:{scope:'/'}, allowLocalhostAsSecureOrigin:false,
-      notifyButton:{enable:false}, welcomeNotification:{title:'Diamond Fashions', message:'Thank you! You will now get our new arrivals and offers. / अब आपको नए माल और ऑफ़र की सूचना मिलेगी।'}}).then(function(){ updateBell(); try { OneSignal.Notifications.addEventListener('permissionChange', updateBell); } catch(e){}
+      notifyButton:{enable:false}, promptOptions:{slidedown:{prompts:[{type:'push', autoPrompt:false, text:{actionMessage:'Get new arrivals and offers from Diamond Fashions / नए माल और ऑफ़र की सूचना पाएँ', acceptButton:'Allow', cancelButton:'Later'}}]}}, welcomeNotification:{title:'Diamond Fashions', message:'Thank you! You will now get our new arrivals and offers. / अब आपको नए माल और ऑफ़र की सूचना मिलेगी।'}}).then(function(){ window.__osReady = true; updateBell(); try { OneSignal.Notifications.addEventListener('permissionChange', updateBell); } catch(e){}
       // gentle ask after 20 s, at most once every 3 days, only if the visitor has not decided yet
       try { var last = +localStorage.getItem('df-bell-ask') || 0; if (Notification.permission === 'default' && Date.now() - last > 3*864e5) setTimeout(function(){ try { localStorage.setItem('df-bell-ask', Date.now()); OneSignal.Slidedown.promptPush(); } catch(e){} }, 20000); } catch(e){} }); });
     var sc = document.createElement('script'); sc.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; sc.defer = true;
     sc.onerror = function(){ try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); } catch(e){} };
     document.head.appendChild(sc);
+    OneSignalDeferred.push(function(){ setTimeout(function(){ if (!window.__osReady) window.__osErr = 'init'; }, 15000); });
+    window.addEventListener('unhandledrejection', function(e){ try { var m = String((e.reason && (e.reason.message || e.reason)) || ''); if (/onesignal|service ?worker|push/i.test(m)) window.__osErr = m.slice(0,120); } catch(x){} });
   }
 } catch(e){}
 function updateBell(){
@@ -2364,9 +2367,23 @@ function updateBell(){
     b.hidden = !onLive || !('Notification' in window);
     b.querySelector('span').textContent = on ? T().bell_on : T().bell_btn; b.title = b.querySelector('span').textContent; b.classList.toggle('on', !!on); });
 }
+function bellToast(msg){ var n = document.getElementById('bell-toast'); if (n) n.remove();
+  n = el('div',{id:'bell-toast',role:'status',style:'position:fixed;left:12px;right:12px;top:12px;z-index:60;max-width:520px;margin:0 auto;background:#0B1626;color:#F2EEE6;border:1px solid #CDAA5C;border-radius:12px;padding:12px 14px;font-size:14px;box-shadow:0 10px 26px rgba(0,0,0,.35)',text:msg});
+  document.body.appendChild(n); setTimeout(function(){ n.remove(); }, 7000); }
 document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('#fl-bell,#tp-bell'); if (!b) return; e.preventDefault();
-  if (!window.OneSignal || !OneSignal.Notifications){ alert(T().bell_wait); return; }
-  try { if (OneSignal.Notifications.permission){ OneSignal.User.PushSubscription.optIn().then(updateBell); } else OneSignal.Notifications.requestPermission().then(updateBell); } catch(err){} });
+  var t = T();
+  if (!('Notification' in window)) { bellToast(t.bell_unsup); return; }
+  if (Notification.permission === 'denied'){ bellToast(t.bell_denied); return; }
+  var OS = window.OneSignal, ready = window.__osReady && OS && OS.Notifications;
+  var ask = ready ? (Notification.permission === 'granted' ? OS.User.PushSubscription.optIn() : OS.Notifications.requestPermission())
+                  : Notification.requestPermission(); // OneSignal not ready yet: ask the browser directly, OneSignal picks it up once loaded
+  Promise.resolve(ask).then(function(){
+    updateBell();
+    if (Notification.permission === 'granted') bellToast(ready ? t.bell_ok : t.bell_ok_wait);
+    else if (Notification.permission === 'denied') bellToast(t.bell_denied);
+  }, function(err){ bellToast(t.bell_err + ' ' + String((err && err.message) || err || window.__osErr || '').slice(0,100)); });
+  if (!ready && window.__osErr) setTimeout(function(){ bellToast(t.bell_err + ' (' + window.__osErr + ')'); }, 4000);
+});
 setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
 })();
 </script>
