@@ -744,6 +744,20 @@ function drawSocial(main){
     var ms = el('select',{style:'min-height:40px;border-radius:8px;margin:0 0 8px 26px',onchange:function(e){ metaRef().set({music:e.target.value},{merge:true}); }},
       MUSIC_STYLES.map(function(m){ return el('option',{value:m[0],text:'🎵 '+(LANG==='en'?m[1]:m[2])}); }));
     ms.value = meta.music || 'festive'; card.appendChild(ms);
+    var vc = el('div',{style:'margin:0 0 10px 26px;padding:10px;border:1px dashed var(--line);border-radius:10px'});
+    vc.appendChild(el('b',{text:'🤖 '+SL('अपने-आप वाले वीडियो में AI लेडी आवाज़ (हिंदी)','AI ladies voice (Hindi) in automatic videos')}));
+    vc.appendChild(el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:meta.voice==='ai'?'checked':null,onchange:function(e){ metaRef().set({voice:e.target.checked?'ai':'none'},{merge:true}); }}), ' '+SL('चालू','On') ]));
+    var kIn = el('input',{type:'password',placeholder:'Google Cloud API key',value:meta.ttsKey||'',style:'width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px'});
+    var vName = el('select',{style:'min-height:40px;border-radius:8px;margin-top:6px'}, TTS_VOICES.map(function(x){ return el('option',{value:x[0],text:x[1]}); })); vName.value = meta.ttsVoice || 'hi-IN-Neural2-A';
+    var vMsg = el('p',{'class':'msg'});
+    vc.appendChild(kIn); vc.appendChild(vName);
+    vc.appendChild(el('div',{'class':'row',style:'margin-top:6px'},[ el('button',{'class':'btn b-sm b-gold',type:'button',text:SL('सेव करें','Save'),onclick:function(){ metaRef().set({ttsKey:kIn.value.trim(), ttsVoice:vName.value},{merge:true}).then(function(){ vMsg.textContent = SL('सेव हो गया ✓','Saved ✓'); vMsg.className = 'msg ok'; }); }}),
+      el('button',{'class':'btn b-sm b-line',type:'button',text:'▶ '+SL('आवाज़ सुनें','Test voice'),onclick:function(){ vMsg.textContent = '…'; vMsg.className = 'msg';
+        var m0 = meta; meta = Object.assign({}, meta, {ttsKey:kIn.value.trim(), ttsVoice:vName.value});
+        ttsVoice('नमस्ते! डायमंड फैशन्स में आपका स्वागत है। नया माल आ गया है, आज ही ऑर्डर कीजिए।').then(function(buf){ meta = m0; new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}))).play(); vMsg.textContent = '🔊'; }, function(e){ meta = m0; vMsg.textContent = e.message; vMsg.className = 'msg err'; }); }}) ]));
+    vc.appendChild(vMsg);
+    vc.appendChild(el('p',{'class':'muted small',text:SL('Key कहाँ से: console.cloud.google.com → प्रोजेक्ट diamond-fashions → "Cloud Text-to-Speech API" Enable → APIs & Services → Credentials → Create credentials → API key। इसके लिए Google Cloud में billing (कार्ड) चालू होनी चाहिए; हर महीने एक तय सीमा तक मुफ़्त है।','Get a key: console.cloud.google.com → project diamond-fashions → enable "Cloud Text-to-Speech API" → APIs & Services → Credentials → Create credentials → API key. Google Cloud billing (a card) must be on; a monthly amount is free.')}));
+    card.appendChild(vc);
     card.appendChild(chk('fb', SL('Facebook पेज पर पोस्ट','Post on Facebook Page')));
     card.appendChild(chk('ig', SL('Instagram पर पोस्ट','Post on Instagram')));
     card.appendChild(el('div',{'class':'field',style:'max-width:260px;margin-top:8px'},[ el('label',{text:SL('कितने पीस बचने पर पोस्ट हो','Post when pieces left are at or below')}),
@@ -848,14 +862,73 @@ function startMusic(ac, out, style, total){
   schedule(); timer = setInterval(schedule, 100);
   return function(){ clearInterval(timer); try { master.disconnect(); } catch(e){} };
 }
+/* ---------- voice-over: product details read in a ladies' voice ---------- */
+var VVOICE = null; // AudioBuffer-ready voice for the next video: {data: ArrayBuffer, dur: seconds}
+function inr(n){ return Number(n).toLocaleString('en-IN'); }
+function voiceScript(p, kind){
+  var a = ['नमस्ते! डायमंड फैशन्स, पुरंदरपुर में आपका स्वागत है।'];
+  var left = pcsLeft(p);
+  a.push(kind === 'low' ? ('जल्दी कीजिए! ' + p.name + ' के अब सिर्फ़ ' + left + ' पीस बचे हैं।') : ('देखिए हमारा नया ' + p.name + '।'));
+  if (p.desc) a.push(p.desc + '।');
+  String(p.details || '').split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return /:\s*\S/.test(l); }).slice(0, 5)
+    .forEach(function(l){ var kv = l.split(':'); a.push(kv[0].trim() + ': ' + kv.slice(1).join(':').trim() + '।'); });
+  if (p.sizes) a.push('साइज़ ' + p.sizes + ' में उपलब्ध है।');
+  if (p.price){ var pr = 'कीमत सिर्फ़ ' + inr(p.price) + ' रुपये' + (p.unit === 'm' ? ' प्रति मीटर' : '');
+    if (p.mrp && p.mrp > p.price) pr += ', एम आर पी ' + inr(p.mrp) + ' रुपये। यानी पूरे ' + Math.round((1 - p.price/p.mrp)*100) + ' प्रतिशत की छूट!'; else pr += '।';
+    a.push(pr); }
+  a.push('ऑर्डर करने के लिए diamondfashions.in पर जाइए, या WhatsApp कीजिए ' + String(cfg.display || '88741 29818').replace(/\+91\s*/, '') + ' पर। घर पर डिलीवरी और कैश ऑन डिलीवरी उपलब्ध है।');
+  return a.join(' ');
+}
+var TTS_VOICES = [['hi-IN-Neural2-A','Neural2-A (best)'],['hi-IN-Wavenet-A','Wavenet-A'],['hi-IN-Wavenet-D','Wavenet-D'],['hi-IN-Standard-A','Standard-A (cheapest)']];
+function ttsVoice(text){ // Google Cloud Text-to-Speech, female Hindi voice
+  if (!meta || !meta.ttsKey) return Promise.reject(new Error(SL('AI आवाज़ के लिए सेटिंग में Google Text-to-Speech की key डालें','Add a Google Text-to-Speech key in Settings for the AI voice')));
+  return fetch('https://texttospeech.googleapis.com/v1/text:synthesize?key=' + encodeURIComponent(meta.ttsKey), {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({input:{text:text}, voice:{languageCode:'hi-IN', name: meta.ttsVoice || 'hi-IN-Neural2-A'}, audioConfig:{audioEncoding:'MP3', speakingRate:1.02, pitch:1}})})
+    .then(function(r){ return r.json(); }).then(function(j){
+      if (j.error) throw new Error('Google TTS: ' + (j.error.message || j.error.status));
+      var bin = atob(j.audioContent), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; });
+}
+function measure(buf){ // duration of encoded audio
+  var AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+  return ac.decodeAudioData(buf.slice(0)).then(function(b){ try { ac.close(); } catch(e){} return {data:buf, dur:b.duration}; });
+}
+/* mic recorder with the script shown as a teleprompter */
+function micRecorder(box, script, onDone){
+  var wrap = el('div',{'class':'card',style:'background:var(--bg);margin:6px 0'});
+  var tp = el('div',{style:'font-size:18px;line-height:1.6;max-height:30vh;overflow:auto;padding:6px 2px',text:script});
+  var st = el('p',{'class':'small muted',text:SL('लाल बटन दबाकर ऊपर लिखा हुआ आराम से पढ़ें, फिर ■ दबाएँ।','Press the red button, read the text calmly, then press ■.')});
+  var btn = el('button',{'class':'btn b-bad',type:'button',text:'● '+SL('रिकॉर्ड करें','Record')});
+  var rec = null, chunks = [], t0 = 0, tick;
+  btn.onclick = function(){
+    if (rec){ rec.stop(); return; }
+    navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true, autoGainControl:true}}).then(function(ms){
+      chunks = []; rec = new MediaRecorder(ms); rec.ondataavailable = function(e){ if (e.data.size) chunks.push(e.data); };
+      rec.onstop = function(){ ms.getTracks().forEach(function(t){ t.stop(); }); clearInterval(tick); rec = null; btn.textContent = '● ' + SL('दोबारा रिकॉर्ड करें','Record again');
+        new Blob(chunks).arrayBuffer().then(measure).then(function(v){
+          st.textContent = SL('रिकॉर्ड हो गया ✓ ','Recorded ✓ ') + Math.round(v.dur) + 's';
+          var au = el('audio',{controls:'',src:URL.createObjectURL(new Blob(chunks)),style:'width:100%;margin-top:6px'}); var old = wrap.querySelector('audio'); if (old) old.remove(); wrap.appendChild(au);
+          onDone(v); }, function(){ st.textContent = SL('आवाज़ पढ़ी नहीं जा सकी, दोबारा रिकॉर्ड करें','Could not read the recording, try again'); }); };
+      rec.start(); t0 = Date.now(); btn.textContent = '■ ' + SL('रोकें','Stop');
+      tick = setInterval(function(){ st.textContent = '🔴 ' + Math.round((Date.now()-t0)/1000) + 's'; }, 500);
+    }, function(){ st.textContent = SL('माइक की अनुमति नहीं मिली। ब्राउज़र में माइक Allow करें।','Microphone permission denied. Allow the mic in the browser.'); });
+  };
+  wrap.appendChild(tp); wrap.appendChild(el('div',{'class':'row'},[btn])); wrap.appendChild(st); box.appendChild(wrap);
+  return wrap;
+}
+
 var VMUSIC = 'festive';
 /* canvas video + background music (or a silent track: Instagram rejects some videos with no audio) */
 function avStream(c, total){
   var st = c.captureStream(30);
   try { var AC = window.AudioContext || window.webkitAudioContext, ac = new AC(), d = ac.createMediaStreamDestination(), stop;
     if (ac.resume) ac.resume();
-    if (VMUSIC && VMUSIC !== 'none') stop = startMusic(ac, d, VMUSIC, total);
+    var bus = ac.createGain(); bus.connect(d);
+    if (VMUSIC && VMUSIC !== 'none') stop = startMusic(ac, bus, VMUSIC, total);
     else { var o = ac.createOscillator(), g = ac.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(d); o.start(); stop = function(){ try { o.stop(); } catch(e){} }; }
+    if (VVOICE && VVOICE.buf){ var vs = ac.createBufferSource(), vg = ac.createGain(), at = ac.currentTime + 1.2; vs.buffer = VVOICE.buf; vg.gain.value = 1.25;
+      vs.connect(vg); vg.connect(d); vs.start(at);
+      bus.gain.setValueAtTime(1, at - .4); bus.gain.linearRampToValueAtTime(.22, at); bus.gain.setValueAtTime(.22, at + VVOICE.buf.duration); bus.gain.linearRampToValueAtTime(1, at + VVOICE.buf.duration + .6); }
+    if (!stop) stop = function(){};
     d.stream.getAudioTracks().forEach(function(t){ st.addTrack(t); });
     setTimeout(function(){ try { stop(); ac.close(); } catch(e){} }, (total + 3) * 1000); } catch(e){}
   return st;
@@ -869,7 +942,7 @@ function makeVideo(p, kind, onProgress){
     imgs = imgs.filter(Boolean);
     if (!imgs.length) throw new Error(SL('फ़ोटो नहीं है','No photos'));
     var W = 720, H = 1280, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
-    var INTRO = 1.6, PER = 2.3, FADE = .5, END = 3.2, total = INTRO + imgs.length * PER + END;
+    var INTRO = 1.6, PER = 2.3, FADE = .5, END = 3.2; if (VVOICE && VVOICE.buf) PER = Math.max(PER, (VVOICE.buf.duration + 2.5 - INTRO - END) / imgs.length); var total = INTRO + imgs.length * PER + END;
     var left = pcsLeft(p);
     var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') + (p.unit === 'm' ? ' / m' : '') : 'Ask for price';
     var tag = kind === 'low' ? ('ONLY ' + left + ' LEFT · सिर्फ़ ' + left + ' बचे') : 'NEW ARRIVAL · नया माल';
@@ -975,7 +1048,7 @@ function makeCameraVideo(p, kind, len, onProgress){
   return Promise.all((p.photos||[]).slice(0, 12).map(loadImg)).then(function(imgs){
     imgs = imgs.filter(Boolean); if (!imgs.length) throw new Error(SL('फ़ोटो नहीं है','No photos'));
     var W = 720, H = 1280, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
-    var END = 4, body = Math.max(8, len - END), nShots = Math.max(imgs.length, Math.round(body / 4.6)), SH = body / nShots, WHIP = .32, total = body + END;
+    if (VVOICE && VVOICE.buf) len = Math.max(len, Math.ceil(VVOICE.buf.duration + 3)); var END = 4, body = Math.max(8, len - END), nShots = Math.max(imgs.length, Math.round(body / 4.6)), SH = body / nShots, WHIP = .32, total = body + END;
     var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') + (p.unit === 'm' ? ' / m' : '') : 'Ask for price';
     var left = pcsLeft(p), tag = kind === 'low' ? ('ONLY ' + left + ' LEFT · सिर्फ़ ' + left + ' बचे') : 'NEW ARRIVAL · नया माल';
     // grain texture
@@ -1072,9 +1145,20 @@ function makeCameraVideo(p, kind, len, onProgress){
     });
   });
 }
-function makeAnyVideo(p, kind, style, onProgress, music){
+function makeAnyVideo(p, kind, style, onProgress, music, voice){
   style = style || (meta && meta.vstyle) || 'cam60';
   VMUSIC = music || (meta && meta.music) || 'festive';
+  if (!voice) voice = {mode: (meta && meta.voice === 'ai' && meta.ttsKey) ? 'ai' : 'none'};
+  VVOICE = null;
+  var getVoice = voice.mode === 'mic' && voice.rec ? Promise.resolve(voice.rec.data)
+    : voice.mode === 'ai' ? ttsVoice(voice.text || voiceScript(p, kind)) : Promise.resolve(null);
+  return getVoice.then(function(buf){
+    if (!buf) return;
+    var AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+    return ac.decodeAudioData(buf.slice(0)).then(function(b){ VVOICE = {buf:b}; try { ac.close(); } catch(e){} });
+  }).then(function(){ return makeAnyVideo2(p, kind, style, onProgress); });
+}
+function makeAnyVideo2(p, kind, style, onProgress){
   if (style === 'cam60') return makeCameraVideo(p, kind, 60, onProgress);
   if (style === 'cam30') return makeCameraVideo(p, kind, 30, onProgress);
   return makeVideo(p, kind, onProgress);
@@ -1091,13 +1175,26 @@ function videoDialog(p){
   var musSel = el('select',{style:'min-height:40px;border-radius:8px;width:100%;margin-bottom:6px'}, MUSIC_STYLES.map(function(m){ return el('option',{value:m[0],text:'🎵 '+(LANG==='en'?m[1]:m[2])}); }));
   musSel.value = (meta && meta.music) || 'festive';
   box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('संगीत (हमारा अपना बनाया, कॉपीराइट-फ़्री)','Music (made by us, copyright-free)')})); box.appendChild(musSel);
+  var vSel = el('select',{style:'min-height:40px;border-radius:8px;width:100%;margin-bottom:6px'}, [
+    el('option',{value:'none',text:'🔇 '+SL('बिना आवाज़ (सिर्फ़ संगीत)','No voice (music only)')}),
+    el('option',{value:'ai',text:'🤖 '+SL('AI लेडी आवाज़ (हिंदी)','AI ladies voice (Hindi)')+((meta && meta.ttsKey) ? '' : SL(' — सेटिंग में key चाहिए',' — needs key in Settings'))}),
+    el('option',{value:'mic',text:'🎙 '+SL('अपनी आवाज़ रिकॉर्ड करें','Record your own voice')}) ]);
+  vSel.value = (meta && meta.voice === 'ai' && meta.ttsKey) ? 'ai' : 'none';
+  var vBox = el('div'), micRec = null, scriptTa = el('textarea',{style:'width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;margin-top:4px'});
+  scriptTa.value = voiceScript(p, kind);
+  function drawVoice(){ vBox.innerHTML = ''; micRec = null;
+    if (vSel.value === 'ai'){ vBox.appendChild(el('p',{'class':'muted small',text:SL('AI यही पढ़ेगी (बदल सकते हैं):','The AI will read this (you can edit):')})); vBox.appendChild(scriptTa); }
+    if (vSel.value === 'mic') micRecorder(vBox, scriptTa.value, function(v){ micRec = v; }); }
+  vSel.onchange = drawVoice;
+  box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('प्रोडक्ट की जानकारी बोलने वाली आवाज़','Voice-over with product details')})); box.appendChild(vSel); box.appendChild(vBox); drawVoice();
   box.appendChild(el('p',{'class':'muted small',text:SL('कैसा वीडियो चाहिए?','Which kind of video?')}));
   [['cam60', SL('🎥 कैमरा स्टाइल · 1 मिनट','🎥 Camera style · 1 min')], ['cam30', SL('🎥 कैमरा स्टाइल · 30 सेकंड','🎥 Camera style · 30 sec')], ['slide', SL('🖼 स्लाइड शो · 20 सेकंड','🖼 Slideshow · 20 sec')]].forEach(function(o){
-    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ var mv = musSel.value; pickRow.remove(); musSel.disabled = true; box.appendChild(msg); go(o[0], mv); }})); });
+    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ if (vSel.value === 'mic' && !micRec){ alert(SL('पहले आवाज़ रिकॉर्ड करें, या "बिना आवाज़" चुनें','Record the voice first, or choose "No voice"')); return; } var mv = musSel.value, vo = {mode:vSel.value, rec:micRec, text:scriptTa.value}; pickRow.remove(); musSel.disabled = true; vSel.disabled = true; vBox.remove(); box.appendChild(msg); go(o[0], mv, vo); }})); });
   box.appendChild(pickRow);
   msg.textContent = SL('बनते समय यह स्क्रीन खुली रखें, फ़ोन लॉक न करें।','Keep this screen open while it is made; do not lock the phone.');
-  function go(style, music){
-  makeAnyVideo(p, kind, style, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }, music).then(function(vid){
+  function go(style, music, vo){
+  msg.textContent = vo.mode === 'ai' ? SL('AI आवाज़ बन रही है…','Making the AI voice…') : msg.textContent;
+  makeAnyVideo(p, kind, style, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }, music, vo).then(function(vid){
     var url = URL.createObjectURL(vid.blob);
     msg.textContent = SL('वीडियो तैयार ✓','Video ready ✓') + ' (' + Math.round(vid.blob.size/1024/1024*10)/10 + ' MB)'; msg.className = 'msg ok';
     box.appendChild(el('video',{src:url,controls:'',autoplay:'',muted:'',playsinline:'',style:'width:100%;max-height:60vh;border-radius:10px;background:#000;margin:8px 0'}));
