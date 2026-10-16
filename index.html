@@ -432,7 +432,7 @@ footer.ft{background:#060D18;color:#C9C4B8;padding:34px 0 calc(90px + env(safe-a
 .follow p{margin:4px 0 0;color:#C9C4B8;font-size:15px}
 .follow-btns{display:flex;gap:10px;flex-wrap:wrap}
 .fl{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 18px;border-radius:999px;font-weight:600;color:#fff;text-decoration:none;border:1.5px solid rgba(255,255,255,.25)}
-.fl.ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF)} .fl.fb{background:#1877F2} .fl.wa{background:#1C8F52}
+.fl.ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF)} .fl.bell{background:#CDAA5C;color:#0B1626} .fl.bell.on{background:transparent;color:#CDAA5C;border-color:#CDAA5C} .fl.fb{background:#1877F2} .fl.wa{background:#1C8F52}
 .fl:hover{filter:brightness(1.08)} .fl[hidden]{display:none}
 
 /* tailoring studio */
@@ -571,6 +571,7 @@ var S = {
   hc:[['Women','Suit · Saree · Lehenga · Kurti'],['Men','Shirt · Jeans · Kurta · Sherwani'],['Boys &amp; Girls','T-Shirt · Jeans · Frock · Gown'],['Kids &amp; Baby','Romper · Baby Set · Winter Wear']],
   hc_call:'Call / WhatsApp', hc_route:'Directions to shop',
   eb_shop:'Collection', sec_shop:'Shop our collection', cat_aria:'Choose a category',
+  bell_btn:'Get offer alerts', bell_on:'Alerts on ✓', bell_wait:'Please wait a moment and try again.',
   app_h:'Get the Diamond Fashions app', app_sub:'Shop faster from your home screen', app_btn:'Install app', app_ios:'On iPhone: tap Share ⬆ then “Add to Home Screen”', app_later:'Not now',
   follow_h:'Follow us', follow_sub:'New arrivals, offers and videos every week', follow_ig:'Instagram', follow_fb:'Facebook', follow_wa:'WhatsApp',
   cats:{all:'All',women:'Women',men:'Men',boys:'Boys',girls:'Girls',kids:'Kids & Baby',footwear:'Footwear',jewellery:'Jewellery',beauty:'Beauty',cookware:'Kitchen',stationery:'Stationery'},
@@ -665,6 +666,7 @@ var S = {
   hc:[['महिला','सूट · साड़ी · लहंगा · कुर्ती'],['पुरुष','शर्ट · जींस · कुर्ता · शेरवानी'],['लड़के और लड़कियाँ','टी-शर्ट · जींस · फ्रॉक · गाउन'],['बच्चे','रोम्पर · बेबी सेट · सर्दी के कपड़े']],
   hc_call:'कॉल / WhatsApp', hc_route:'दुकान का रास्ता',
   eb_shop:'Collection', sec_shop:'हमारा सामान', cat_aria:'कैटेगरी चुनें',
+  bell_btn:'ऑफ़र की सूचना पाएँ', bell_on:'सूचना चालू ✓', bell_wait:'एक पल रुककर फिर दबाएँ।',
   app_h:'डायमंड फैशन्स का ऐप लें', app_sub:'होम स्क्रीन से जल्दी खरीदारी करें', app_btn:'ऐप इंस्टॉल करें', app_ios:'iPhone पर: Share ⬆ दबाएँ, फिर “Add to Home Screen”', app_later:'अभी नहीं',
   follow_h:'हमें फ़ॉलो करें', follow_sub:'हर हफ़्ते नया माल, ऑफ़र और वीडियो', follow_ig:'Instagram', follow_fb:'Facebook', follow_wa:'WhatsApp',
   cats:{all:'सभी',women:'महिला',men:'पुरुष',boys:'लड़के',girls:'लड़कियाँ',kids:'बच्चे',footwear:'जूते-चप्पल',jewellery:'ज्वेलरी',beauty:'ब्यूटी',cookware:'बर्तन',stationery:'स्टेशनरी'},
@@ -927,6 +929,7 @@ function renderFrame(){
  '<section class="follow" id="follow"><div class="wrap"><div><h2>'+t.follow_h+'</h2><p>'+t.follow_sub+'</p></div><div class="follow-btns">' +
    '<a id="fl-ig" class="fl ig" target="_blank" rel="noopener" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>'+t.follow_ig+'</span></a>' +
    '<a id="fl-fb" class="fl fb" target="_blank" rel="noopener" href="#" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V8.8c0-.5.3-.8.8-.8z"/></svg><span>'+t.follow_fb+'</span></a>' +
+   '<a id="fl-bell" class="fl bell" href="#" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span>'+t.bell_btn+'</span></a>' +
    '<a id="fl-wa" class="fl wa" target="_blank" rel="noopener" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 1.8 1.9 3.6 3.9 4.3l1.3-1.2 1.8.9-.4 1.6c-3.4.4-7.1-3.2-6.7-6.6L10.5 8l.9 1.8z" fill="currentColor" stroke="none"/></svg><span>'+t.follow_wa+'</span></a>' +
  '</div></div></section>' +
  '<footer class="ft"><div class="wrap">' +
@@ -2306,6 +2309,7 @@ function renderSocial(){
   if (SHOP.fbUrl){ fb.href = SHOP.fbUrl; fb.hidden = false; } else fb.hidden = true;
   wa.href = waLink(T().wa_greet || 'Hello');
   var wf = document.getElementById('wa-float'); if (wf) wf.href = wa.href;
+  try { updateBell(); } catch(e){}
   Array.prototype.forEach.call(document.querySelectorAll('.ft a[data-cat]'), function(a){ a.onclick = function(e){ e.preventDefault(); goLink('cat:' + a.getAttribute('data-cat')); }; });
 }
 function renderAll(){
@@ -2338,7 +2342,30 @@ function readAdminHash(){
 readTrackHash(); readAdminHash();
 window.addEventListener('hashchange', function(){ openFromHash(); readTrackHash(); if (readAdminHash() && canEdit){ renderAll(); return; } if (!adminMode) renderTrack(); });
 renderAll(); setTimeout(openFromHash, 0);
-try { if ('serviceWorker' in navigator && /diamondfashions\.in$/.test(location.hostname)) navigator.serviceWorker.register('/sw.js'); } catch(e){}
+var OS_APP = '7d764933-5740-498d-803f-4065d5641022';
+var onLive = /(^|\.)diamondfashions\.in$/.test(location.hostname);
+try {
+  if (onLive){
+    // OneSignal: offer / new-item notifications; it registers our /sw.js (which also keeps the app working offline)
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(OneSignal){ return OneSignal.init({appId:OS_APP, serviceWorkerPath:'sw.js', serviceWorkerParam:{scope:'/'}, allowLocalhostAsSecureOrigin:false,
+      notifyButton:{enable:false}, welcomeNotification:{title:'Diamond Fashions', message:'Thank you! You will now get our new arrivals and offers. / अब आपको नए माल और ऑफ़र की सूचना मिलेगी।'}}).then(function(){ updateBell(); try { OneSignal.Notifications.addEventListener('permissionChange', updateBell); } catch(e){}
+      // gentle ask after 20 s, at most once every 3 days, only if the visitor has not decided yet
+      try { var last = +localStorage.getItem('df-bell-ask') || 0; if (Notification.permission === 'default' && Date.now() - last > 3*864e5) setTimeout(function(){ try { localStorage.setItem('df-bell-ask', Date.now()); OneSignal.Slidedown.promptPush(); } catch(e){} }, 20000); } catch(e){} }); });
+    var sc = document.createElement('script'); sc.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; sc.defer = true;
+    sc.onerror = function(){ try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); } catch(e){} };
+    document.head.appendChild(sc);
+  }
+} catch(e){}
+function updateBell(){
+  var b = document.getElementById('fl-bell'); if (!b) return;
+  var on = false; try { on = window.OneSignal && OneSignal.Notifications && OneSignal.Notifications.permission && OneSignal.User.PushSubscription.optedIn; } catch(e){}
+  b.hidden = !onLive || !('Notification' in window);
+  b.querySelector('span').textContent = on ? T().bell_on : T().bell_btn; b.classList.toggle('on', !!on);
+}
+document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('#fl-bell'); if (!b) return; e.preventDefault();
+  if (!window.OneSignal || !OneSignal.Notifications){ alert(T().bell_wait); return; }
+  try { if (OneSignal.Notifications.permission){ OneSignal.User.PushSubscription.optIn().then(updateBell); } else OneSignal.Notifications.requestPermission().then(updateBell); } catch(err){} });
 setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
 })();
 </script>

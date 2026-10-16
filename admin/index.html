@@ -442,8 +442,9 @@ function editProduct(p0){
       keep(); var lft = pcsLeft(p);
       postProduct(p, lft !== null && lft > 0 && lft <= ((meta && meta.low) || 3) ? 'low' : 'new').then(function(){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓'); msg.className = 'msg ok'; postB.disabled = false; },
         function(e){ msg.textContent = SL('पोस्ट नहीं हुआ: ','Could not post: ') + (e.message||e); msg.className = 'msg err'; postB.disabled = false; }); }});
+    var bellB = isNew ? null : el('button',{'class':'btn b-line',type:'button',text:'🔔 '+SL('ग्राहकों को सूचना','Notify customers'),onclick:function(){ keep(); notifyDialog(p); }});
     var vidB = isNew || (p.photos||[]).length < 2 ? null : el('button',{'class':'btn b-line',type:'button',text:'🎬 '+SL('वीडियो बनाएँ','Make video'),onclick:function(){ keep(); videoDialog(p); }});
-    box.appendChild(el('div',{'class':'row'},[ save, postB, vidB, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
+    box.appendChild(el('div',{'class':'row'},[ save, postB, vidB, bellB, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
     box.appendChild(msg);
     ['e-unit','e-sizes'].forEach(function(id){ var n = document.getElementById(id); if (n) n.addEventListener('change', function(){ keep(); render(); }); });
   }
@@ -1416,6 +1417,22 @@ function videoDialog(p){
       postVideo(p, kind, vid).then(function(o){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓') + (o && o.carousel ? SL(' — Instagram ने Reel नहीं लिया, वहाँ फ़ोटो (स्वाइप वाली) डाल दी गईं। वजह: ',' — Instagram refused the Reel, so the photos were posted there as a carousel. Reason: ') + o.reelErr : ''); msg.className = 'msg ok'; }, function(e){ msg.textContent = (e.message||e); msg.className = 'msg err'; pb.disabled = false; }); }}); acts.appendChild(pb); }
     box.appendChild(acts);
   }, function(e){ msg.textContent = e.message || e; msg.className = 'msg err'; });  }
+}
+
+/* ---------- customer notifications (OneSignal) ---------- */
+var OS_APP = '7d764933-5740-498d-803f-4065d5641022';
+function notifyDialog(p){
+  var sc = el('div',{'class':'scrim'}), box = el('div',{'class':'modal',style:'max-width:480px'}); sc.appendChild(box); document.body.appendChild(sc);
+  var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') : '';
+  var off = (p.mrp && p.price && p.mrp > p.price) ? ' · ' + Math.round((1 - p.price/p.mrp)*100) + '% OFF' : '';
+  var fields = [[SL('शीर्षक (Title)','Title'), '✨ ' + SL('नया माल: ','New arrival: ') + p.name],
+    [SL('संदेश (Message)','Message'), (price ? price + off + ' – ' : '') + SL('अभी देखें और ऑर्डर करें। घर पर डिलीवरी, COD।','See it now and order. Home delivery, COD.')],
+    [SL('लिंक (Launch URL)','Launch URL'), 'https://diamondfashions.in/#p-' + p.code]];
+  box.appendChild(el('div',{'class':'row',style:'justify-content:space-between'},[ el('h3',{style:'margin:0',text:'🔔 '+SL('ग्राहकों को सूचना भेजें','Send a notification')}), el('button',{'class':'btn b-line b-sm',type:'button',text:'×',onclick:function(){ sc.remove(); }}) ]));
+  box.appendChild(el('p',{'class':'muted small',text:SL('OneSignal खुलेगा → "New Message / Push" → नीचे की तीनों चीज़ें कॉपी करके डालें → Send. सूचना उन सभी ग्राहकों को जाएगी जिन्होंने "ऑफ़र की सूचना पाएँ" चालू किया है।','OneSignal opens → "New Message / Push" → copy the three fields below → Send. It goes to every customer who turned on offer alerts.')}));
+  fields.forEach(function(f){ var ta = el('textarea',{style:'width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit'}); ta.value = f[1];
+    box.appendChild(el('div',{'class':'field'},[ el('label',{text:f[0]}), ta, el('button',{'class':'btn b-sm b-line',type:'button',style:'margin-top:4px',text:'📋 '+SL('कॉपी','Copy'),onclick:function(e){ try { navigator.clipboard.writeText(ta.value); e.target.textContent = '✓'; } catch(x){ ta.select(); document.execCommand('copy'); } }}) ])); });
+  box.appendChild(el('a',{'class':'btn b-gold',target:'_blank',rel:'noopener',href:'https://dashboard.onesignal.com/apps/' + OS_APP,text:SL('OneSignal खोलें','Open OneSignal')}));
 }
 
 /* ---------- live data ---------- */
