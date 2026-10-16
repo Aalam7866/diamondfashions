@@ -566,9 +566,161 @@ function drawReviews(main){
   });
 }
 
+/* Tiny read-only SQLite reader (tables only) – enough to read TailorShop's database in the browser */
+function sqliteOpen(buf){
+  var u8 = new Uint8Array(buf), dv = new DataView(buf);
+  var hdr = ''; for (var i = 0; i < 15; i++) hdr += String.fromCharCode(u8[i]);
+  if (hdr !== 'SQLite format 3') throw new Error('Not a SQLite database');
+  var ps = dv.getUint16(16); if (ps === 1) ps = 65536;
+  var usable = ps - u8[20], enc = dv.getUint32(56);
+  var td = new TextDecoder(enc === 2 ? 'utf-16le' : enc === 3 ? 'utf-16be' : 'utf-8');
+  function off(pg){ return (pg - 1) * ps; }
+  function varint(p){ var v = 0; for (var i = 0; i < 9; i++){ var b = u8[p + i]; if (i === 8){ v = v * 256 + b; return [v, p + 9]; } v = v * 128 + (b & 0x7f); if (!(b & 0x80)) return [v, p + i + 1]; } }
+  function payload(p, P){ // returns Uint8Array of full payload starting at cell payload position p
+    var X = usable - 35;
+    if (P <= X) return u8.subarray(p, p + P);
+    var M = Math.floor((usable - 12) * 32 / 255) - 23, K = M + ((P - M) % (usable - 4)), local = K <= X ? K : M;
+    var out = new Uint8Array(P); out.set(u8.subarray(p, p + local)); var got = local, next = dv.getUint32(p + local);
+    while (next && got < P){ var o = off(next), n = Math.min(usable - 4, P - got); out.set(u8.subarray(o + 4, o + 4 + n), got); got += n; next = dv.getUint32(o); }
+    return out;
+  }
+  function record(b){
+    var bv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    function vi(p){ var v = 0; for (var i = 0; i < 9; i++){ var x = b[p + i]; if (i === 8){ return [v * 256 + x, p + 9]; } v = v * 128 + (x & 0x7f); if (!(x & 0x80)) return [v, p + i + 1]; } }
+    var h = vi(0), hs = h[0], p = h[1], types = []; while (p < hs){ var t = vi(p); types.push(t[0]); p = t[1]; }
+    var d = hs, vals = [];
+    types.forEach(function(t){
+      if (t === 0){ vals.push(null); }
+      else if (t >= 1 && t <= 6){ var n = [0,1,2,3,4,6,8][t], v = 0; for (var i = 0; i < n; i++) v = v * 256 + b[d + i]; if (b[d] & 0x80) v -= Math.pow(2, n * 8); vals.push(v); d += n; }
+      else if (t === 7){ vals.push(bv.getFloat64(d)); d += 8; }
+      else if (t === 8){ vals.push(0); } else if (t === 9){ vals.push(1); }
+      else if (t >= 12 && t % 2 === 0){ var L = (t - 12) / 2; vals.push(b.slice(d, d + L)); d += L; }
+      else if (t >= 13){ var L2 = (t - 13) / 2; vals.push(td.decode(b.subarray(d, d + L2))); d += L2; }
+      else vals.push(null);
+    });
+    return vals;
+  }
+  function scan(root, cb){
+    var stack = [root];
+    while (stack.length){
+      var pg = stack.pop(), o = off(pg), h = pg === 1 ? o + 100 : o, type = u8[h], n = dv.getUint16(h + 3);
+      var cp = h + (type === 5 || type === 2 ? 12 : 8);
+      if (type === 5){ var kids = []; for (var i = 0; i < n; i++) kids.push(dv.getUint32(o + dv.getUint16(cp + i * 2))); kids.push(dv.getUint32(h + 8)); for (var k = kids.length - 1; k >= 0; k--) stack.push(kids[k]); }
+      else if (type === 13){ for (var j = 0; j < n; j++){ var c = o + dv.getUint16(cp + j * 2), a = varint(c), r = varint(a[1]); cb(r[0], record(payload(r[1], a[0]))); } }
+    }
+  }
+  var master = [];
+  scan(1, function(rowid, v){ master.push({type:v[0], name:v[1], root:v[3], sql:v[4]}); });
+  function columns(sql){
+    var s = sql.slice(sql.indexOf('(') + 1, sql.lastIndexOf(')')), parts = [], depth = 0, cur = '';
+    for (var i = 0; i < s.length; i++){ var ch = s[i]; if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && depth === 0){ parts.push(cur); cur = ''; } else cur += ch; }
+    parts.push(cur);
+    return parts.map(function(x){ return x.trim(); }).filter(function(x){ return x && !/^(PRIMARY|UNIQUE|FOREIGN|CHECK|CONSTRAINT)\b/i.test(x); })
+      .map(function(x){ var m = /^["`\[]?([^"`\]\s]+)["`\]]?\s*(.*)$/.exec(x); return {name:m[1], ipk:/INTEGER\s+PRIMARY\s+KEY/i.test(m[2])}; });
+  }
+  return {
+    tables: master.filter(function(m){ return m.type === 'table'; }).map(function(m){ return m.name; }),
+    all: function(name){
+      var m = master.filter(function(x){ return x.type === 'table' && x.name === name; })[0]; if (!m) return [];
+      var cols = columns(m.sql), rows = [];
+      scan(m.root, function(rowid, v){ var o = {}; cols.forEach(function(c, i){ o[c.name] = c.ipk ? rowid : (i < v.length ? v[i] : null); }); rows.push(o); });
+      return rows;
+    }
+  };
+}
+/* ---------- TailorShop (shop billing software) → website stock ---------- */
+function posClean(n){ return String(n||'').split(/\s*-\s*/)[0].trim() || String(n||''); }
+function posCat(n){ var s = String(n||'').toLowerCase();
+  if (/women|ladies|lady|girl'?s?\b|saree|kurti|lehenga|blouse|palazzo|legging|suit/.test(s)) return /girl/.test(s) ? 'girls' : 'women';
+  if (/boy/.test(s)) return 'boys'; if (/kid|baby|infant/.test(s)) return 'kids';
+  if (/shoe|chappal|sandal|slipper|footwear/.test(s)) return 'footwear';
+  if (/school|tie|book|pen|bag|stationery/.test(s)) return 'stationery';
+  return 'men'; }
+function posArt(n){ var s = String(n||'').toLowerCase();
+  var m = [[/palazzo|legging/,'leggings'],[/trouser|pant|jean|chino|track|short/,'pant'],[/t-?shirt|polo/,'tshirt'],[/shirt/,'shirt'],[/kurta/,'kurta'],[/sherwani|sweater|jacket|coat|blazer/,'jacket'],
+    [/saree|sari/,'saree'],[/lehenga/,'lehenga'],[/blouse/,'blouse'],[/frock|gown/,'frock'],[/shoe|chappal|sandal/,'shoe'],[/suit/,'suit']];
+  for (var i = 0; i < m.length; i++) if (m[i][0].test(s)) return m[i][1]; return 'shirt'; }
+function posRead(file){
+  return file.arrayBuffer().then(function(buf){
+    var db = sqliteOpen(buf);
+    if (db.tables.indexOf('items') < 0) throw new Error(SL('यह TailorShop की फ़ाइल नहीं लगती (items टेबल नहीं मिली)','This does not look like a TailorShop file (no items table)'));
+    var stock = {}; function add(code, q){ code = Number(code); if (!code) return; stock[code] = (stock[code] || 0) + (Number(q) || 0); }
+    db.all('purchases').forEach(function(r){ add(r.code, r.qty); });
+    if (db.tables.indexOf('g_sale_lines') >= 0) db.all('g_sale_lines').forEach(function(r){ add(r.hsn, -(r.qty || 0)); });
+    if (db.tables.indexOf('g_returns') >= 0) db.all('g_returns').forEach(function(r){ add(r.hsn, r.qty); });
+    return db.all('items').map(function(it){ return {code:Number(it.code), name:it.name || '', company:it.company || '', size:String(it.model || '').trim(), colour:String(it.colour || '').trim(),
+      price:Math.round((it.sale_rate || 0) * 100) / 100, qty:Math.max(0, Math.round((stock[it.code] || 0) * 100) / 100)}; });
+  });
+}
+function drawPos(main){
+  var card = el('div',{'class':'card',style:'border-left:4px solid var(--gold)'});
+  card.appendChild(el('h3',{style:'margin:0 0 4px',text:'🖥 '+SL('दुकान के सॉफ़्टवेयर (TailorShop) से स्टॉक लाएँ','Bring stock from the shop software (TailorShop)')}));
+  card.appendChild(el('p',{'class':'muted small',html:SL('1. TailorShop बंद करें। 2. नीचे बटन दबाकर <b>tailorshop.db</b> फ़ाइल चुनें (TailorShop के <b>publish</b> फ़ोल्डर में)। 3. हर सामान के आगे चुनें कि वेबसाइट के किस सामान से जोड़ना है, फिर "वेबसाइट पर भेजें"। अगली बार से जोड़ा हुआ याद रहेगा – बस फ़ाइल चुनकर भेजें।',
+    '1. Close TailorShop. 2. Press the button and choose the <b>tailorshop.db</b> file (in TailorShop\'s <b>publish</b> folder). 3. For each item choose which website product it belongs to, then "Send to website". Links are remembered – next time just choose the file and send.')}));
+  var msg = el('p',{'class':'msg'}), box = el('div');
+  var fi = el('input',{type:'file',accept:'.db,.sqlite,application/octet-stream',style:'position:absolute;inset:0;opacity:0;cursor:pointer'});
+  card.appendChild(el('label',{'class':'btn b-gold',style:'position:relative;overflow:hidden;display:inline-flex'},[ '📂 '+SL('tailorshop.db फ़ाइल चुनें','Choose tailorshop.db file'), fi ]));
+  card.appendChild(msg); card.appendChild(box); main.appendChild(card);
+  fi.onchange = function(){ var f = fi.files[0]; if (!f) return; msg.textContent = SL('पढ़ रहे हैं…','Reading…'); msg.className = 'msg';
+    posRead(f).then(function(items){ msg.textContent = items.length + SL(' सामान मिले',' items found'); msg.className = 'msg ok'; posTable(box, items, msg); },
+      function(e){ msg.textContent = SL('फ़ाइल नहीं पढ़ी गई: ','Could not read the file: ') + (e.message || e); msg.className = 'msg err'; }); };
+}
+function posTable(box, items, msg){
+  box.innerHTML = '';
+  var linked = {}; products.forEach(function(p){ (p.pos || []).forEach(function(c){ linked[c] = p.id; }); });
+  var priceChk = el('input',{type:'checkbox',checked:'checked'});
+  box.appendChild(el('label',{'class':'row',style:'margin:8px 0'},[ priceChk, ' '+SL('वेबसाइट पर दाम भी TailorShop वाले रखें','Also use TailorShop prices on the website') ]));
+  var opts = [['skip','— '+SL('वेबसाइट पर नहीं','not on website')+' —'],['new','+ '+SL('नया सामान बनाएँ','create new product')]].concat(products.map(function(p){ return [p.id, (p.code||'')+' · '+p.name]; }));
+  var catOpts = Object.keys(CATS).map(function(k){ return [k, CATS[k]]; });
+  var rows = [], tb = el('tbody');
+  items.forEach(function(it){
+    var sel = el('select',{style:'max-width:220px'}, opts.map(function(o){ return el('option',{value:o[0],text:o[1]}); }));
+    sel.value = linked[it.code] || (it.qty > 0 ? 'new' : 'skip');
+    var cs = el('select',null, catOpts.map(function(o){ return el('option',{value:o[0],text:o[1]}); })); cs.value = posCat(it.name);
+    var catCell = el('td'); function showCat(){ catCell.innerHTML = ''; if (sel.value === 'new') catCell.appendChild(cs); }
+    sel.onchange = showCat; showCat();
+    rows.push({it:it, sel:sel, cat:cs});
+    tb.appendChild(el('tr',null,[ el('td',{'class':'num small',text:String(it.code)}), el('td',null,[ el('b',{text:it.name}), el('div',{'class':'muted small',text:[it.company, it.colour].filter(Boolean).join(' · ')}) ]),
+      el('td',{text:it.size || '—'}), el('td',{text:rupees(it.price)}), el('td',{html: it.qty <= 0 ? '<span class="st bad">0</span>' : '<b>'+it.qty+'</b>'}), el('td',null,[sel]), catCell ]));
+  });
+  box.appendChild(el('div',{'class':'invwrap'},[ el('table',{'class':'inv'},[ el('thead',null,[ el('tr',null,[SL('कोड','Code'),SL('सामान','Item'),SL('साइज़','Size'),SL('दाम','Price'),SL('स्टॉक','Stock'),SL('वेबसाइट का सामान','Website product'),SL('कैटेगरी','Category')].map(function(h){ return el('th',{text:h}); })) ]), tb ]) ]));
+  var go = el('button',{'class':'btn b-gold',type:'button',style:'margin-top:10px',text:'⬆ '+SL('वेबसाइट पर भेजें','Send to website'),onclick:function(){
+    go.disabled = true; msg.textContent = SL('भेज रहे हैं…','Sending…'); msg.className = 'msg';
+    var batch = db.batch(), upd = {}, made = 0, changed = 0, seq = {};
+    function nextCode2(cat){ var pf = 'DF-'+(PFX[cat]||'X'); if (seq[cat] === undefined){ seq[cat] = 0; products.forEach(function(p){ var m = new RegExp('^'+pf+'(\\d+)$').exec(p.code||''); if (m) seq[cat] = Math.max(seq[cat], parseInt(m[1],10)); }); } seq[cat]++; return pf + (seq[cat] < 10 ? '0' : '') + seq[cat]; }
+    rows.forEach(function(r){
+      var it = r.it, v = r.sel.value; if (v === 'skip') return;
+      var size = it.size || '_';
+      if (v === 'new'){
+        var cat = r.cat.value, st = {}; st[size] = it.qty;
+        var np = {id:'p' + Date.now().toString(36) + it.code, code:nextCode2(cat), name:posClean(it.name), cat:cat, art:posArt(it.name), unit:'pc', price:it.price || null, mrp:null,
+          sizes: it.size || '', stock:st, inStock: it.qty > 0, photos:[], desc:[it.company, it.colour].filter(Boolean).join(' · '),
+          details:(it.company ? 'Brand: ' + it.company + '\n' : '') + (it.colour ? 'Colour: ' + it.colour : ''), pos:[it.code], order:Date.now(), updated:now(), social: (it.qty > 0 && it.qty <= ((meta && meta.low) || 3)) ? {lowAt:'import'} : {}};
+        batch.set(db.collection('products').doc(np.id), np); made++; return;
+      }
+      var p = upd[v] || (upd[v] = JSON.parse(JSON.stringify(products.filter(function(x){ return x.id === v; })[0] || {})));
+      if (!p.id) return;
+      p.stock = p.stock || {}; p._touched = p._touched || {};
+      if (!p._touched[size]){ p.stock[size] = 0; p._touched[size] = true; } // first TailorShop line for this size replaces the old number
+      p.stock[size] += it.qty;
+      if (size !== '_' && sizesOf(p).indexOf(size) < 0) p.sizes = sizesOf(p).concat([size]).join(', ');
+      p.pos = (p.pos || []).filter(function(c){ return c !== it.code; }).concat([it.code]);
+      if (priceChk.checked && it.price) p.price = it.price;
+    });
+    Object.keys(upd).forEach(function(id){ var p = upd[id]; var tot = Object.keys(p.stock).reduce(function(a,k){ return a + (typeof p.stock[k] === 'number' ? p.stock[k] : 0); }, 0);
+      var u = {stock:p.stock, sizes:p.sizes || '', pos:p.pos, inStock: tot > 0, updated:now()}; if (priceChk.checked && p.price) u.price = p.price;
+      batch.set(db.collection('products').doc(id), u, {merge:true}); changed++; });
+    batch.set(db.collection('config').doc('shop'), {posSyncAt:now()}, {merge:true});
+    batch.commit().then(function(){ go.disabled = false; msg.textContent = '✓ ' + SL('हो गया: ','Done: ') + changed + SL(' सामान का स्टॉक बदला, ',' products updated, ') + made + SL(' नए सामान बने। नए सामान की फ़ोटो "सामान" टैब में डालें।',' new products created. Add photos for new products in the Products tab.'); msg.className = 'msg ok'; },
+      function(e){ go.disabled = false; msg.textContent = SL('नहीं हुआ: ','Failed: ') + (e.message || e); msg.className = 'msg err'; });
+  }});
+  box.appendChild(go);
+}
+
 /* ---------- stock ---------- */
 function drawStock(main){
   main.appendChild(el('h2',{text:L('स्टॉक')}));
+  drawPos(main);
   main.appendChild(el('p',{'class':'muted small',text:L('संख्या बदलें और बाहर टैप करें, अपने-आप सेव होगा। खाली = गिनती नहीं (हमेशा उपलब्ध)। ऑर्डर मंज़ूर करने पर स्टॉक अपने-आप घटता है।')}));
   var tb = el('tbody');
   products.forEach(function(p){
