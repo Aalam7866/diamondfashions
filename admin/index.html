@@ -877,7 +877,10 @@ function socialWatch(){
     socialBusy[p.id] = true;
     socialQueue = socialQueue.then(function(){
       return db.collection('products').doc(p.id).update(mark).then(function(){ return (job === 'new' && meta.video !== false && (p.photos||[]).length >= 3 && vidType()) ? makeAnyVideo(p, job).then(function(vd){ return postVideo(p, job, vd); }) : postProduct(p, job); })
-        .then(function(){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram')); },
+        .then(function(){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram'));
+          if (job === 'new' && meta.osKey && meta.osAuto !== false){ var pr = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') : '';
+            osSend('✨ ' + SL('नया माल: ','New arrival: ') + p.name, (pr ? pr + ' – ' : '') + SL('अभी देखें और ऑर्डर करें। घर पर डिलीवरी, COD।','See it now and order. Home delivery, COD.'), 'https://diamondfashions.in/#p-' + p.code)
+              .then(function(){ toast('🔔 ' + p.name + SL(' की सूचना ग्राहकों को गई',' notification sent to customers')); }, function(){}); } },
               function(e){ toast('⚠ ' + p.name + ': ' + (e.message||e), true); });
     }).then(function(){ delete socialBusy[p.id]; });
   });
@@ -916,6 +919,16 @@ function drawSocial(main){
     vc.appendChild(vMsg);
     vc.appendChild(el('p',{'class':'muted small',text:SL('Key कहाँ से: console.cloud.google.com → प्रोजेक्ट diamond-fashions → "Cloud Text-to-Speech API" Enable → APIs & Services → Credentials → Create credentials → API key। इसके लिए Google Cloud में billing (कार्ड) चालू होनी चाहिए; हर महीने एक तय सीमा तक मुफ़्त है।','Get a key: console.cloud.google.com → project diamond-fashions → enable "Cloud Text-to-Speech API" → APIs & Services → Credentials → Create credentials → API key. Google Cloud billing (a card) must be on; a monthly amount is free.')}));
     card.appendChild(vc);
+    var oc = el('div',{style:'margin:0 0 10px 26px;padding:10px;border:1px dashed var(--line);border-radius:10px'});
+    oc.appendChild(el('b',{text:'🔔 '+SL('ग्राहकों को सूचना (OneSignal)','Customer notifications (OneSignal)')}));
+    var oIn = el('input',{type:'password',placeholder:'OneSignal REST API key (os_v2_app_…)',value:meta.osKey||'',style:'width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px;margin-top:6px'});
+    var oMsg = el('p',{'class':'msg'});
+    oc.appendChild(oIn);
+    oc.appendChild(el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:meta.osAuto!==false?'checked':null,onchange:function(e){ metaRef().set({osAuto:e.target.checked},{merge:true}); }}), ' '+SL('नया सामान (फ़ोटो के साथ) पोस्ट होते ही ग्राहकों को अपने-आप सूचना भेजें','Notify customers automatically when a new item (with photo) is posted') ]));
+    oc.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-sm b-gold',type:'button',text:SL('सेव करें','Save'),onclick:function(){ metaRef().set({osKey:oIn.value.trim()},{merge:true}).then(function(){ oMsg.textContent = SL('सेव हो गया ✓ (यह key सिर्फ़ Admin में रहती है, वेबसाइट पर नहीं)','Saved ✓ (the key stays in Admin only, never on the website)'); oMsg.className = 'msg ok'; }); }}),
+      el('button',{'class':'btn b-sm b-line',type:'button',text:'▶ '+SL('टेस्ट सूचना भेजें','Send test'),onclick:function(){ var m0 = meta; meta = Object.assign({}, meta, {osKey:oIn.value.trim()}); oMsg.textContent = '…'; oMsg.className = 'msg';
+        osSend('Diamond Fashions', SL('टेस्ट सूचना ✓','Test notification ✓'), 'https://diamondfashions.in/').then(function(j){ meta = m0; oMsg.textContent = SL('भेज दी गई ✓','Sent ✓') + (j.recipients ? ' (' + j.recipients + ')' : ''); oMsg.className = 'msg ok'; }, function(e){ meta = m0; oMsg.textContent = e.message; oMsg.className = 'msg err'; }); }}) ]));
+    oc.appendChild(oMsg); card.appendChild(oc);
     card.appendChild(chk('fb', SL('Facebook पेज पर पोस्ट','Post on Facebook Page')));
     card.appendChild(chk('ig', SL('Instagram पर पोस्ट','Post on Instagram')));
     card.appendChild(el('div',{'class':'field',style:'max-width:260px;margin-top:8px'},[ el('label',{text:SL('कितने पीस बचने पर पोस्ट हो','Post when pieces left are at or below')}),
@@ -1421,6 +1434,23 @@ function videoDialog(p){
 
 /* ---------- customer notifications (OneSignal) ---------- */
 var OS_APP = '7d764933-5740-498d-803f-4065d5641022';
+function osSend(title, message, url){
+  if (!meta || !meta.osKey) return Promise.reject(new Error(SL('सेटिंग में OneSignal की REST API key डालें','Add the OneSignal REST API key in Settings')));
+  function go(seg){ return fetch('https://api.onesignal.com/notifications?c=push', {method:'POST', headers:{'Content-Type':'application/json; charset=utf-8', 'Authorization':'Key ' + meta.osKey},
+      body: JSON.stringify({app_id:OS_APP, target_channel:'push', included_segments:[seg], headings:{en:title}, contents:{en:message}, url:url,
+        chrome_web_icon:'https://diamondfashions.in/icon-192.png', chrome_web_badge:'https://diamondfashions.in/icon-192.png'})})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); }); }
+  return go('Total Subscriptions').then(function(res){
+    var err = JSON.stringify(res.j.errors || '');
+    if (!res.ok && /segment/i.test(err)) return go('Subscribed Users');
+    return res;
+  }).then(function(res){
+    var err = res.j.errors; var txt = Array.isArray(err) ? err.join(', ') : (err ? JSON.stringify(err) : '');
+    if (!res.ok) throw new Error('OneSignal: ' + (txt || 'error'));
+    if (!res.j.id) throw new Error(/not subscribed|no recipients|All included players/i.test(txt) ? SL('अभी कोई ग्राहक subscribe नहीं है','No subscribers yet') : ('OneSignal: ' + txt));
+    return res.j;
+  }, function(e){ throw (e instanceof TypeError) ? new Error(SL('ब्राउज़र से सीधा नहीं भेजा जा सका – नीचे "OneSignal खोलें" से भेजें','Could not send from the browser – use "Open OneSignal" below')) : e; });
+}
 function notifyDialog(p){
   var sc = el('div',{'class':'scrim'}), box = el('div',{'class':'modal',style:'max-width:480px'}); sc.appendChild(box); document.body.appendChild(sc);
   var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') : '';
@@ -1432,7 +1462,15 @@ function notifyDialog(p){
   box.appendChild(el('p',{'class':'muted small',text:SL('OneSignal खुलेगा → "New Message / Push" → नीचे की तीनों चीज़ें कॉपी करके डालें → Send. सूचना उन सभी ग्राहकों को जाएगी जिन्होंने "ऑफ़र की सूचना पाएँ" चालू किया है।','OneSignal opens → "New Message / Push" → copy the three fields below → Send. It goes to every customer who turned on offer alerts.')}));
   fields.forEach(function(f){ var ta = el('textarea',{style:'width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit'}); ta.value = f[1];
     box.appendChild(el('div',{'class':'field'},[ el('label',{text:f[0]}), ta, el('button',{'class':'btn b-sm b-line',type:'button',style:'margin-top:4px',text:'📋 '+SL('कॉपी','Copy'),onclick:function(e){ try { navigator.clipboard.writeText(ta.value); e.target.textContent = '✓'; } catch(x){ ta.select(); document.execCommand('copy'); } }}) ])); });
-  box.appendChild(el('a',{'class':'btn b-gold',target:'_blank',rel:'noopener',href:'https://dashboard.onesignal.com/apps/' + OS_APP,text:SL('OneSignal खोलें','Open OneSignal')}));
+  var nmsg = el('p',{'class':'msg'});
+  var tas = box.querySelectorAll('textarea');
+  if (meta && meta.osKey) box.appendChild(el('button',{'class':'btn b-gold',type:'button',style:'margin-right:8px',text:'🔔 '+SL('अभी सबको भेजें','Send to everyone now'),onclick:function(e){
+    if (!confirm(SL('यह सूचना सभी subscribe किए ग्राहकों को भेजें?','Send this notification to all subscribed customers?'))) return;
+    var b = e.target; b.disabled = true; nmsg.textContent = '…'; nmsg.className = 'msg';
+    osSend(tas[0].value, tas[1].value, tas[2].value).then(function(j){ nmsg.textContent = SL('भेज दी गई ✓','Sent ✓') + (j.recipients ? ' (' + j.recipients + ')' : ''); nmsg.className = 'msg ok'; socialLog({at:now(), code:p.code, name:p.name, kind:'push', ok:true}); },
+      function(err){ b.disabled = false; nmsg.textContent = err.message; nmsg.className = 'msg err'; }); }}));
+  box.appendChild(el('a',{'class':'btn b-line',target:'_blank',rel:'noopener',href:'https://dashboard.onesignal.com/apps/' + OS_APP,text:SL('OneSignal खोलें','Open OneSignal')}));
+  box.appendChild(nmsg);
 }
 
 /* ---------- live data ---------- */
