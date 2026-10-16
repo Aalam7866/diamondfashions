@@ -606,7 +606,7 @@ function drawSettings(main){
 }
 
 /* ---------- Facebook & Instagram auto-post ---------- */
-var GV = 'https://graph.facebook.com/v23.0/';
+var GV = 'https://graph.facebook.com/v26.0/';
 var meta = null, metaLoaded = false, socialBusy = {}, socialQueue = Promise.resolve();
 function SL(hi, en){ return LANG === 'en' ? en : hi; }
 function metaRef(){ return db.collection('secret').doc('meta'); }
