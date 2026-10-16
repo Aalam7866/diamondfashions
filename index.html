@@ -2357,7 +2357,10 @@ try {
     var sc = document.createElement('script'); sc.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; sc.defer = true;
     sc.onerror = function(){ try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); } catch(e){} };
     document.head.appendChild(sc);
-    OneSignalDeferred.push(function(){ setTimeout(function(){ if (!window.__osReady) window.__osErr = 'init'; }, 15000); });
+    OneSignalDeferred.push(function(){ setTimeout(function(){ if (!window.__osReady && !window.__osErr) window.__osErr = 'init'; }, 15000); });
+    // keep OneSignal's own error text so the bell can show the real reason
+    ['error','warn'].forEach(function(k){ var o = console[k]; console[k] = function(){ try { var m = Array.prototype.map.call(arguments, function(x){ return x && x.message ? x.message : String(x); }).join(' ');
+      if (/onesignal/i.test(m) && !window.__osReady) window.__osErr = m.replace(/\s+/g,' ').slice(0,180); } catch(e){} return o.apply(console, arguments); }; });
     window.addEventListener('unhandledrejection', function(e){ try { var m = String((e.reason && (e.reason.message || e.reason)) || ''); if (/onesignal|service ?worker|push/i.test(m)) window.__osErr = m.slice(0,120); } catch(x){} });
   }
 } catch(e){}
