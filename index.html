@@ -383,6 +383,11 @@ footer .wrap{padding-block:22px 96px;display:flex;justify-content:space-between;
   footer .wrap{padding-bottom:90px}
 }
 
+/* header social buttons */
+.pill.soc{display:inline-flex;align-items:center;gap:6px;color:#fff;border-color:transparent}
+.pill.soc.fb{background:#1877F2}.pill.soc.ig{background:linear-gradient(45deg,#F58529,#DD2A7B 55%,#8134AF)}
+.pill.soc[hidden]{display:none}
+@media (max-width:640px){.pill.soc{width:40px;height:40px;min-height:40px;padding:0;justify-content:center;border-radius:50%}.pill.soc span{display:none}}
 /* follow us */
 .follow{background:linear-gradient(115deg,#0B1626,#16305A);color:#F2EEE6;padding:26px 0;margin-top:20px}
 .follow .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -790,6 +795,8 @@ function renderFrame(){
   '<a class="pill" href="#track">'+t.nav_track+'</a>' +
   '<a class="pill" href="#returns">'+t.nav_ret+'</a>' +
   '<a class="pill" href="#order">'+t.nav_order+' <span class="count" id="top-count">0</span></a>' +
+  '<a class="pill soc fb" id="tp-fb" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V8.8c0-.5.3-.8.8-.8z"/></svg><span>Facebook</span></a>' +
+  '<a class="pill soc ig" id="tp-ig" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>Instagram</span></a>' +
   '<a class="pill" id="top-wa" target="_blank" rel="noopener">WhatsApp</a>' +
   '<button class="pill" id="owner-btn" type="button"'+(canEdit?'':' hidden')+'>'+t.adm_btn+'</button></div>' +
  '</div></header>' +
@@ -2222,6 +2229,9 @@ function prefillReturn(){
   try { var r=document.getElementById('r-order'); if (r && !r.value){ var h=JSON.parse(localStorage.getItem('df-orders')||'[]'); if (h[0]) r.value=h[0].id; } } catch(e) {}
 }
 function renderSocial(){
+  var tf = document.getElementById('tp-fb'), ti = document.getElementById('tp-ig');
+  if (tf){ tf.hidden = !SHOP.fbUrl; if (SHOP.fbUrl) tf.href = SHOP.fbUrl; }
+  if (ti){ ti.hidden = !SHOP.igUrl; if (SHOP.igUrl) ti.href = SHOP.igUrl; }
   var ig = document.getElementById('fl-ig'), fb = document.getElementById('fl-fb'), wa = document.getElementById('fl-wa'); if (!ig) return;
   if (SHOP.igUrl){ ig.href = SHOP.igUrl; ig.hidden = false; } else ig.hidden = true;
   if (SHOP.fbUrl){ fb.href = SHOP.fbUrl; fb.hidden = false; } else fb.hidden = true;
