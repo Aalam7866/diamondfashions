@@ -1030,11 +1030,15 @@ function postVideo(p, kind, vid){
     // Instagram gets Facebook's own converted MP4 (source URL), so any recorded format works
     var tries = 0;
     function src(){ return gfetch(r.id, {fields:'source,status', access_token:tok}).then(function(v){
-      if (v.source) return v.source; if (++tries > 75) throw new Error('Facebook is still processing the video'); return wait(4000).then(src); }); }
+      var vs = v.status && v.status.video_status; // wait until Facebook has finished converting the video
+      if (v.source && (!vs || vs === 'ready')) return v.source;
+      if (vs === 'error') throw new Error('Facebook could not convert the video');
+      if (++tries > 75) throw new Error('Facebook is still processing the video'); return wait(4000).then(src); }); }
     return src().then(function(url){ return gfetch(meta.igId + '/media', {media_type:'REELS', video_url:url, caption:igCaption(cap, p), share_to_feed:'true', access_token:tok}, 'POST'); })
       .then(function(cr){ var n = 0;
-        function ready(){ return gfetch(cr.id, {fields:'status_code', access_token:tok}).then(function(st){
-          if (st.status_code === 'FINISHED') return; if (st.status_code === 'ERROR' || ++n > 45) throw new Error('Instagram could not process the video');
+        function ready(){ return gfetch(cr.id, {fields:'status_code,status', access_token:tok}).then(function(st){
+          if (st.status_code === 'FINISHED') return;
+          if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED' || ++n > 60) throw new Error('Instagram could not process the video' + (st.status ? ' — ' + st.status : ''));
           return wait(4000).then(ready); }); }
         return ready().then(function(){ return gfetch(meta.igId + '/media_publish', {creation_id:cr.id, access_token:tok}, 'POST'); }); })
       .then(function(pub){ out.ig = pub.id; });
