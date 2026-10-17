@@ -179,7 +179,7 @@ function newCount(){ return orders.filter(function(o){ return o.status==='new'; 
 /* ---------- admin app: install, alerts, badge ---------- */
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 var instEvt = null, adminSW = null;
-var APP_HOST = /(^|\.)github\.io$/.test(location.hostname), SITE = APP_HOST ? 'https://diamondfashions.in' : '', APP_URL = 'https://aalam7866.github.io/admin/';
+var APP_HOST = /(^|\.)github\.io$|^apps\.diamondfashions\.in$/.test(location.hostname), SITE = APP_HOST ? 'https://diamondfashions.in' : '', APP_URL = 'https://aalam7866.github.io/admin/';
 if (APP_HOST && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ adminSW = r; }).catch(function(){});
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; if (me && isAdmin(me)) try { draw(); } catch(x){} else { var ib = document.getElementById('login-inst'); if (ib){ ib.innerHTML = ''; var b = installBtn(); if (b) ib.appendChild(b); } } });
 window.addEventListener('appinstalled', function(){ instEvt = null; IS_APP = true; if (me && isAdmin(me)) try { draw(); } catch(x){} });
