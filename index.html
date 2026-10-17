@@ -113,6 +113,16 @@ section.block{padding-block:44px}
 .field input,.field select,.field textarea{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
 .field textarea{min-height:80px;resize:vertical}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.pg-bar,.pg-x{display:none}
+body.pg #app>section,body.pg #app>footer{display:none}
+body.pg-track #app>#track,body.pg-returns #app>#returns{display:block;min-height:calc(100vh - 140px);padding-top:14px}
+body.pg .pg-bar{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.pg-back{width:40px;height:40px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;color:var(--ink);background:var(--bg);border:1px solid var(--line)}
+.pg-bar small{display:block;color:var(--muted);font-size:13px}.pg-bar small a{color:inherit}.pg-bar b{font-size:18px;font-weight:600}
+body.pg .pg-x{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:600}
+.pg-x svg{width:24px;height:24px;flex:none;color:var(--accent,#8a6a1f)}.pg-x span{flex:1}.pg-x b{font-size:22px;color:var(--muted)}
+body.pg .sec-head{margin-top:0}
+
 .alt-l{color:var(--muted);font-weight:400;font-size:.88em}
 h2+.alt-h{margin:4px 0 0;font-size:17px}
 .services h3 .alt-l{font-family:inherit}
@@ -615,7 +625,7 @@ var S = {
   err_cart:'Add at least one item to your order first.', err_contact:'Please write your name and a 10-digit mobile number so the shop can reach you.',
   wa_greet:'Hello Diamond Fashions! I would like to know about your clothes.',
   wa_order:'Hello Diamond Fashions! I would like to order:', wa_size:'size', wa_total:'Total', wa_name:'Name', wa_mobile:'Mobile', wa_how:'Delivery', wa_addr:'Address', wa_note:'Note',
-  eb_tailor:'Tailoring', sec_tailor:'Tailoring centre for women and men',
+  pg_home:'Home', pg_help:'Help centre', pg_to_ret:'Cancel, return or exchange an order', pg_to_track:'Track your order', pg_go:'Open', eb_tailor:'Tailoring', sec_tailor:'Tailoring centre for women and men',
   t_ladies:'Ladies tailoring', t_ladies_items:['Suit stitching','Blouse stitching','Fall-pico','Fitting &amp; alteration'],
   t_gents:'Gents tailoring', t_gents_items:['Shirt stitching','Pant stitching','Kurta pajama','Fitting &amp; alteration'],
   t_name:'Your name', t_phone:'Mobile number', t_for:'For whom', t_for_opts:['Women','Men','Boy','Girl'],
@@ -710,7 +720,7 @@ var S = {
   err_cart:'पहले कम से कम एक कपड़ा ऑर्डर में जोड़ें।', err_contact:'अपना नाम और 10 अंकों का मोबाइल नंबर लिखें, ताकि दुकान आपसे बात कर सके।',
   wa_greet:'नमस्ते डायमंड फैशन्स! मुझे कपड़ों के बारे में जानकारी चाहिए।',
   wa_order:'नमस्ते डायमंड फैशन्स! मुझे यह ऑर्डर करना है:', wa_size:'साइज़', wa_total:'कुल', wa_name:'नाम', wa_mobile:'मोबाइल', wa_how:'कैसे लेंगे', wa_addr:'पता', wa_note:'बात',
-  eb_tailor:'Tailoring', sec_tailor:'सिलाई सेंटर: लेडीज़ और जेंट्स',
+  pg_home:'होम', pg_help:'मदद केंद्र', pg_to_ret:'ऑर्डर कैंसिल, वापसी या बदलाव', pg_to_track:'अपना ऑर्डर ट्रैक करें', pg_go:'खोलें', eb_tailor:'Tailoring', sec_tailor:'सिलाई सेंटर: लेडीज़ और जेंट्स',
   t_ladies:'लेडीज़ सिलाई', t_ladies_items:['सूट सिलाई','ब्लाउज़ सिलाई','फॉल-पीको','फिटिंग व ऑल्टरेशन'],
   t_gents:'जेंट्स सिलाई', t_gents_items:['शर्ट सिलाई','पैंट सिलाई','कुर्ता-पायजामा','फिटिंग व ऑल्टरेशन'],
   t_name:'आपका नाम', t_phone:'मोबाइल नंबर', t_for:'किसके लिए', t_for_opts:['महिला','पुरुष','लड़का','लड़की'],
@@ -844,6 +854,18 @@ function el(tag, attrs, kids){
 function waLink(text){ return 'https://wa.me/' + SHOP.waNumber + '?text=' + encodeURIComponent(text); }
 function cartCount(){ return cart.reduce(function(s,c){return s+c.qty;},0); }
 function opts(list){ return list.map(function(o,i){ return '<option value="'+i+'">'+o+'</option>'; }).join(''); }
+function pgBar(t, title){ return '<div class="pg-bar"><a class="pg-back" href="#shop" aria-label="'+t.pg_home+'">←</a><div><small><a href="#shop">'+t.pg_home+'</a> › '+t.pg_help+'</small><b>'+title+'</b></div></div>'; }
+function pgLink(href, ico, text){ return '<a class="pg-x" href="'+href+'">'+ico+'<span>'+text+'</span><b aria-hidden="true">›</b></a>'; }
+/* Track and Returns open as their own pages (like Flipkart/Amazon help pages) */
+var pgCur = '';
+function applyPage(){
+  var h = location.hash || '', pg = /^#track(-|$)/.test(h) ? 'track' : h === '#returns' ? 'returns' : '';
+  var b = document.body; b.classList.toggle('pg', !!pg); b.classList.toggle('pg-track', pg === 'track'); b.classList.toggle('pg-returns', pg === 'returns');
+  if (pg && pg !== pgCur) window.scrollTo(0, 0);
+  else if (!pg && pgCur){ var id = h.replace(/^#/, ''), tg = id && document.getElementById(id); setTimeout(function(){ if (tg && !/^p-/.test(id)) tg.scrollIntoView(); else if (!tg) window.scrollTo(0, 0); }, 0); }
+  pgCur = pg;
+}
+window.addEventListener('hashchange', applyPage);
 function lis2(list, alt){ return list.map(function(o, i){ return '<li>'+o+(alt && alt[i] && alt[i] !== o ? ' <span class="alt-l">· '+alt[i]+'</span>' : '')+'</li>'; }).join(''); }
 function lis(list){ return list.map(function(o){ return '<li>'+o+'</li>'; }).join(''); }
 
@@ -913,7 +935,7 @@ function renderFrame(){
    '<p class="hint">'+t.co_hint+' <span class="num" id="o-num"></span></p>' +
   '</form></div>' +
  '</div></section>' +
- '<section class="block" id="returns"><div class="wrap">' +
+ '<section class="block" id="returns"><div class="wrap">' + pgBar(t, t.pg_to_ret) +
   '<div class="sec-head"><div><div class="eyebrow">'+t.ret_eb+'</div><h2>'+D(t.ret_title)+'</h2></div></div>' +
   '<div class="slip"><div class="panel"><ul class="retlist">'+t.ret_points.map(function(x){ return '<li>'+icoRet+'<span>'+D(x)+'</span></li>'; }).join('')+'</ul></div>' +
   '<form class="panel form" id="r-form" novalidate>' +
@@ -927,9 +949,9 @@ function renderFrame(){
    '<p class="error" id="r-err" role="alert"></p>' +
    (formUrlFor('') ? '<button type="button" class="btn btn-gold" id="r-direct">'+t.rq_send+'</button><p class="hint" id="r-msg" aria-live="polite" style="margin:0;font-weight:600"></p>' : '') +
    '<a class="btn '+(formUrlFor('')?'btn-line':'btn-wa')+'" id="r-send" target="_blank" rel="noopener">'+t.ret_send+'</a>' +
-  '</form></div>' +
+  '</form></div>' + pgLink('#track', ICO_U.track, t.pg_to_track) +
  '</div></section>' +
- '<section class="block" id="track"><div class="wrap">' +
+ '<section class="block" id="track"><div class="wrap">' + pgBar(t, t.nav_track) +
   '<div class="sec-head"><div><div class="eyebrow">'+t.tr_eb+'</div><h2>'+t.tr_title+'</h2></div></div>' +
   '<div class="slip"><form class="panel form" id="tr-form" novalidate>' +
    '<div class="field"><label for="tr-id">'+t.tr_lbl+'</label><input id="tr-id" autocomplete="off" autocapitalize="characters" placeholder="DF-261015-K7QX"></div>' +
@@ -938,7 +960,7 @@ function renderFrame(){
    '<button class="btn btn-line" type="button" id="tr-ret">'+t.tr_return+'</button>' +
    '<button class="btn btn-line" type="button" id="tr-can" style="color:var(--danger)">'+t.tr_cancel+'</button></div>' +
    '<div id="tr-recent" class="row"></div>' +
-  '</form><div class="panel" id="tr-out" aria-live="polite"></div></div>' +
+  '</form><div class="panel" id="tr-out" aria-live="polite"></div></div>' + pgLink('#returns', ICO_U.ret, t.pg_to_ret) +
  '</div></section>' +
  '<section class="block tailor" id="tailor"><div class="wrap">' +
   '<div class="sec-head"><div><div class="eyebrow">'+t.eb_tailor+'</div><h2>'+t.sec_tailor+'</h2><p class="alt-l alt-h">'+tAlt.sec_tailor+'</p></div></div>' +
@@ -2238,7 +2260,8 @@ function goReturn(id){
   var ri = document.getElementById('r-item'); if (ri && !ri.value && hh.items) ri.value = hh.items;
   var r = document.getElementById('r-order'); if (r){ r.value = id; try { r.dispatchEvent(new Event('input')); } catch(e){} }
   renderTrack();
-  setTimeout(function(){ var s = document.getElementById('returns'); if (s) s.scrollIntoView({behavior:'smooth'}); var it=document.getElementById('r-item'); if (it) it.focus({preventScroll:true}); }, 300);
+  if (location.hash !== '#returns') location.hash = '#returns'; else window.scrollTo(0, 0);
+  setTimeout(function(){ var it=document.getElementById('r-item'); if (it) it.focus({preventScroll:true}); }, 300);
 }
 function stepsEl(idx, at, pick){
   var t = T(), at2 = at || {};
@@ -2433,7 +2456,7 @@ function renderInventory(body){
 }
 function readTrackHash(){
   var m = /^#?track-(DF-\d{6}-[A-Z0-9]{3,8})$/.exec(location.hash||'');
-  if (m){ trackId = m[1]; setTimeout(function(){ var s=document.getElementById('track'); if (s) s.scrollIntoView(); }, 50); }
+  if (m){ trackId = m[1]; }
 }
 function prefillReturn(){
   try { var r=document.getElementById('r-order'); if (r && !r.value){ var h=JSON.parse(localStorage.getItem('df-orders')||'[]'); if (h[0]) r.value=h[0].id; } } catch(e) {}
@@ -2471,7 +2494,7 @@ function renderSocial(){
 function renderAll(){
   if (adminMode && canEdit){ closeProduct(); renderAdmin(); return; }
   var reopen = openId; closeProduct();
-  renderFrame(); renderSocial(); renderBanners(); renderTailor(); wireBottomNav(); restoreForms(); prefillReturn(); renderChips(); renderGrid(); renderCart(); renderDone(); updateTailorLink(); updateReturnLink(); renderOwner();
+  renderFrame(); applyPage(); renderSocial(); renderBanners(); renderTailor(); wireBottomNav(); restoreForms(); prefillReturn(); renderChips(); renderGrid(); renderCart(); renderDone(); updateTailorLink(); updateReturnLink(); renderOwner();
   var tf = document.getElementById('tr-form');
   tf.addEventListener('submit', function(e){ e.preventDefault(); var v = document.getElementById('tr-id').value.trim().toUpperCase(); var er=document.getElementById('tr-err'); if (!v){ er.textContent = T().tr_err; return; } er.textContent=''; trMode=''; trackId = v; renderTrack(); });
   var trPick = function(mode){ var v = document.getElementById('tr-id').value.trim().toUpperCase() || trackId; var er=document.getElementById('tr-err'); if (!v){ er.textContent = T().tr_need; document.getElementById('tr-id').focus(); return; } er.textContent=''; trackId = v; trMode = mode; if (mode==='return'){ var r=TRACK[v]; var ok = r && r.s==='delivered' && r.at && r.at.delivered && (Date.now()-new Date(r.at.delivered).getTime())/86400000 <= SHOP.returnDays; if (ok){ goReturn(v); return; } } renderTrack(); };
