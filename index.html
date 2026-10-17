@@ -113,6 +113,28 @@ section.block{padding-block:44px}
 .field input,.field select,.field textarea{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
 .field textarea{min-height:80px;resize:vertical}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.ol{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.ol-row{display:grid;grid-template-columns:76px minmax(0,1fr) 24px;gap:14px;align-items:center;padding:14px 16px;text-decoration:none;color:var(--ink);border-bottom:1px solid var(--line)}
+.ol-row:last-child{border-bottom:0}.ol-row:hover{background:var(--bg)}
+.ol-im{width:76px;height:76px;border-radius:14px;background:var(--art-bg);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ol-im img{width:100%;height:100%;object-fit:cover}.ol-im svg{width:56%;color:var(--art-line)}
+.ol-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ol-st{font-size:17px;font-weight:700;color:var(--ink)}.ol-st.ok{color:#1d7a3a}.ol-st.bad{color:#b3261e}.ol-st.go{color:#8a5a00}
+.ol-nm{color:var(--muted);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ol-txt small{color:var(--muted);font-size:12px}
+.ol-go{font-size:28px;color:var(--ink);line-height:1;text-align:right}
+.ol-empty{padding:18px;margin:0;color:var(--muted)}
+.ol-findh{font-size:16px;margin:4px 0 10px}
+#track:not(.is-detail) #tr-out,#track:not(.is-detail) #tr-ret,#track:not(.is-detail) #tr-can,#track:not(.is-detail) #tr-recent{display:none}
+#track.is-detail #ol-list,#track.is-detail .ol-findh,#track.is-detail #tr-form,#track .sec-head{display:none}
+#track.is-detail .slip{grid-template-columns:minmax(0,1fr)}
+button.ol-row{width:100%;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer;font:inherit}.ol-row.on{background:var(--gold-soft,#f6ecd5)}
+.ol-back{display:inline-block;margin-bottom:10px;font-weight:600}
+.ol-head{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;margin-bottom:12px}.ol-head small{color:var(--muted)}
+.ol-items{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:12px}.ol-items h4{margin:0 0 8px;font-size:15px;color:var(--muted)}
+.ol-irow{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.ol-irow .ol-im{width:56px;height:56px;border-radius:10px}
+.ol-tot{display:flex;justify-content:space-between;border-top:2px solid var(--ink);padding-top:10px;margin-top:6px;font-size:16px}
+
 .cp{display:grid;grid-template-columns:96px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-height:60vh}
 .cp-rail{background:var(--bg);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;max-height:75vh}
 .cp-tab{border:0;background:none;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;border-left:4px solid transparent;text-align:center;line-height:1.2}
@@ -690,7 +712,7 @@ var S = {
   can_send:'Send cancel request on WhatsApp', can_note:'You can cancel until your order leaves the shop. The shop will confirm on WhatsApp.', can_late:'This order has already left the shop, so it cannot be cancelled. You can return it within {d} days after delivery.',
   can_done:'This order is cancelled.', can_rej:'This order was cancelled by the shop.', ret_late:'The {d}-day return time for this order is over.', ret_soon:'You can return this order within {d} days after it is delivered.', ret_go:'Fill the return form below.',
   wa_can:'Hello Diamond Fashions! I want to cancel my order:', tr_need:'First type your order ID above.',
-  nav_track:'Track order', tr_eb:'Track', tr_title:'Track your order', tr_lbl:'Order ID', tr_btn:'Track', tr_recent:'Your recent orders:',
+  rt_pick:'Which order do you need help with?', rt_sel:'Selected', ol_title:'My orders', ol_empty:'No orders on this phone yet. Log in to see all your orders, or find one by its order number below.', ol_find:'Find an order by its number', ol_back:'← My orders', ol_more:' +{n} more', ol_items:'Items in this order', ol_total:'Order total', ol_placed:'Ordered on {d}', ol_acc:'Accepted on {d}', ol_packed:'Packed on {d}', ol_ship:'On the way · {d}', ol_pick:'Ready for pickup · {d}', ol_deliv:'Delivered on {d}', ol_can:'Cancelled', ol_rej:'Cancelled by the shop', ol_retreq:'Return requested', ol_retok:'Return approved', ol_returned:'Returned on {d}', ol_retno:'Return declined', ol_help:'Need help with this order?', nav_track:'Track order', tr_eb:'Track', tr_title:'Track your order', tr_lbl:'Order ID', tr_btn:'Track', tr_recent:'Your recent orders:',
   tr_none:'We could not find this order. Check the order ID, or message us on WhatsApp.', tr_wait:'Your order is placed. The shop has not confirmed it yet. Make sure you pressed Send in WhatsApp.',
   tr_steps:['Order placed','Accepted','Packed','On the way','Delivered'], tr_pick:'Ready for pickup', tr_rej:'This order was cancelled by the shop.',
   tr_ret:{return_req:'Return requested',return_ok:'Return approved',returned:'Return completed',return_no:'Return declined'},
@@ -785,7 +807,7 @@ var S = {
   can_send:'WhatsApp पर रद्द करने की रिक्वेस्ट भेजें', can_note:'दुकान से सामान निकलने से पहले तक ऑर्डर रद्द कर सकते हैं। दुकान WhatsApp पर पक्का करेगी।', can_late:'यह ऑर्डर दुकान से निकल चुका है, इसलिए रद्द नहीं हो सकता। डिलीवरी के {d} दिन के अंदर वापस कर सकते हैं।',
   can_done:'यह ऑर्डर रद्द हो गया है।', can_rej:'यह ऑर्डर दुकान ने रद्द कर दिया।', ret_late:'इस ऑर्डर की {d} दिन की वापसी का समय खत्म हो गया।', ret_soon:'डिलीवरी के बाद {d} दिन के अंदर वापस कर सकते हैं।', ret_go:'नीचे वापसी का फॉर्म भरें।',
   wa_can:'नमस्ते डायमंड फैशन्स! मुझे अपना ऑर्डर रद्द करना है:', tr_need:'पहले ऊपर अपना ऑर्डर नंबर लिखें।',
-  nav_track:'ऑर्डर ट्रैक करें', tr_eb:'Track', tr_title:'अपना ऑर्डर ट्रैक करें', tr_lbl:'ऑर्डर नंबर', tr_btn:'देखें', tr_recent:'आपके हाल के ऑर्डर:',
+  rt_pick:'किस ऑर्डर में मदद चाहिए? चुनें', rt_sel:'चुना गया', ol_title:'मेरे ऑर्डर', ol_empty:'इस फ़ोन पर अभी कोई ऑर्डर नहीं। सारे ऑर्डर देखने के लिए लॉग-इन करें, या नीचे ऑर्डर नंबर से खोजें।', ol_find:'ऑर्डर नंबर से खोजें', ol_back:'← मेरे ऑर्डर', ol_more:' +{n} और', ol_items:'इस ऑर्डर का सामान', ol_total:'कुल रकम', ol_placed:'{d} को ऑर्डर किया', ol_acc:'{d} को मंज़ूर हुआ', ol_packed:'{d} को पैक हुआ', ol_ship:'रास्ते में · {d}', ol_pick:'लेने के लिए तैयार · {d}', ol_deliv:'{d} को पहुँच गया', ol_can:'कैंसिल हो गया', ol_rej:'दुकान ने रद्द किया', ol_retreq:'वापसी की माँग भेजी', ol_retok:'वापसी मंज़ूर', ol_returned:'{d} को वापस हुआ', ol_retno:'वापसी नामंज़ूर', ol_help:'इस ऑर्डर में मदद चाहिए?', nav_track:'ऑर्डर ट्रैक करें', tr_eb:'Track', tr_title:'अपना ऑर्डर ट्रैक करें', tr_lbl:'ऑर्डर नंबर', tr_btn:'देखें', tr_recent:'आपके हाल के ऑर्डर:',
   tr_none:'यह ऑर्डर नहीं मिला। ऑर्डर नंबर जांचें या WhatsApp पर मैसेज करें।', tr_wait:'आपका ऑर्डर हो गया है। दुकान ने अभी पक्का नहीं किया है। ध्यान दें कि आपने WhatsApp में Send दबाया हो।',
   tr_steps:['ऑर्डर हुआ','मंज़ूर','पैक','रास्ते में','पहुँच गया'], tr_pick:'लेने के लिए तैयार', tr_rej:'यह ऑर्डर दुकान ने रद्द कर दिया।',
   tr_ret:{return_req:'वापसी की माँग',return_ok:'वापसी मंज़ूर',returned:'वापसी पूरी',return_no:'वापसी नामंज़ूर'},
@@ -890,14 +912,16 @@ function pgBar(t, title, crumb){ return '<div class="pg-bar"><a class="pg-back" 
 function pgLink(href, ico, text){ return '<a class="pg-x" href="'+href+'">'+ico+'<span>'+text+'</span><b aria-hidden="true">›</b></a>'; }
 /* Track and Returns open as their own pages (like Flipkart/Amazon help pages) */
 var pgCur = '';
-function applyPage(){
+function applyPage(ev){
   var h = location.hash || '', pg = /^#track(-|$)/.test(h) ? 'track' : h === '#returns' ? 'returns' : h === '#order' ? 'order' : h === '#cats' ? 'cats' : '';
   var b = document.body; b.classList.toggle('pg', !!pg); b.classList.toggle('pg-track', pg === 'track'); b.classList.toggle('pg-returns', pg === 'returns'); b.classList.toggle('pg-order', pg === 'order'); b.classList.toggle('pg-cats', pg === 'cats'); if (pg === 'cats') try { renderCats(); } catch(e){}
-  if (pg && pg !== pgCur) window.scrollTo(0, 0);
+  if (pg && (pg !== pgCur || (ev && ev.type === 'hashchange'))){ window.scrollTo(0, 0); setTimeout(function(){ window.scrollTo(0, 0); }, 30); }
   else if (!pg && pgCur){ var id = h.replace(/^#/, ''), tg = id && document.getElementById(id); setTimeout(function(){ if (tg && !/^p-/.test(id)) tg.scrollIntoView(); else if (!tg) window.scrollTo(0, 0); }, 0); }
   pgCur = pg;
 }
 window.addEventListener('hashchange', applyPage);
+window.addEventListener('load', function(){ if (pgCur) [60, 400].forEach(function(ms){ setTimeout(function(){ window.scrollTo(0, 0); }, ms); }); });
+if ('scrollRestoration' in history) try { history.scrollRestoration = 'manual'; } catch(e){}
 function lis2(list, alt){ return list.map(function(o, i){ return '<li>'+o+(alt && alt[i] && alt[i] !== o ? ' <span class="alt-l">· '+alt[i]+'</span>' : '')+'</li>'; }).join(''); }
 function lis(list){ return list.map(function(o){ return '<li>'+o+'</li>'; }).join(''); }
 
@@ -969,6 +993,7 @@ function renderFrame(){
   '</form></div>' +
  '</div></section>' +
  '<section class="block" id="returns"><div class="wrap">' + pgBar(t, t.pg_to_ret) +
+  '<h3 class="ol-findh rt-h">'+t.rt_pick+'</h3><div class="ol rt-list" id="rt-list"></div>' +
   '<div class="sec-head"><div><div class="eyebrow">'+t.ret_eb+'</div><h2>'+D(t.ret_title)+'</h2></div></div>' +
   '<div class="slip"><div class="panel"><ul class="retlist">'+t.ret_points.map(function(x){ return '<li>'+icoRet+'<span>'+D(x)+'</span></li>'; }).join('')+'</ul></div>' +
   '<form class="panel form" id="r-form" novalidate>' +
@@ -984,8 +1009,10 @@ function renderFrame(){
    '<a class="btn '+(formUrlFor('')?'btn-line':'btn-wa')+'" id="r-send" target="_blank" rel="noopener">'+t.ret_send+'</a>' +
   '</form></div>' + pgLink('#track', ICO_U.track, t.pg_to_track) +
  '</div></section>' +
- '<section class="block" id="track"><div class="wrap">' + pgBar(t, t.nav_track) +
-  '<div class="sec-head"><div><div class="eyebrow">'+t.tr_eb+'</div><h2>'+t.tr_title+'</h2></div></div>' +
+ '<section class="block" id="track"><div class="wrap">' + pgBar(t, t.ol_title) +
+  '<div class="ol" id="ol-list"></div>' +
+  '<div class="ol-detail" id="ol-detail"></div>' +
+  '<h3 class="ol-findh">'+t.ol_find+'</h3>' +
   '<div class="slip"><form class="panel form" id="tr-form" novalidate>' +
    '<div class="field"><label for="tr-id">'+t.tr_lbl+'</label><input id="tr-id" autocomplete="off" autocapitalize="characters" placeholder="DF-261015-K7QX"></div>' +
    '<p class="error" id="tr-err" role="alert"></p>' +
@@ -1964,7 +1991,7 @@ function showSummary(order, dl){
   (needFee ? utrI : ok).focus();
 }
 function commitOrder(order){
-  try { var hist = JSON.parse(localStorage.getItem('df-orders')||'[]'); hist.unshift({id:order.id, phone:order.phone, items:order.items.map(function(i){return i.sku+' '+i.name;}).join(', ')}); localStorage.setItem('df-orders', JSON.stringify(hist.slice(0,10))); } catch(e) {}
+  try { var hist = JSON.parse(localStorage.getItem('df-orders')||'[]'); hist.unshift({id:order.id, phone:order.phone, created:new Date().toISOString(), total:order.total, items:order.items.map(function(i){return i.sku+' '+i.name;}).join(', '), list:order.items.map(function(i){ return {sku:i.sku, name:i.name, size:i.size, qty:i.qty, price:i.price}; })}); localStorage.setItem('df-orders', JSON.stringify(hist.slice(0,20))); } catch(e) {}
   placed = order;
   try { window.dispatchEvent(new CustomEvent('df-order',{detail:order})); } catch(e){}
   if ((window.DF && DF.saveOrder) || orderFormUrl(order)){ order.sent = 'sending'; sendOrderDirect(order); }
@@ -2060,7 +2087,7 @@ function renderDone(){
     el('p',{'class':'done-step','aria-live':'polite',text: o.sent==='ok' ? t.conf_sent : o.sent==='sending' ? t.conf_sending : o.sent==='fail' ? t.conf_failed : (orderFormUrl(o) ? t.conf_step_form : t.conf_step)}),
     (orderFormUrl(o) && o.sent !== 'ok' && o.sent !== 'sending') ? el('a',{'class':'btn btn-gold',href:orderFormUrl(o),target:'_blank',rel:'noopener',text:t.conf_send_form}) : null,
     o.sent === 'sending' ? null : el('a',{'class':orderFormUrl(o) ? 'btn btn-line' : 'btn btn-wa',href:waLink(orderMessage(o)),target:'_blank',rel:'noopener',text:orderFormUrl(o) ? t.conf_or_wa : t.conf_send}),
-    el('a',{'class':'btn btn-line',href:'#track',text:t.conf_track,onclick:function(){ trackId = o.id; setTimeout(renderTrack, 0); }}),
+    el('a',{'class':'btn btn-line',href:'#track-'+o.id,text:t.conf_track}),
     el('p',{'class':'hint',text:SHOP.display})
   ];
   var payBox;
@@ -2271,11 +2298,81 @@ function saveShop(btn, status){
 
 /* ---------- order tracking ---------- */
 var TR_STATES = ['accepted','packed','shipped','pickup','delivered','rejected','cancelled','return_req','return_ok','returned','return_no'];
+/* ---------- Flipkart-style "My orders" list ---------- */
+var acctOrders = [];
+function allOrders(){
+  var map = {}, out = [];
+  var add = function(o){ if (!o || !o.id) return; var x = map[o.id]; if (!x){ x = map[o.id] = {id:o.id}; out.push(x); }
+    if (!x.created && o.created) x.created = o.created; if (!x.total && o.total) x.total = o.total;
+    var items = o.list || (Array.isArray(o.items) ? o.items : null);
+    if (!items && typeof o.items === 'string') items = o.items.split(', ').map(function(s){ var i = s.indexOf(' '); return i > 0 ? {sku:s.slice(0,i), name:s.slice(i+1)} : {sku:'', name:s}; });
+    if (items && (!x.items || !x.items.length || (items[0] && items[0].price && !(x.items[0]||{}).price))) x.items = items; };
+  acctOrders.forEach(add); myOrders().forEach(add);
+  out.forEach(function(o){ if (!o.created){ var m = /^DF-(\d\d)(\d\d)(\d\d)-/.exec(o.id); if (m) o.created = '20'+m[1]+'-'+m[2]+'-'+m[3]+'T12:00:00'; } });
+  return out.sort(function(a,b){ return String(b.created||'').localeCompare(String(a.created||'')); });
+}
+function olDate(iso){ try { return new Date(iso).toLocaleDateString(lang==='hi'?'hi-IN':'en-IN',{month:'short',day:'2-digit',year:'numeric'}); } catch(e){ return ''; } }
+function olStatus(o){
+  var t = T(), r = TRACK[o.id], s = r ? r.s : 'waiting', at = (r && r.at) || {}, d = function(k){ return olDate(at[k] || o.created); };
+  var map = {waiting:[t.ol_placed,'placed',d('new')], accepted:[t.ol_acc,'go',d('accepted')], packed:[t.ol_packed,'go',d('packed')], shipped:[t.ol_ship,'go',d('shipped')], pickup:[t.ol_pick,'go',d('pickup')], delivered:[t.ol_deliv,'ok',d('delivered')],
+    cancelled:[t.ol_can,'bad',''], rejected:[t.ol_rej,'bad',''], return_req:[t.ol_retreq,'go',''], return_ok:[t.ol_retok,'go',''], returned:[t.ol_returned,'ok',d('returned')], return_no:[t.ol_retno,'bad','']};
+  var x = map[s] || [s,'go',''];
+  return {text:x[0].replace('{d}', x[2]), cls:x[1]};
+}
+function olThumb(items){
+  var it = (items||[])[0] || {}, p = it.sku && window.DF ? DF.productBySku(it.sku) : null;
+  var box = el('span',{'class':'ol-im'});
+  if (p && p.photos && p.photos.length) box.appendChild(el('img',{src:p.photos[0],alt:'',loading:'lazy'}));
+  else box.innerHTML = artSvg((p && p.art) || 'suit');
+  return box;
+}
+function renderOrderList(){
+  var box = document.getElementById('ol-list'); if (!box) return;
+  var t = T(); box.innerHTML = '';
+  var list = allOrders();
+  if (!list.length){ box.appendChild(el('p',{'class':'ol-empty',text:t.ol_empty})); return; }
+  list.forEach(function(o){
+    var st = olStatus(o), items = o.items || [], first = items[0] ? items[0].name : o.id;
+    box.appendChild(el('a',{'class':'ol-row',href:'#track-'+o.id},[
+      olThumb(items),
+      el('span',{'class':'ol-txt'},[ el('b',{'class':'ol-st '+st.cls,text:st.text}), el('span',{'class':'ol-nm',text:first + (items.length > 1 ? t.ol_more.replace('{n}', items.length-1) : '')}), el('small',{'class':'num',text:o.id}) ]),
+      el('span',{'class':'ol-go','aria-hidden':'true',text:'›'}) ]));
+  });
+}
+function renderRetList(){
+  var box = document.getElementById('rt-list'); if (!box) return;
+  var t = T(), list = allOrders(), cur = (document.getElementById('r-order')||{}).value || '';
+  box.innerHTML = ''; box.hidden = !list.length; var h = document.querySelector('#returns .rt-h'); if (h) h.hidden = !list.length;
+  list.slice(0, 8).forEach(function(o){
+    var st = olStatus(o), items = o.items || [], first = items[0] ? items[0].name : o.id, on = cur.toUpperCase() === o.id;
+    box.appendChild(el('button',{type:'button','class':'ol-row'+(on?' on':''),onclick:function(){
+      var ri = document.getElementById('r-item'); if (ri) ri.value = items.map(function(i){ return (i.sku?i.sku+' ':'')+i.name; }).join(', ');
+      goReturn(o.id); renderRetList(); var f = document.getElementById('r-form'); if (f) setTimeout(function(){ f.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); }},[
+      olThumb(items),
+      el('span',{'class':'ol-txt'},[ el('b',{'class':'ol-st '+st.cls,text:st.text}), el('span',{'class':'ol-nm',text:first + (items.length > 1 ? t.ol_more.replace('{n}', items.length-1) : '')}), el('small',{'class':'num',text:o.id+(on?' · ✓ '+t.rt_sel:'')}) ]),
+      el('span',{'class':'ol-go','aria-hidden':'true',text:on?'✓':'›'}) ]));
+  });
+}
+function renderOrderDetail(){
+  var box = document.getElementById('ol-detail'); if (!box) return;
+  var t = T(); box.innerHTML = '';
+  if (!trackId) return;
+  var o = allOrders().filter(function(x){ return x.id === trackId; })[0] || {id:trackId, items:[]}, st = olStatus(o);
+  box.appendChild(el('a',{'class':'ol-back',href:'#track',text:t.ol_back}));
+  box.appendChild(el('div',{'class':'ol-head'},[ el('b',{'class':'ol-st '+st.cls,text:st.text}), el('small',{'class':'num',text:o.id+(o.created?' · '+olDate(o.created):'')}) ]));
+  if ((o.items||[]).length){
+    var ul = el('div',{'class':'ol-items'},[ el('h4',{text:t.ol_items}) ]);
+    o.items.forEach(function(i){ ul.appendChild(el('div',{'class':'ol-irow'},[ olThumb([i]), el('span',{'class':'ol-txt'},[ el('span',{'class':'ol-nm',text:i.name}), el('small',{text:[i.sku, i.size ? t.size_lbl+i.size : '', i.qty ? '× '+i.qty : ''].filter(Boolean).join(' · ')}) ]), i.price ? el('b',{'class':'num',text:rupees(i.price*(i.qty||1))}) : null ])); });
+    if (o.total) ul.appendChild(el('div',{'class':'ol-tot'},[ el('span',{text:t.ol_total}), el('b',{'class':'num',text:rupees(o.total)}) ]));
+    box.appendChild(ul);
+  }
+}
 function myOrders(){ try { var h = JSON.parse(localStorage.getItem('df-orders')||'[]'); return Array.isArray(h) ? h : []; } catch(e){ return []; } }
 function fmtWhen(iso){ try { var d=new Date(iso); return d.toLocaleDateString(lang==='hi'?'hi-IN':'en-IN',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString(lang==='hi'?'hi-IN':'en-IN',{hour:'numeric',minute:'2-digit'}); } catch(e){ return ''; } }
 var trRedraw = null;
 /* Small API for the customer-account module. */
 window.DF = {
+  setAcctOrders: function(list){ acctOrders = list || []; try { renderOrderList(); renderRetList(); } catch(e){} },
   trackInto: function(box, id, redraw){ trRedraw = redraw || null; box.innerHTML = ''; fillTrack(box, id, true); },
   setRedraw: function(f){ trRedraw = f || null; },
   resetMode: function(){ trMode = ''; },
@@ -2307,6 +2404,8 @@ function openFromHash(){
 function renderTrack(){
   var t = T(), out = document.getElementById('tr-out'), rec = document.getElementById('tr-recent');
   if (!out) return;
+  var sec = document.getElementById('track'); if (sec) sec.classList.toggle('is-detail', !!trackId);
+  try { renderOrderList(); renderOrderDetail(); renderRetList(); } catch(e){}
   var inp = document.getElementById('tr-id'); if (trackId && inp && !inp.value) inp.value = trackId;
   rec.innerHTML = '';
   var mine = myOrders();
@@ -2609,8 +2708,9 @@ function renderInventory(body){
   drawTable();
 }
 function readTrackHash(){
-  var m = /^#?track-(DF-\d{6}-[A-Z0-9]{3,8})$/.exec(location.hash||'');
-  if (m){ trackId = m[1]; }
+  var m = /^#?track-(DF-\d{6}-[A-Z0-9]{3,8})$/i.exec(location.hash||'');
+  if (m){ trackId = m[1].toUpperCase(); }
+  else if (location.hash === '#track'){ trackId = ''; trMode = ''; }
 }
 function prefillReturn(){
   try { var r=document.getElementById('r-order'); if (r && !r.value){ var h=JSON.parse(localStorage.getItem('df-orders')||'[]'); if (h[0]) r.value=h[0].id; } } catch(e) {}
@@ -2650,7 +2750,7 @@ function renderAll(){
   var reopen = openId; closeProduct();
   renderFrame(); applyPage(); renderSocial(); renderBanners(); renderTailor(); wireBottomNav(); restoreForms(); prefillReturn(); renderChips(); renderGrid(); renderCart(); renderDone(); updateTailorLink(); updateReturnLink(); renderOwner();
   var tf = document.getElementById('tr-form');
-  tf.addEventListener('submit', function(e){ e.preventDefault(); var v = document.getElementById('tr-id').value.trim().toUpperCase(); var er=document.getElementById('tr-err'); if (!v){ er.textContent = T().tr_err; return; } er.textContent=''; trMode=''; trackId = v; renderTrack(); });
+  tf.addEventListener('submit', function(e){ e.preventDefault(); var v = document.getElementById('tr-id').value.trim().toUpperCase(); var er=document.getElementById('tr-err'); if (!v){ er.textContent = T().tr_err; return; } er.textContent=''; trMode=''; if (/^DF-\d{6}-[A-Z0-9]{3,8}$/.test(v)){ if (location.hash !== '#track-'+v){ location.hash = '#track-'+v; return; } } trackId = v; renderTrack(); });
   var trPick = function(mode){ var v = document.getElementById('tr-id').value.trim().toUpperCase() || trackId; var er=document.getElementById('tr-err'); if (!v){ er.textContent = T().tr_need; document.getElementById('tr-id').focus(); return; } er.textContent=''; trackId = v; trMode = mode; if (mode==='return'){ var r=TRACK[v]; var ok = r && r.s==='delivered' && r.at && r.at.delivered && (Date.now()-new Date(r.at.delivered).getTime())/86400000 <= SHOP.returnDays; if (ok){ goReturn(v); return; } } renderTrack(); };
   document.getElementById('tr-ret').onclick = function(){ trPick('return'); };
   document.getElementById('tr-can').onclick = function(){ trPick('cancel'); };
@@ -3283,6 +3383,8 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
         }
       };
       if (u) loadProfile().then(after); else after();
+      if (u) userDoc().collection('orders').orderBy('created','desc').limit(30).get().then(function(snap){ var l = []; snap.forEach(function(d){ l.push(d.data()); }); if (window.DF && DF.setAcctOrders) DF.setAcctOrders(l); }, function(){});
+      else if (window.DF && DF.setAcctOrders) DF.setAcctOrders([]);
     });
     placeButton();
   }).catch(function(){ /* SDK blocked: page keeps working as guest checkout */ });
