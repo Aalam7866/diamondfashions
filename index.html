@@ -127,6 +127,7 @@ section.block{padding-block:44px}
 .os-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:15px;background:var(--bg);border-radius:10px;padding:12px}.os-kv>span:nth-child(odd){color:var(--muted)}
 .os-fee{border:2px solid var(--sign-gold,#CDAA5C);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:rgba(205,170,92,.10)}
 .os-fee b{font-size:17px}.os-fee p{margin:0;font-size:14px;color:var(--muted)}.os-fee .qrwrap{display:flex;flex-direction:column;align-items:center;gap:4px}.os-qr{min-width:170px;min-height:170px}
+.os-shot{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--line);padding-top:10px}.os-shot-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.os-shot-row img{width:56px;height:88px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}.os-shot-row .ok-t{color:#1d7a3a;font-weight:600;font-size:14px}
 .os-act{display:flex;gap:10px;position:sticky;bottom:-18px;background:var(--surface);padding:10px 0 4px}.os-act .btn{flex:1}.os-act .btn-gold{flex:2}
 @media (max-width:560px){ .osum{border-radius:0;height:100%;max-height:none;padding:16px max(16px, env(safe-area-inset-left,0px)) 18px max(16px, env(safe-area-inset-right,0px))} }
 
@@ -655,7 +656,7 @@ var S = {
   o_pin:'PIN code', o_land:'Landmark (optional)',
   pay_cod:'Cash on Delivery (COD)', pay_cod_d:'Pay cash when you receive your order', pay_upi:'Pay online (UPI)', pay_upi_d:'Google Pay, PhonePe, Paytm or any UPI app',
   pay_upi_off:'Online payment is coming soon', pay_noprice:'Some items do not have a price yet. The shop will confirm the amount on WhatsApp before you pay.',
-  fp_title:'Pay the delivery charge first: {f}', fp_sub:'With Cash on Delivery you pay for the items when they arrive, but the delivery charge has to be paid now by UPI.', fp_open:'Pay {f} with UPI app', fp_scan:'or scan with any UPI app', fp_utr:'UPI Ref No. / UTR (12 digits)', fp_utr_hint:'After paying, your UPI app shows a 12-digit “UPI Ref No.” or “UTR”. Write it here.', fp_err:'Please pay the delivery charge and write the 12-digit UPI Ref No. / UTR.', fp_paid:'paid by UPI', sum_title:'Check your order', sum_sub:'Please check everything once. Tap “Confirm order” to place it.', sum_items:'Items', sum_to:'Deliver to', sum_pick:'Pick up from shop', sum_edit:'← Change', sum_ok:'✓ Confirm order', sum_close:'Close', co_place:'Place order', co_hint:'After you place the order, WhatsApp opens with your order. Press Send so the shop receives it.',
+  fp_title:'Pay the delivery charge first: {f}', fp_sub:'With Cash on Delivery you pay for the items when they arrive, but the delivery charge has to be paid now by UPI.', fp_open:'Pay {f} with UPI app', fp_scan:'or scan with any UPI app', fp_utr:'UPI Ref No. / UTR (12 digits)', fp_utr_hint:'After paying, your UPI app shows a 12-digit “UPI Ref No.” or “UTR”. Write it here.', fp_err:'Please pay the delivery charge, then write the 12-digit UPI Ref No. / UTR or add the payment screenshot.', fp_or:'Can’t find the UTR? Add the payment screenshot instead', fp_shot:'📷 Add payment screenshot', fp_shot_ch:'Change screenshot', fp_shot_rm:'Remove', fp_shot_ok:'Screenshot added ✓', fp_shot_wa:'payment screenshot added',  fp_paid:'paid by UPI', sum_title:'Check your order', sum_sub:'Please check everything once. Tap “Confirm order” to place it.', sum_items:'Items', sum_to:'Deliver to', sum_pick:'Pick up from shop', sum_edit:'← Change', sum_ok:'✓ Confirm order', sum_close:'Close', co_place:'Place order', co_hint:'After you place the order, WhatsApp opens with your order. Press Send so the shop receives it.',
   err_addr:'For home delivery, write your address and 6-digit PIN code.', err_pay:'Choose a payment method.',
   conf_title:'Order placed!', conf_id:'Order ID: ', conf_step:'Last step: send your order to the shop on WhatsApp. Your order is confirmed only after the shop receives it.',
   conf_send:'Send order to shop on WhatsApp', conf_step_form:'Last step: tap “Send order” and press Submit on the form that opens. Your order is confirmed only after the shop receives it.', conf_send_form:'Send order', conf_or_wa:'Or send on WhatsApp', conf_sending:'Sending your order to the shop…', conf_sent:'Your order has been sent to the shop. The shop will call or WhatsApp you to confirm. Keep your order ID to track it.', conf_failed:'Could not send automatically. Tap “Send order” below to send it.', conf_pay_title:'Pay by UPI', conf_amt:'Amount to pay', conf_upi_id:'UPI ID', conf_copy:'Copy UPI ID', conf_copied:'UPI ID copied',
@@ -750,7 +751,7 @@ var S = {
   o_pin:'पिन कोड', o_land:'लैंडमार्क (चाहें तो)',
   pay_cod:'कैश ऑन डिलीवरी (COD)', pay_cod_d:'सामान मिलने पर नकद पैसे दें', pay_upi:'ऑनलाइन पेमेंट (UPI)', pay_upi_d:'Google Pay, PhonePe, Paytm या कोई भी UPI ऐप',
   pay_upi_off:'ऑनलाइन पेमेंट जल्द शुरू होगा', pay_noprice:'कुछ कपड़ों का दाम अभी नहीं लिखा है। पेमेंट से पहले दुकान WhatsApp पर रकम बताएगी।',
-  fp_title:'पहले डिलीवरी चार्ज भरें: {f}', fp_sub:'कैश ऑन डिलीवरी में सामान के पैसे सामान मिलने पर दें, लेकिन डिलीवरी चार्ज अभी UPI से भरना ज़रूरी है।', fp_open:'UPI ऐप से {f} भरें', fp_scan:'या किसी भी UPI ऐप से स्कैन करें', fp_utr:'UPI Ref No. / UTR (12 अंक)', fp_utr_hint:'पेमेंट के बाद UPI ऐप में 12 अंकों का “UPI Ref No.” या “UTR” दिखेगा — वह यहाँ लिखें।', fp_err:'डिलीवरी चार्ज भरें और 12 अंकों का UPI Ref No. / UTR लिखें।', fp_paid:'UPI से भरा', sum_title:'अपना ऑर्डर जाँच लें', sum_sub:'एक बार सब देख लें। सही हो तो “ऑर्डर पक्का करें” दबाएँ।', sum_items:'सामान', sum_to:'कहाँ भेजें', sum_pick:'दुकान से लेंगे', sum_edit:'← बदलें', sum_ok:'✓ ऑर्डर पक्का करें', sum_close:'बंद करें', co_place:'ऑर्डर करें', co_hint:'ऑर्डर करने पर WhatsApp में आपका ऑर्डर खुलेगा। Send दबाएं ताकि दुकान तक पहुंचे।',
+  fp_title:'पहले डिलीवरी चार्ज भरें: {f}', fp_sub:'कैश ऑन डिलीवरी में सामान के पैसे सामान मिलने पर दें, लेकिन डिलीवरी चार्ज अभी UPI से भरना ज़रूरी है।', fp_open:'UPI ऐप से {f} भरें', fp_scan:'या किसी भी UPI ऐप से स्कैन करें', fp_utr:'UPI Ref No. / UTR (12 अंक)', fp_utr_hint:'पेमेंट के बाद UPI ऐप में 12 अंकों का “UPI Ref No.” या “UTR” दिखेगा — वह यहाँ लिखें।', fp_err:'डिलीवरी चार्ज भरें, फिर 12 अंकों का UPI Ref No. / UTR लिखें या पेमेंट का स्क्रीनशॉट लगाएँ।', fp_or:'UTR नहीं मिल रहा? तो पेमेंट का स्क्रीनशॉट लगा दें', fp_shot:'📷 पेमेंट का स्क्रीनशॉट लगाएँ', fp_shot_ch:'दूसरा स्क्रीनशॉट', fp_shot_rm:'हटाएँ', fp_shot_ok:'स्क्रीनशॉट लग गया ✓', fp_shot_wa:'पेमेंट का स्क्रीनशॉट लगाया',  fp_paid:'UPI से भरा', sum_title:'अपना ऑर्डर जाँच लें', sum_sub:'एक बार सब देख लें। सही हो तो “ऑर्डर पक्का करें” दबाएँ।', sum_items:'सामान', sum_to:'कहाँ भेजें', sum_pick:'दुकान से लेंगे', sum_edit:'← बदलें', sum_ok:'✓ ऑर्डर पक्का करें', sum_close:'बंद करें', co_place:'ऑर्डर करें', co_hint:'ऑर्डर करने पर WhatsApp में आपका ऑर्डर खुलेगा। Send दबाएं ताकि दुकान तक पहुंचे।',
   err_addr:'घर पर डिलीवरी के लिए पता और 6 अंकों का पिन कोड लिखें।', err_pay:'पेमेंट का तरीका चुनें।',
   conf_title:'ऑर्डर हो गया!', conf_id:'ऑर्डर नंबर: ', conf_step:'आखिरी काम: अपना ऑर्डर WhatsApp पर दुकान को भेजें। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।',
   conf_send:'WhatsApp पर दुकान को ऑर्डर भेजें', conf_step_form:'आखिरी काम: “ऑर्डर भेजें” दबाएँ और जो फॉर्म खुले उसमें Submit दबाएँ। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।', conf_send_form:'ऑर्डर भेजें', conf_or_wa:'या WhatsApp पर भेजें', conf_sending:'आपका ऑर्डर दुकान को भेजा जा रहा है…', conf_sent:'आपका ऑर्डर दुकान को भेज दिया गया है। दुकान आपको फ़ोन या WhatsApp करके पक्का करेगी। ट्रैक करने के लिए ऑर्डर नंबर संभालकर रखें।', conf_failed:'अपने-आप नहीं भेजा जा सका। नीचे “ऑर्डर भेजें” दबाकर भेजें।', conf_pay_title:'UPI से पेमेंट करें', conf_amt:'देने वाली रकम', conf_upi_id:'UPI ID', conf_copy:'UPI ID कॉपी करें', conf_copied:'UPI ID कॉपी हो गई',
@@ -1714,6 +1715,7 @@ function placeOrder(){
     addr: val('o-addr'), pin: val('o-pin'), land: val('o-land'), note: val('o-note'), loc: orderLoc, delivery: dl ? (dl.km != null ? dl.charge : null) : null, distKm: dl && dl.km != null ? dl.km : null };
   showSummary(order, dl);
 }
+function shotPhoto(file){ return new Promise(function(res){ var r = new FileReader(); r.onload = function(){ var im = new Image(); im.onload = function(){ var k = Math.min(1, 1100/Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width*k); c.height = Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height); var d = c.toDataURL('image/jpeg', .6); if (d.length > 450000){ c.width = Math.round(c.width*.7); c.height = Math.round(c.height*.7); c.getContext('2d').drawImage(im,0,0,c.width,c.height); d = c.toDataURL('image/jpeg', .55); } res(d); }; im.onerror = function(){ res(''); }; im.src = r.result; }; r.readAsDataURL(file); }); }
 function showSummary(order, dl){
   var t = T(), prev = document.activeElement;
   var old = document.getElementById('sum-scrim'); if (old) old.remove();
@@ -1732,10 +1734,18 @@ function showSummary(order, dl){
   var home = /deliver|घर/i.test(order.how||'') || (dl != null);
   var addr = [order.addr, order.pin ? 'PIN '+order.pin : '', order.land].filter(Boolean).join(', ');
   /* COD + paid home delivery: the delivery charge must be paid by UPI now */
-  var needFee = order.pay === 'cod' && order.delivery > 0 && SHOP.upi, feeBox = null, utrI = null, feeErr = null;
+  var needFee = order.pay === 'cod' && order.delivery > 0 && SHOP.upi, feeBox = null, utrI = null, feeErr = null, feeShot = '';
   if (needFee){
     var f = rupees(order.delivery), furi = 'upi://pay?pa='+encodeURIComponent(SHOP.upi)+'&pn='+encodeURIComponent('Diamond Fashions')+'&am='+(+order.delivery).toFixed(2)+'&cu=INR&tn='+encodeURIComponent(order.id+' delivery');
     var fqr = el('div',{'class':'qr os-qr',role:'img','aria-label':t.fp_scan});
+    var shotI = el('input',{type:'file',accept:'image/*',style:'position:absolute;inset:0;opacity:0;cursor:pointer','aria-label':t.fp_shot}), shotRow = el('div',{'class':'os-shot-row'});
+    var drawShot = function(){ shotRow.innerHTML = '';
+      if (feeShot) shotRow.appendChild(el('img',{src:feeShot,alt:t.fp_shot_ok}));
+      if (feeShot) shotRow.appendChild(el('span',{'class':'ok-t',text:t.fp_shot_ok}));
+      shotI.value = ''; shotRow.appendChild(el('label',{'class':'btn btn-line',style:'position:relative;overflow:hidden;min-height:40px'},[ feeShot ? t.fp_shot_ch : t.fp_shot, shotI ]));
+      if (feeShot) shotRow.appendChild(el('button',{type:'button','class':'linkbtn',text:t.fp_shot_rm,onclick:function(){ feeShot = ''; drawShot(); }})); };
+    shotI.onchange = function(){ var fl = shotI.files && shotI.files[0]; if (!fl) return; shotPhoto(fl).then(function(d){ feeShot = d; feeErr.textContent = ''; drawShot(); }); };
+    drawShot();
     utrI = el('input',{id:'os-utr',inputmode:'numeric',maxlength:'12',autocomplete:'off',placeholder:'123456789012'});
     utrI.addEventListener('input', function(){ utrI.value = utrI.value.replace(/\D/g,'').slice(0,12); feeErr.textContent = ''; });
     feeErr = el('p',{'class':'error','role':'alert'});
@@ -1743,11 +1753,12 @@ function showSummary(order, dl){
       el('b',{text:t.fp_title.replace('{f}', f)}), el('p',{text:t.fp_sub}),
       el('a',{'class':'btn btn-gold',href:furi,text:t.fp_open.replace('{f}', f)}),
       el('div',{'class':'qrwrap'},[ fqr, el('small',{text:t.fp_scan+' · '+SHOP.upi}) ]),
-      el('div',{'class':'field'},[ el('label',{'for':'os-utr',text:t.fp_utr}), utrI, el('small',{'class':'hint',text:t.fp_utr_hint}) ]), feeErr ]);
+      el('div',{'class':'field'},[ el('label',{'for':'os-utr',text:t.fp_utr}), utrI, el('small',{'class':'hint',text:t.fp_utr_hint}) ]),
+      el('div',{'class':'os-shot'},[ el('small',{'class':'hint',text:t.fp_or}), shotRow ]), feeErr ]);
     setTimeout(function(){ try { if (window.QRCode) new QRCode(fqr, {text:furi, width:150, height:150, colorDark:'#0B1626', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.M}); } catch(e){} }, 0);
   }
   var ok = el('button',{'class':'btn btn-gold',type:'button',text:t.sum_ok,onclick:function(){
-    if (needFee){ if (!/^\d{12}$/.test(utrI.value)){ feeErr.textContent = t.fp_err; utrI.focus(); return; } order.feeUtr = utrI.value; order.feePaid = order.delivery; }
+    if (needFee){ if (!/^\d{12}$/.test(utrI.value) && !feeShot){ feeErr.textContent = t.fp_err; utrI.focus(); return; } order.feeUtr = /^\d{12}$/.test(utrI.value) ? utrI.value : ''; order.feeShot = feeShot; order.feePaid = order.delivery; }
     ok.disabled = true; close(); commitOrder(order); }});
   var box = el('div',{'class':'osum',role:'dialog','aria-modal':'true','aria-labelledby':'os-h'},[
     el('button',{'class':'os-x',type:'button','aria-label':t.sum_close,text:'×',onclick:close}),
@@ -1847,7 +1858,7 @@ function orderMessage(o){
   if (o.land) lines.push(t.wa_land+': '+o.land);
   if (o.loc) lines.push(t.wa_loc+': '+mapLink(o.loc));
   if (o.distKm != null) lines.push(t.wa_dist+': ~'+o.distKm+' km');
-  if (o.delivery != null) lines.push(t.wa_fee+': '+(o.delivery ? rupees(o.delivery) : t.fee_free)+(o.feeUtr ? ' — '+t.fp_paid+' (UTR '+o.feeUtr+')' : '')); else if (/deliver|घर/i.test(o.how||'')) lines.push(t.wa_fee+': '+t.fee_tbd);
+  if (o.delivery != null) lines.push(t.wa_fee+': '+(o.delivery ? rupees(o.delivery) : t.fee_free)+(o.feeUtr ? ' — '+t.fp_paid+' (UTR '+o.feeUtr+')' : o.feeShot ? ' — '+t.fp_paid+' ('+t.fp_shot_wa+')' : '')); else if (/deliver|घर/i.test(o.how||'')) lines.push(t.wa_fee+': '+t.fee_tbd);
   if (o.note) lines.push(t.wa_note+': '+o.note);
   return lines.join('\n');
 }
@@ -2905,12 +2916,12 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     DF.saveOrder = function(o){
       var doc = {id:o.id, items:(o.items||[]).map(function(i){ return {sku:i.sku||'', name:i.name||'', size:i.size||'', qty:i.qty||1, price:i.price||0}; }),
         total:o.total||0, allPriced:!!o.allPriced, pay:o.pay||'cod', paid:false, name:o.name||'', phone:o.phone||'', how:o.how||'', home:/deliver|घर/i.test(o.how||''),
-        addr:o.addr||'', pin:o.pin||'', land:o.land||'', note:o.note||'', loc:o.loc ? {lat:o.loc.lat, lng:o.loc.lng, acc:o.loc.acc||0} : null, delivery:o.delivery != null ? o.delivery : null, feeUtr:o.feeUtr||'', feePaid:o.feePaid||0, distKm:o.distKm != null ? o.distKm : null, lang:(document.documentElement.lang||'en').slice(0,2),
+        addr:o.addr||'', pin:o.pin||'', land:o.land||'', note:o.note||'', loc:o.loc ? {lat:o.loc.lat, lng:o.loc.lng, acc:o.loc.acc||0} : null, delivery:o.delivery != null ? o.delivery : null, feeUtr:o.feeUtr||'', feeShot:o.feeShot||'', feePaid:o.feePaid||0, distKm:o.distKm != null ? o.distKm : null, lang:(document.documentElement.lang||'en').slice(0,2),
         uid:user ? user.uid : '', email:user ? (user.email||'') : '', status:'new', created:new Date().toISOString(), log:[{at:new Date().toISOString(), s:'new'}]};
       return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000).catch(function(e){
         if (!doc.loc || !/permission/i.test((e && (e.code||e.message)) || '')) throw e;
         /* older security rules may not allow the new 'loc' field: keep the map link in the note instead */
-        doc.note = [doc.note, 'Map: https://maps.google.com/?q='+doc.loc.lat+','+doc.loc.lng, doc.distKm != null ? '~'+doc.distKm+' km' : '', doc.delivery != null ? 'Delivery Rs '+doc.delivery : '', doc.feeUtr ? 'Delivery paid UPI UTR '+doc.feeUtr : ''].filter(Boolean).join(' | '); delete doc.loc; delete doc.delivery; delete doc.distKm; delete doc.feeUtr; delete doc.feePaid;
+        doc.note = [doc.note, 'Map: https://maps.google.com/?q='+doc.loc.lat+','+doc.loc.lng, doc.distKm != null ? '~'+doc.distKm+' km' : '', doc.delivery != null ? 'Delivery Rs '+doc.delivery : '', doc.feeUtr ? 'Delivery paid UPI UTR '+doc.feeUtr : doc.feeShot ? 'Delivery paid UPI (screenshot: ask on WhatsApp)' : ''].filter(Boolean).join(' | '); delete doc.loc; delete doc.delivery; delete doc.distKm; delete doc.feeUtr; delete doc.feePaid; delete doc.feeShot;
         return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000);
       });
     };
