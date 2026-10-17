@@ -5,15 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>Diamond Fashions Admin</title>
-<link rel="manifest" href="/admin/manifest.webmanifest">
 <meta name="theme-color" content="#0B1626">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DF Admin">
 <meta name="application-name" content="DF Admin">
-<link rel="icon" type="image/png" sizes="192x192" href="/admin/icon-192.png">
-<link rel="apple-touch-icon" href="/admin/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Hind:wght@400;500;600;700&display=swap">
 <style>
@@ -179,12 +178,14 @@ function newCount(){ return orders.filter(function(o){ return o.status==='new'; 
 /* ---------- admin app: install, alerts, badge ---------- */
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 var instEvt = null, adminSW = null;
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/admin/sw.js', {scope:'/admin/'}).then(function(r){ adminSW = r; }).catch(function(){});
+var APP_HOST = /(^|\.)github\.io$/.test(location.hostname), SITE = APP_HOST ? 'https://diamondfashions.in' : '', APP_URL = 'https://aalam7866.github.io/';
+if (APP_HOST && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ adminSW = r; }).catch(function(){});
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; if (me && isAdmin(me)) try { draw(); } catch(x){} else { var ib = document.getElementById('login-inst'); if (ib){ ib.innerHTML = ''; var b = installBtn(); if (b) ib.appendChild(b); } } });
 window.addEventListener('appinstalled', function(){ instEvt = null; IS_APP = true; if (me && isAdmin(me)) try { draw(); } catch(x){} });
 (function(){ var m = /[?&]tab=(\w+)/.exec(location.search); if (m) tab = m[1]; })();
 function installBtn(){
   if (IS_APP) return null;
+  if (!APP_HOST) return el('a',{'class':'pill gold',href:APP_URL,target:'_blank',rel:'noopener',text:'📲 '+L('ऐप इंस्टॉल करें')});
   var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
   return el('button',{'class':'pill gold',type:'button',text:'📲 '+L('ऐप इंस्टॉल करें'),onclick:function(){
     if (instEvt){ instEvt.prompt(); instEvt.userChoice.then(function(){ instEvt = null; if (me && isAdmin(me)) draw(); }); }
@@ -213,7 +214,7 @@ document.addEventListener('pointerdown', function(){ try { actx = actx || new (w
 function notifyAdmin(title, body, tag){
   chime();
   if (!alertsOn()) return;
-  var opt = {body:body, icon:'/admin/icon-192.png', badge:'/admin/icon-96.png', tag:tag, renotify:true, vibrate:[200,100,200], data:{url:'/admin/?tab=orders'}};
+  var opt = {body:body, icon:'icon-192.png', badge:'icon-96.png', tag:tag, renotify:true, vibrate:[200,100,200], data:{url:'./?tab=orders'}};
   try { (adminSW ? adminSW.showNotification(title, opt) : Promise.reject()).catch(function(){ new Notification(title, opt); }); } catch(e){ try { new Notification(title, opt); } catch(x){} }
 }
 function setBadge(){ var n = newCount() + reqCount(); try { if (navigator.setAppBadge){ if (n) navigator.setAppBadge(n); else navigator.clearAppBadge(); } } catch(e){} document.title = (n ? '('+n+') ' : '') + 'Diamond Fashions Admin'; }
@@ -224,7 +225,7 @@ function draw(){
   app.innerHTML = '';
   var head = el('header',null,[ el('div',{'class':'wrap'},[
     el('div',{'class':'brand',html:'DIAMOND<small>ADMIN · SELLER HUB</small>'}),
-    el('div',{'class':'hbtns'},[ installBtn(), alertBtn(), langBtn(true), el('a',{'class':'pill',href:'/',target:'_blank',text:L('वेबसाइट देखें')}), el('button',{'class':'pill',type:'button',text:L('लॉग-आउट'),onclick:function(){ auth.signOut(); }}) ])
+    el('div',{'class':'hbtns'},[ installBtn(), alertBtn(), langBtn(true), el('a',{'class':'pill',href:SITE+'/',target:'_blank',text:L('वेबसाइट देखें')}), el('button',{'class':'pill',type:'button',text:L('लॉग-आउट'),onclick:function(){ auth.signOut(); }}) ])
   ]) ]);
   app.appendChild(head);
   var tabs = [['orders',L('ऑर्डर'),newCount()],['requests',L('रिक्वेस्ट'),reqCount()],['products',L('सामान'),0],['banners',L('विज्ञापन'),0],['reviews',L('रिव्यू'),0],['stock',L('स्टॉक'),0],['settings',L('सेटिंग'),0]];
@@ -420,7 +421,7 @@ function drawProducts(main){
   s.oninput = fill; fill();
   var mm = el('p',{'class':'msg'});
   var have = {}; products.forEach(function(x){ have[x.id] = 1; });
-  fetch('/index.html', {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(html){
+  fetch(SITE+'/index.html', {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(html){
     var m2 = /<script type="application\/json" id="shop-data">([\s\S]*?)<\/script>/.exec(html); if (!m2) return;
     var miss = (JSON.parse(m2[1]).products||[]).filter(function(x){ return !have[x.id]; });
     if (!miss.length) return;
@@ -527,7 +528,7 @@ function editProduct(p0){
 }
 function importFromSite(btn, m){
   btn.disabled = true; m.textContent = L('वेबसाइट से सामान ला रहे हैं… (1–2 मिनट)'); m.className = 'msg';
-  fetch('/index.html', {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(html){
+  fetch(SITE+'/index.html', {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(html){
     var mm = /<script type="application\/json" id="shop-data">([\s\S]*?)<\/script>/.exec(html); if (!mm) throw new Error(L('डेटा नहीं मिला'));
     var d = JSON.parse(mm[1]);
     var shop = d.shop || {};
