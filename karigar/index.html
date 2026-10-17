@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Diamond Fashions Karigar</title>
+<meta name="theme-color" content="#0B1626">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DF Karigar">
+<meta name="application-name" content="DF Karigar">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Hind:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#FBF8F2; --surface:#FFFFFF; --ink:#0B1626; --muted:#545B69; --line:#E4DCCB;
+  --gold:#8C6C26; --gold-soft:#F3EAD6; --navy:#0B1626; --on-navy:#F2EEE6; --sign-gold:#CDAA5C;
+  --ok:#1C7A3E; --bad:#A3262A; --warn:#9A5B00; --wa:#1C6E45; --blue:#1F4E8C;
+  --f-brand:'Jost','Hind',system-ui,sans-serif; --f-body:'Hind','Jost',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A1322; --surface:#12203A; --ink:#F2EEE6; --muted:#AEB5C2; --line:#25365A;
+  --gold:#CDAA5C; --gold-soft:#1A2A46; --navy:#060D18; --ok:#4CC27A; --bad:#E0787B; --warn:#E3A44A; --wa:#34A56C; --blue:#7FB0F0; color-scheme:dark } }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45}
+button,input{font:inherit}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+header{background:var(--navy);color:var(--on-navy);padding:14px 0 12px;padding-top:max(14px, env(safe-area-inset-top));position:sticky;top:0;z-index:5}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-brand);letter-spacing:.2em;font-weight:600;font-size:18px}
+.brand small{display:block;letter-spacing:.3em;font-size:10px;color:var(--sign-gold)}
+.hb{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:1px solid rgba(205,170,92,.5);background:transparent;color:var(--on-navy);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer;text-decoration:none;font-weight:600}
+.pill.gold{background:var(--sign-gold);color:#0B1626;border-color:var(--sign-gold)}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:64px;z-index:4;overflow-x:auto}
+.tabs button{flex:1;border:0;background:none;padding:12px 8px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sign-gold)}
+.tabs .n{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:10px;background:var(--bad);color:#fff;font-size:12px;line-height:20px}
+main{padding:14px 0 90px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card.hot{border:2px solid var(--sign-gold)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.num{font-variant-numeric:tabular-nums;font-weight:700}
+.st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--gold-soft);color:var(--gold)}
+.st.ok{background:rgba(28,122,62,.12);color:var(--ok)}.st.bad{background:rgba(163,38,42,.12);color:var(--bad)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:10px 0;font-size:15px}
+.kv>span:nth-child(odd){color:var(--muted)}
+.items{margin:6px 0 10px;padding-left:18px;font-size:15px}
+.cash{display:flex;justify-content:space-between;align-items:center;background:var(--gold-soft);border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:700;font-size:17px}
+.cash.paid{background:rgba(28,122,62,.12);color:var(--ok)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;cursor:pointer;text-decoration:none}
+.btn.gold{background:var(--sign-gold);border-color:var(--sign-gold);color:#0B1626}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}
+.btn.line{background:transparent}
+.btn.sm{min-height:38px;padding:0 12px;font-size:14px}
+.btn[disabled]{opacity:.55}
+.grow{flex:1}
+.muted{color:var(--muted)}.small{font-size:13px}
+.msg{min-height:20px;margin:6px 0 0;font-weight:600}.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.login{max-width:440px;margin:40px auto;padding:0 16px}
+.login .card{padding:22px;text-align:center}
+.gbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;margin-top:10px}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.empty b{display:block;font-size:40px}
+.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.sum div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.sum b{display:block;font-size:22px}.sum span{font-size:12px;color:var(--muted)}
+label.chk{display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:600}
+label.chk input{width:22px;height:22px}
+</style>
+
+<style>
+.job{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.job.late{border:2px solid var(--bad)}.job.new{border:2px solid var(--sign-gold)}
+.g{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;background:var(--bg)}
+.meas{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:4px 12px;margin-top:6px;font-size:15px}
+.meas div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:3px 0}
+.g img{width:110px;height:130px;object-fit:cover;border-radius:8px;margin-top:8px}
+.due{font-weight:700}.due.late{color:var(--bad)}
+.note{background:var(--gold-soft);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:15px}
+textarea{width:100%;min-height:60px;border-radius:10px;border:1px solid var(--line);padding:8px;background:var(--bg);color:var(--ink);font:inherit;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app"><p class="empty">…</p></div>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<script>
+if (/(^|\.)diamondfashions\.in$/.test(location.hostname)) location.replace('https://aalam7866.github.io/karigar/'+location.search);
+(function(){
+/* Diamond Fashions Karigar page: a tailor opens his own secret link and sees only the jobs given to him.
+   The link (…/karigar/?k=XXXX) is made in Admin → सिलाई → कारीगर. Blocking him there stops the link at once. */
+var CFG = {"apiKey":"AIzaSyDEnVBUgdbQQnpy0aXKS4TFa8EmkuBnKW4","authDomain":"diamond-fashions.firebaseapp.com","projectId":"diamond-fashions","storageBucket":"diamond-fashions.firebasestorage.app","messagingSenderId":"548211132063","appId":"1:548211132063:web:0ee6dca5768f4ec7b3c4aa"};
+firebase.initializeApp(CFG);
+var db = firebase.firestore();
+try { db.settings({experimentalAutoDetectLongPolling:true, merge:true}); } catch(e){}
+var app = document.getElementById('app');
+var LANG = (function(){ try { return localStorage.getItem('k-lang') || 'hi'; } catch(e){ return 'hi'; } })();
+function L(hi, en){ return LANG === 'en' ? en : hi; }
+document.documentElement.lang = LANG;
+var tok = new URLSearchParams(location.search).get('k') || '';
+try { if (tok) localStorage.setItem('k-token', tok); else tok = localStorage.getItem('k-token') || ''; } catch(e){}
+if (tok && !/[?&]k=/.test(location.search)) try { history.replaceState(null, '', '?k='+tok); } catch(e){}
+var me = null, jobs = [], tab = 'todo', seen = null, sw = null, instEvt = null;
+var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ sw = r; }).catch(function(){});
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; });
+function el(tag, a, kids){ var n = document.createElement(tag); if (a) for (var k in a){ var v = a[k];
+  if (k==='text') n.textContent = v; else if (k==='html') n.innerHTML = v; else if (k.slice(0,2)==='on') n.addEventListener(k.slice(2), v);
+  else if (v!==null && v!==undefined && v!==false) n.setAttribute(k, v); }
+  (kids||[]).forEach(function(c){ if (c) n.appendChild(typeof c==='string' ? document.createTextNode(c) : c); }); return n; }
+function today(){ var d = new Date(), p = function(n){ return (n<10?'0':'')+n; }; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function dmy(s){ return s ? s.split('-').reverse().join('-') : ''; }
+function when(iso){ if (!iso) return ''; return new Date(iso).toLocaleString(LANG==='en'?'en-IN':'hi-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
+var actx = null;
+function chime(){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); [0,.2].forEach(function(dt,i){ var o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = [784,1047][i]; g.gain.setValueAtTime(.0001, actx.currentTime+dt); g.gain.exponentialRampToValueAtTime(.3, actx.currentTime+dt+.02); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dt+.5); o.connect(g); g.connect(actx.destination); o.start(actx.currentTime+dt); o.stop(actx.currentTime+dt+.55); }); } catch(e){} try { navigator.vibrate && navigator.vibrate([200,100,200]); } catch(e){} }
+document.addEventListener('pointerdown', function(){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); } catch(e){} }, {once:true});
+function notify(t, b){ chime(); if (!('Notification' in window) || Notification.permission !== 'granted') return; var o = {body:b, icon:'icon-192.png', tag:'job', renotify:true}; try { (sw ? sw.showNotification(t, o) : Promise.reject()).catch(function(){ new Notification(t, o); }); } catch(e){} }
+
+function screen(icon, title, text){
+  app.innerHTML = '';
+  app.appendChild(el('div',{'class':'login'},[ el('div',{'class':'card'},[ el('div',{style:'font-size:44px',text:icon}), el('h2',{text:title}), el('p',{'class':'muted',text:text}),
+    el('a',{'class':'btn wa',href:'https://wa.me/918874129818',target:'_blank',rel:'noopener',text:L('दुकान से WhatsApp पर बात करें','WhatsApp the shop')}) ]) ]));
+}
+function draw(){
+  var y = window.scrollY; app.innerHTML = '';
+  var alertB = ('Notification' in window && Notification.permission === 'default') ? el('button',{'class':'pill',type:'button',text:'🔔 '+L('सूचना चालू','Alerts on'),onclick:function(){ Notification.requestPermission().then(function(){ chime(); draw(); }); }}) : null;
+  var inst = IS_APP ? null : el('button',{'class':'pill gold',type:'button',text:'📲 '+L('ऐप इंस्टॉल करें','Install app'),onclick:function(){ if (instEvt){ instEvt.prompt(); } else alert(L('Chrome में ⋮ → “Install app” या “Add to Home screen” दबाएँ।','In Chrome tap ⋮ → “Install app” or “Add to Home screen”.')); }});
+  app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[ el('div',{'class':'brand',html:'DIAMOND<small>'+L('कारीगर','TAILOR')+' · '+(me.name||'')+'</small>'}),
+    el('div',{'class':'hb'},[ inst, alertB, el('button',{'class':'pill',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('k-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}) ]) ]) ]));
+  var todo = jobs.filter(function(j){ return j.kstatus !== 'done' && ['ready','delivered','cancelled'].indexOf(j.tstatus) < 0; });
+  var done = jobs.filter(function(j){ return !(j.kstatus !== 'done' && ['ready','delivered','cancelled'].indexOf(j.tstatus) < 0); });
+  var late = todo.filter(function(j){ return j.due && j.due < today(); }).length;
+  app.appendChild(el('nav',{'class':'tabs'},[ ['todo',L('मेरा काम','My work'),todo.length],['done',L('पूरा हुआ','Done'),0] ].map(function(t){ return el('button',{type:'button','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); }},[ t[1], t[2] ? el('span',{'class':'n',text:String(t[2])}) : null ]); })));
+  var main = el('main',{'class':'wrap'}); app.appendChild(main);
+  main.appendChild(el('div',{'class':'sum'},[ el('div',null,[ el('b',{text:String(todo.length)}), el('span',{text:L('बाकी काम','Pending')}) ]), el('div',null,[ el('b',{style:late?'color:var(--bad)':'',text:String(late)}), el('span',{text:L('लेट','Late')}) ]), el('div',null,[ el('b',{text:String(done.length)}), el('span',{text:L('पूरा','Done')}) ]) ]));
+  var list = (tab === 'todo' ? todo : done).slice().sort(function(a,b){ return String(a.due||'9999').localeCompare(String(b.due||'9999')); });
+  if (!list.length) main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='todo' ? '🧵' : '✅'}), tab==='todo' ? L('अभी कोई काम नहीं। दुकान से काम आते ही यहाँ दिखेगा (आवाज़ के साथ)।','No work right now. New work from the shop appears here (with a sound).') : L('अभी कुछ पूरा नहीं हुआ।','Nothing finished yet.') ]));
+  list.forEach(function(j){ main.appendChild(card(j)); });
+  window.scrollTo(0, y);
+}
+function card(j){
+  var late = j.due && j.due < today() && j.kstatus !== 'done';
+  var c = el('div',{'class':'job'+(late?' late':(j.kstatus?'':' new'))});
+  c.appendChild(el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:17px',text:j.bookingId||''}), el('span',{'class':'st '+(j.kstatus==='done'?'ok':''),text: j.kstatus==='done' ? L('पूरा','Done') : j.kstatus==='started' ? L('चालू','Working') : L('नया','New')}) ]));
+  c.appendChild(el('div',{style:'margin-top:6px'},[ L('ग्राहक: ','Customer: ')+(j.cust||'—')+' · ', el('span',{'class':'due'+(late?' late':''),text:L('डिलीवरी: ','Due: ')+(j.due?dmy(j.due):'—')+(late?' ('+L('लेट','late')+')':'')}) ]));
+  if (j.forKarigar) c.appendChild(el('div',{'class':'note',text:'📝 '+j.forKarigar}));
+  (j.items||[]).forEach(function(it, i){
+    var g = el('div',{'class':'g'},[ el('b',{text:(i+1)+'. '+it.type+(it.qty>1?' × '+it.qty:'')+(it.forWho?' · '+it.forWho:'')}) ]);
+    var st = Object.keys(it.style||{}).map(function(k){ return it.style[k]; }).filter(Boolean).join(' · ');
+    if (it.fabric) g.appendChild(el('div',{'class':'small',text:L('कपड़ा: ','Cloth: ')+it.fabric}));
+    if (st) g.appendChild(el('div',{'class':'small',text:L('डिज़ाइन: ','Design: ')+st}));
+    if (it.notes) g.appendChild(el('div',{'class':'small',text:L('नोट: ','Note: ')+it.notes}));
+    var m = it.meas || {}, mk = Object.keys(m);
+    if (mk.length){ g.appendChild(el('div',{'class':'small',style:'font-weight:700;margin-top:6px',text:L('नाप (इंच)','Measurements (inch)')})); g.appendChild(el('div',{'class':'meas'}, mk.map(function(k){ return el('div',null,[ el('span',{text:k}), el('b',{text:m[k]+'"'}) ]); }))); }
+    else if (it.measAt !== 'given') g.appendChild(el('div',{'class':'small muted',text:L('नाप दुकान पर मिलेगा','Measurements at the shop')}));
+    if (it.photo) g.appendChild(el('a',{href:it.photo,target:'_blank'},[ el('img',{src:it.photo,alt:''}) ]));
+    c.appendChild(g);
+  });
+  var m = el('p',{'class':'msg'});
+  var nt = el('textarea',{placeholder:L('दुकान के लिए कुछ लिखना है? (जैसे कपड़ा कम है)','Message for the shop (e.g. cloth is short)')}); nt.value = j.knote || '';
+  var upd = function(st){ m.textContent = '…'; m.className = 'msg';
+    db.collection('karigars').doc(tok).collection('jobs').doc(j._id).update({kstatus:st, kAt:new Date().toISOString(), knote:nt.value.trim()}).then(function(){ m.textContent = '✓'; m.className = 'msg ok'; }, function(e){ m.textContent = L('नहीं हुआ: ','Failed: ')+(e.code||e.message); m.className = 'msg err'; }); };
+  if (j.kstatus !== 'done' && ['ready','delivered','cancelled'].indexOf(j.tstatus) < 0){
+    c.appendChild(nt);
+    c.appendChild(el('div',{'class':'row',style:'margin-top:8px'},[
+      j.kstatus !== 'started' ? el('button',{'class':'btn gold grow',type:'button',text:'🧵 '+L('काम शुरू किया','Started'),onclick:function(){ upd('started'); }}) : null,
+      el('button',{'class':'btn ok grow',type:'button',text:'✓ '+L('काम पूरा हो गया','Work finished'),onclick:function(){ if (confirm(L('यह काम पूरा हो गया?','Is this work finished?'))) upd('done'); }}) ]));
+  } else if (j.kstatus === 'done') c.appendChild(el('div',{'class':'small muted',style:'margin-top:8px',text:'✓ '+L('पूरा किया: ','Finished: ')+when(j.kAt)}));
+  c.appendChild(m);
+  return c;
+}
+if (!tok){ screen('🔗', L('लिंक अधूरा है','Link is incomplete'), L('दुकान से भेजा गया पूरा लिंक खोलें।','Open the full link the shop sent you.')); return; }
+db.collection('karigars').doc(tok).onSnapshot(function(s){
+  if (!s.exists){ screen('🚫', L('यह लिंक बंद है','This link is closed'), L('दुकान मालिक से नया लिंक माँगें।','Ask the shop owner for a new link.')); return; }
+  var first = !me; me = s.data();
+  if (first){
+    db.collection('karigars').doc(tok).collection('jobs').onSnapshot(function(q){
+      jobs = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; jobs.push(x); });
+      var fresh = seen ? jobs.filter(function(j){ return !seen[j._id]; }) : [];
+      if (!seen) seen = {}; jobs.forEach(function(j){ seen[j._id] = 1; });
+      fresh.forEach(function(j){ notify('🧵 '+L('नया सिलाई काम','New tailoring work'), (j.bookingId||'')+' · '+(j.items||[]).map(function(i){ return i.type; }).join(', ')+(j.due?' · '+dmy(j.due):'')); });
+      draw();
+    }, function(){ screen('🚫', L('यह लिंक बंद है','This link is closed'), L('दुकान मालिक से बात करें।','Talk to the shop owner.')); });
+  } else draw();
+}, function(){ screen('🚫', L('यह लिंक बंद है','This link is closed'), L('दुकान मालिक से नया लिंक माँगें।','Ask the shop owner for a new link.')); });
+})();
+</script>
+</body>
+</html>

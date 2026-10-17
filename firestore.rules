@@ -65,6 +65,19 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/orders/$(id)).data.get('rider', '') == myEmail());
     }
 
+    // Tailors (कारीगर): each has a secret link /karigar/?k=<id>; blocked = link stops at once
+    match /karigars/{tok} {
+      allow read, write: if isAdmin();
+      allow get: if resource.data.active == true;
+      match /jobs/{jid} {
+        allow read, write: if isAdmin();
+        allow read: if get(/databases/$(database)/documents/karigars/$(tok)).data.active == true;
+        allow update: if get(/databases/$(database)/documents/karigars/$(tok)).data.active == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kstatus', 'kAt', 'knote']);
+      }
+    }
+    match /{path=**}/jobs/{jid} { allow read: if isAdmin(); }
+
     match /riders/{rid} {
       allow read, write: if isAdmin();
       allow get: if signedIn() && rid == myEmail();
