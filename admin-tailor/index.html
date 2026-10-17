@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DF Tailoring</title>
+<meta name="theme-color" content="#0a4e42">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DF Tailor">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="/admin-shared/df.css">
+<style>:root { --app: #0a4e42; }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/admin-shared/df.js"></script>
+<script>
+(function () {
+  'use strict';
+  var t = DF.t, el = DF.el, root = document.getElementById('app');
+
+  function start() { if (!DF.session()) DF.loginScreen(root, t('DF Tailoring', 'DF सिलाई'), start); else draw(); }
+
+  function draw() {
+    root.innerHTML = '';
+    root.appendChild(DF.header(t('DF Tailoring', 'DF सिलाई'), draw));
+    var main = el('main', {}, [el('div', { 'class': 'empty', text: t('Loading…', 'आ रहा है…') })]);
+    root.appendChild(main);
+    // the private links are only in Firebase (sent by the shop PC) in staffcfg – staff-only; never in this public page,
+    // never in "config" (the customer website reads that collection publicly)
+    DF.get('staffcfg/links').then(function (c) {
+      main.innerHTML = '';
+      var any = false;
+      if (c.orderLink) {
+        any = true;
+        main.appendChild(el('button', { 'class': 'primary big', onclick: function () { location.href = c.orderLink; } },
+          ['✂ ' + t('New tailoring order', 'नया सिलाई ऑर्डर'), el('small', { text: t('Book an order with measurements', 'नाप के साथ ऑर्डर बुक करें') })]));
+      }
+      if (c.adminLink) {
+        any = true;
+        main.appendChild(el('button', { 'class': 'gold big', onclick: function () { location.href = c.adminLink; } },
+          ['₹ ' + t('Payments & delivery (admin)', 'पेमेंट और डिलीवरी (एडमिन)'), el('small', { text: t('Orders, take payment, deliver', 'ऑर्डर, पेमेंट लें, डिलीवर करें') })]));
+      }
+      var work = c.workLinks || [];
+      if (work.length) {
+        any = true;
+        main.appendChild(el('h2', { text: t('Tailors\' work links', 'कारीगरों के काम के लिंक') }));
+        work.forEach(function (w) {
+          var msg = t('Your work link (Diamond Fashions): ', 'आपका काम का लिंक (Diamond Fashions): ') + w.link;
+          main.appendChild(el('div', { 'class': 'card' }, [
+            el('div', { 'class': 'row' }, [
+              el('div', { 'class': 'grow' }, [el('b', { text: w.name }), el('div', { 'class': 'muted', text: w.role || '' })]),
+              el('button', { text: t('Open', 'खोलें'), onclick: function () { location.href = w.link; } }),
+            ]),
+            el('div', { 'class': 'row', style: 'margin-top:8px' }, [
+              el('button', { 'class': 'grow', text: 'WhatsApp', onclick: function () { location.href = 'https://wa.me/?text=' + encodeURIComponent(msg); } }),
+              el('button', { 'class': 'grow', text: t('Copy link', 'लिंक कॉपी करें'), onclick: function () {
+                (navigator.clipboard ? navigator.clipboard.writeText(w.link) : Promise.reject()).then(function () { DF.toast(t('Copied.', 'कॉपी हो गया।')); },
+                  function () { prompt(t('Copy this link:', 'यह लिंक कॉपी करें:'), w.link); });
+              } }),
+            ]),
+          ]));
+        });
+      }
+      if (!any) {
+        main.appendChild(el('div', { 'class': 'card' }, [
+          el('b', { text: t('The tailoring links are not switched on yet.', 'सिलाई के लिंक अभी चालू नहीं हैं।') }),
+          el('p', { 'class': 'muted', text: t('On the shop PC: TailorShop → Settings → Online work link → Set up…, switch on the order and admin links. They appear here within a few minutes.',
+                                             'दुकान के कंप्यूटर पर: TailorShop → सेटिंग्स → Online work link → Set up…, ऑर्डर और एडमिन लिंक चालू करें। कुछ मिनट में यहाँ दिखेंगे।') }),
+        ]));
+      }
+      main.appendChild(el('p', { 'class': 'muted', text: t('Updated', 'अपडेट') + ': ' + (c.updated ? new Date(c.updated).toLocaleString() : '–') }));
+    }, function (e) {
+      main.innerHTML = '';
+      main.appendChild(el('div', { 'class': 'card' }, [el('b', { text: e.message }),
+        el('p', { 'class': 'muted', text: e.status === 404 ? t('Open TailorShop on the shop PC once (with internet); it sends the links.', 'दुकान के कंप्यूटर पर एक बार TailorShop खोलें (इंटरनेट के साथ); वह लिंक भेज देगा।') : '' })]));
+    });
+  }
+
+  DF.registerSW();
+  start();
+})();
+</script>
+</body>
+</html>

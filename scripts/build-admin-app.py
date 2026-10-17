@@ -16,6 +16,10 @@ for app in ['admin', 'rider']:
             open(os.path.join(DST, app, f), 'w', encoding='utf-8').write(html)
         else:
             shutil.copy(src, os.path.join(DST, app, f))
+# staff apps made with Claude Code on the shop PC (DF Staff, DF Tailoring, DF Reports + shared code): copied as they are
+for app in ['admin-staff', 'admin-tailor', 'admin-reports', 'admin-shared']:
+    shutil.rmtree(os.path.join(DST, app), ignore_errors=True)
+    shutil.copytree(os.path.join(ROOT, app), os.path.join(DST, app))
 # root: a small chooser page, not an app (so it never overlaps the two app scopes)
 for old in ['manifest.webmanifest', 'icon-96.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png']:
     p = os.path.join(DST, old)
@@ -27,6 +31,9 @@ open(os.path.join(DST, 'index.html'), 'w', encoding='utf-8').write('''<!doctype 
 <body><main><h1>DIAMOND FASHIONS</h1>
 <a href="/admin/"><img src="/admin/icon-192.png" alt=""><span>DF Admin<small>दुकान मालिक के लिए</small></span></a>
 <a href="/rider/"><img src="/rider/icon-192.png" alt=""><span>DF Rider<small>डिलीवरी बॉय के लिए</small></span></a>
+<a href="/admin-staff/"><img src="/admin-staff/icon-192.png" alt=""><span>DF Staff<small>प्रोडक्ट, स्टॉक, फ़ोटो, नया आइटम</small></span></a>
+<a href="/admin-tailor/"><img src="/admin-tailor/icon-192.png" alt=""><span>DF Tailoring<small>सिलाई ऑर्डर और कारीगरों के लिंक</small></span></a>
+<a href="/admin-reports/"><img src="/admin-reports/icon-192.png" alt=""><span>DF Reports<small>आज की बिक्री, बकाया, कम स्टॉक</small></span></a>
 <a href="https://diamondfashions.in/"><span>🛍️ diamondfashions.in<small>ग्राहकों की वेबसाइट</small></span></a></main></body></html>''')
 open(os.path.join(DST, '.nojekyll'), 'w').write('')
 open(os.path.join(DST, 'robots.txt'), 'w').write('User-agent: *\nDisallow: /\n')

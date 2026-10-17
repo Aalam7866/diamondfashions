@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DF Reports</title>
+<meta name="theme-color" content="#5c1828">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DF Reports">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="/admin-shared/df.css">
+<style>:root { --app: #5c1828; }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/admin-shared/df.js"></script>
+<script>
+(function () {
+  'use strict';
+  var t = DF.t, el = DF.el, root = document.getElementById('app'), timer = null;
+
+  function start() { if (!DF.session()) DF.loginScreen(root, t('DF Reports', 'DF रिपोर्ट'), start); else draw(); }
+
+  function tile(k, v, hl) { return el('div', { 'class': 'tile' + (hl ? ' hl' : '') }, [el('div', { 'class': 'k', text: k }), el('div', { 'class': 'v', text: v })]); }
+
+  function draw() {
+    root.innerHTML = '';
+    root.appendChild(DF.header(t('DF Reports', 'DF रिपोर्ट'), draw));
+    var main = el('main', {}, [el('div', { 'class': 'empty', text: t('Loading…', 'आ रहा है…') })]);
+    root.appendChild(main);
+    DF.get('reports/today').then(function (r) {
+      main.innerHTML = '';
+      var today = new Date(), iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+      var row = el('div', { 'class': 'row' }, [
+        el('div', { 'class': 'grow muted', text: t('Updated', 'अपडेट') + ': ' + (r.updatedText || '–') }),
+        el('button', { text: '↻ ' + t('Refresh', 'रीफ़्रेश'), onclick: draw }),
+      ]);
+      main.appendChild(row);
+      if (r.date !== iso)
+        main.appendChild(el('div', { 'class': 'card', style: 'border-color:#b3261e' }, [el('b', { text: t('This is not today\'s report.', 'यह आज की रिपोर्ट नहीं है।') }),
+          el('div', { 'class': 'muted', text: t('Is TailorShop open on the shop PC with internet? It sends every few minutes.', 'क्या दुकान के कंप्यूटर पर TailorShop इंटरनेट के साथ खुला है? वह हर कुछ मिनट में भेजता है।') })]));
+
+      main.appendChild(el('h2', { text: t('Today', 'आज') + ' · ' + (r.date || '') }));
+      main.appendChild(el('div', { 'class': 'tiles' }, [
+        tile(t('Sales', 'बिक्री'), DF.money(r.salesTotal), true),
+        tile(t('Collected', 'जमा'), DF.money(r.collected), true),
+        tile(t('Bills', 'बिल'), String(r.salesCount || 0)),
+        tile(t('Pieces sold', 'बिके पीस'), String(r.salesPcs || 0)),
+        tile(t('Returns', 'वापसी'), DF.money(r.returnsTotal)),
+        tile(t('New tailoring orders', 'नए सिलाई ऑर्डर'), String(r.newOrdersToday || 0)),
+      ]));
+      var by = r.byMethod || {};
+      if (Object.keys(by).length) {
+        main.appendChild(el('h2', { text: t('Collected by method', 'तरीके के हिसाब से जमा') }));
+        main.appendChild(el('div', { 'class': 'card' }, [el('table', {}, Object.keys(by).map(function (m) {
+          return el('tr', {}, [el('td', { text: m }), el('td', { 'class': 'n', text: DF.money(by[m]) })]);
+        }))]));
+      }
+
+      main.appendChild(el('h2', { text: t('Dues', 'बकाया') }));
+      main.appendChild(el('div', { 'class': 'tiles' }, [
+        tile(t('Sales dues', 'बिक्री बकाया'), DF.money(r.dueSales)),
+        tile(t('Tailoring dues', 'सिलाई बकाया'), DF.money(r.dueOrders)),
+        tile(t('Customers with dues', 'बकाया वाले ग्राहक'), String(r.dueCustomers || 0)),
+        tile(t('Total dues', 'कुल बकाया'), DF.money((r.dueSales || 0) + (r.dueOrders || 0)), true),
+      ]));
+
+      main.appendChild(el('h2', { text: t('Tailoring orders', 'सिलाई ऑर्डर') }));
+      main.appendChild(el('div', { 'class': 'tiles' }, [
+        tile(t('Open orders', 'चालू ऑर्डर'), String(r.ordersOpen || 0)),
+        tile(t('Ready', 'तैयार'), String(r.ordersReady || 0)),
+        tile(t('Delivery today', 'आज डिलीवरी'), String(r.deliveryToday || 0)),
+        tile(t('Late', 'लेट'), String(r.late || 0), (r.late || 0) > 0),
+      ]));
+
+      main.appendChild(el('h2', { text: t('This month', 'इस महीने') }));
+      main.appendChild(el('div', { 'class': 'tiles' }, [
+        tile(t('Sales', 'बिक्री'), DF.money(r.monthSales)),
+        tile(t('Collected', 'जमा'), DF.money(r.monthCollected)),
+        tile(t('Bills', 'बिल'), String(r.monthBills || 0)),
+        tile(t('Pieces in stock', 'स्टॉक में पीस'), String(r.stockPcs || 0)),
+      ]));
+
+      var recent = r.recent || [];
+      main.appendChild(el('h2', { text: t('Today\'s bills', 'आज के बिल') }));
+      main.appendChild(recent.length ? el('div', { 'class': 'card' }, [el('table', {}, [el('tr', {}, [
+          el('th', { text: t('No', 'नं') }), el('th', { text: t('Time', 'समय') }), el('th', { text: t('Customer', 'ग्राहक') }),
+          el('th', { 'class': 'n', text: t('Total', 'कुल') }), el('th', { 'class': 'n', text: t('Due', 'बाकी') })])].concat(recent.map(function (b) {
+          return el('tr', {}, [el('td', { text: String(b.no) }), el('td', { text: b.time || '' }), el('td', { text: b.name || '' }),
+            el('td', { 'class': 'n', text: DF.money(b.total) }), el('td', { 'class': 'n', text: b.due > 0 ? DF.money(b.due) : '–' })]);
+        })))]) : el('div', { 'class': 'empty', text: t('No bill yet today.', 'आज अभी कोई बिल नहीं।') }));
+
+      var low = r.lowStock || [];
+      main.appendChild(el('h2', { text: t('Low stock', 'कम स्टॉक') + ' (' + low.length + ')' }));
+      main.appendChild(low.length ? el('div', { 'class': 'card' }, [el('table', {}, [el('tr', {}, [
+          el('th', { text: t('Item', 'आइटम') }), el('th', { text: t('Size', 'साइज़') }), el('th', { 'class': 'n', text: t('Left', 'बचा') })])].concat(low.map(function (i) {
+          return el('tr', {}, [el('td', { text: (i.webCode ? i.webCode + ' ' : '') + i.name + (i.colour ? ' · ' + i.colour : '') }), el('td', { text: i.size || '' }),
+            el('td', { 'class': 'n', html: i.stock <= 0 ? '<b style="color:#b3261e">' + i.stock + '</b>' : String(i.stock) })]);
+        })))]) : el('div', { 'class': 'empty', text: t('Nothing is low.', 'कुछ भी कम नहीं है।') }));
+    }, function (e) {
+      main.innerHTML = '';
+      main.appendChild(el('div', { 'class': 'card' }, [el('b', { text: e.message }),
+        el('p', { 'class': 'muted', text: e.status === 404 ? t('Open TailorShop on the shop PC (with internet); it sends the report every few minutes.', 'दुकान के कंप्यूटर पर TailorShop खोलें (इंटरनेट के साथ); वह हर कुछ मिनट में रिपोर्ट भेजता है।') : '' })]));
+    });
+    clearTimeout(timer);
+    timer = setTimeout(function () { if (document.visibilityState === 'visible') draw(); }, 120000);
+  }
+
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && DF.session()) draw(); });
+  DF.registerSW();
+  start();
+})();
+</script>
+</body>
+</html>

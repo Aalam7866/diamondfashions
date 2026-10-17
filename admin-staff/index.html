@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DF Staff</title>
+<meta name="theme-color" content="#0b1727">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DF Staff">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="/admin-shared/df.css">
+<style>:root { --app: #0b1727; }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/admin-shared/df.js"></script>
+<script>
+(function () {
+  'use strict';
+  var t = DF.t, el = DF.el, root = document.getElementById('app');
+  var CATS = [['women', 'Women', 'महिला'], ['men', 'Men', 'पुरुष'], ['boys', 'Boys', 'लड़के'], ['girls', 'Girls', 'लड़कियाँ'], ['kids', 'Kids & Baby', 'बच्चे'],
+              ['footwear', 'Footwear', 'जूते-चप्पल'], ['jewellery', 'Jewellery', 'ज्वेलरी'], ['beauty', 'Beauty', 'ब्यूटी'], ['cookware', 'Kitchen', 'बर्तन'], ['stationery', 'Stationery', 'स्टेशनरी']];
+  function catName(k) { var c = CATS.filter(function (x) { return x[0] === k; })[0]; return c ? t(c[1], c[2]) : (k || ''); }
+  var products = null, tab = 'products', filter = '', cat = '';
+
+  function start() { if (!DF.session()) DF.loginScreen(root, t('DF Staff – shop', 'DF स्टाफ – दुकान'), start); else draw(); }
+
+  function draw() {
+    root.innerHTML = '';
+    root.appendChild(DF.header(t('DF Staff', 'DF स्टाफ'), draw));
+    var tabs = el('div', { 'class': 'tabs' }, [
+      el('button', { 'class': tab === 'products' ? 'on' : '', text: t('Products', 'प्रोडक्ट'), onclick: function () { tab = 'products'; draw(); } }),
+      el('button', { 'class': tab === 'new' ? 'on' : '', text: t('+ New item', '+ नया आइटम'), onclick: function () { tab = 'new'; draw(); } }),
+    ]);
+    root.appendChild(tabs);
+    var main = el('main');
+    root.appendChild(main);
+    if (tab === 'products') productsScreen(main); else newItemScreen(main);
+  }
+
+  // ---------------------------------------------------------------- products
+  function productsScreen(main) {
+    var search = el('input', { type: 'search', placeholder: t('Search name or code (DF-M07)…', 'नाम या कोड खोजें (DF-M07)…'), value: filter });
+    var chips = el('div', { 'class': 'chips' }, [el('button', { 'class': cat === '' ? 'on' : '', text: t('All', 'सभी'), onclick: function () { cat = ''; draw(); } })]
+      .concat(CATS.map(function (c) { return el('button', { 'class': cat === c[0] ? 'on' : '', text: t(c[1], c[2]), onclick: function () { cat = c[0]; draw(); } }); })));
+    var listBox = el('div');
+    var reload = el('button', { text: '↻', title: t('Load again', 'फिर से लाएँ'), onclick: function () { products = null; draw(); } });
+    main.appendChild(el('div', { 'class': 'row' }, [search, reload]));
+    main.appendChild(chips);
+    main.appendChild(listBox);
+    search.addEventListener('input', function () { filter = search.value; show(); });
+    function show() {
+      listBox.innerHTML = '';
+      var q = filter.trim().toLowerCase();
+      var rows = (products || []).filter(function (p) {
+        return (!cat || p.cat === cat) && (!q || (p.code || '').toLowerCase().indexOf(q) >= 0 || (p.name || '').toLowerCase().indexOf(q) >= 0);
+      });
+      if (!rows.length) { listBox.appendChild(el('div', { 'class': 'empty', text: t('Nothing found.', 'कुछ नहीं मिला।') })); return; }
+      rows.forEach(function (p) {
+        var stock = p.stock || {}, total = Object.keys(stock).reduce(function (a, k) { return a + (+stock[k] || 0); }, 0);
+        listBox.appendChild(el('div', { 'class': 'card', onclick: function () { detail(p); } }, [
+          el('div', { 'class': 'row' }, [
+            el('div', { 'class': 'grow' }, [el('b', { text: (p.code || '') + '  ' + (p.name || '') }),
+              el('div', { 'class': 'muted', text: catName(p.cat) + (p.sizes ? ' · ' + p.sizes : '') })]),
+            el('div', { style: 'text-align:right' }, [el('b', { text: DF.money(p.price) }),
+              el('div', {}, [el('span', { 'class': 'chip ' + (total > 0 ? 'good' : 'bad'), text: total > 0 ? t('In stock ', 'स्टॉक ') + total : t('Out of stock', 'स्टॉक खत्म') }),
+                p.hidden ? el('span', { 'class': 'chip', text: t('hidden', 'छिपा') }) : null])]),
+          ]),
+        ]));
+      });
+    }
+    if (products) { show(); return; }
+    listBox.appendChild(el('div', { 'class': 'empty', text: t('Loading products…', 'प्रोडक्ट आ रहे हैं…') }));
+    DF.list('products', ['id', 'code', 'name', 'cat', 'price', 'mrp', 'sizes', 'stock', 'inStock', 'hidden', 'desc']).then(function (list) {
+      products = list.sort(function (a, b) { return (a.code || '').localeCompare(b.code || ''); });
+      show();
+    }, function (e) { listBox.innerHTML = ''; listBox.appendChild(el('div', { 'class': 'empty', text: e.message })); });
+  }
+
+  function detail(p) {
+    root.innerHTML = '';
+    root.appendChild(DF.header(t('DF Staff', 'DF स्टाफ'), function () { detail(p); }));
+    var main = el('main');
+    root.appendChild(main);
+    main.appendChild(el('button', { text: '← ' + t('Back', 'वापस'), onclick: draw }));
+    var pics = el('div', { 'class': 'photos' }, [el('div', { 'class': 'muted', text: t('Loading photos…', 'फ़ोटो आ रही हैं…') })]);
+    var stock = p.stock || {};
+    var rows = Object.keys(stock).map(function (k) { return el('tr', {}, [el('td', { text: k === '_' ? t('(one size)', '(एक साइज़)') : k }), el('td', { 'class': 'n', text: String(stock[k]) })]); });
+    main.appendChild(el('div', { 'class': 'card' }, [
+      el('h2', { text: (p.code || '') + '  ' + (p.name || '') }),
+      el('div', { 'class': 'muted', text: catName(p.cat) + (p.hidden ? ' · ' + t('hidden on the website', 'वेबसाइट पर छिपा') : '') }),
+      el('div', { style: 'font-size:22px;font-weight:700;margin:6px 0' }, [DF.money(p.price) + ' ', p.mrp ? el('s', { 'class': 'muted', text: DF.money(p.mrp) }) : null]),
+      pics,
+      el('h2', { text: t('Stock by size', 'साइज़ के हिसाब से स्टॉक') }),
+      el('table', {}, [el('tr', {}, [el('th', { text: t('Size', 'साइज़') }), el('th', { 'class': 'n', text: t('In stock', 'स्टॉक') })])].concat(rows)),
+      p.desc ? el('p', { 'class': 'muted', text: p.desc }) : null,
+    ]));
+    var input = el('input', { type: 'file', accept: 'image/*', capture: 'environment', multiple: 'multiple', style: 'display:none' });
+    var btn = el('button', { 'class': 'gold big', text: '📷 ' + t('Add photo of this product', 'इस प्रोडक्ट की फ़ोटो जोड़ें'), onclick: function () { input.click(); } });
+    input.addEventListener('change', function () {
+      var files = Array.prototype.slice.call(input.files || [], 0, 6);
+      if (!files.length) return;
+      btn.disabled = true; btn.textContent = t('Sending…', 'भेज रहे हैं…');
+      DF.fit(files).then(function (photos) {
+        return DF.add('inbox', { kind: 'photo', webCode: p.code || '', name: p.name || '', photos: photos, by: DF.session().email, created: new Date().toISOString() });
+      }).then(function () {
+        DF.toast(t('Sent. The shop PC adds it to ' + p.code + ' in a few minutes.', 'भेज दिया। दुकान का कंप्यूटर कुछ मिनट में इसे ' + p.code + ' में जोड़ देगा।'));
+        btn.disabled = false; btn.textContent = '📷 ' + t('Add photo of this product', 'इस प्रोडक्ट की फ़ोटो जोड़ें');
+      }, function (e) { DF.toast(e.message, true); btn.disabled = false; btn.textContent = '📷 ' + t('Add photo of this product', 'इस प्रोडक्ट की फ़ोटो जोड़ें'); });
+    });
+    main.appendChild(btn);
+    main.appendChild(input);
+    // the photos come with the product only now (they are big)
+    DF.get('products/' + encodeURIComponent(p._id), ['photos']).then(function (d) {
+      pics.innerHTML = '';
+      (d.photos || []).forEach(function (src) { pics.appendChild(el('img', { src: src, alt: '' })); });
+      if (!(d.photos || []).length) pics.appendChild(el('div', { 'class': 'muted', text: t('No photo yet.', 'अभी कोई फ़ोटो नहीं।') }));
+    }, function () { pics.innerHTML = ''; });
+  }
+
+  // ---------------------------------------------------------------- new item
+  var draft = { photos: [] };
+  function newItemScreen(main) {
+    function inp(key, label, type, attrs) {
+      var i = el('input', Object.assign({ type: type || 'text', value: draft[key] == null ? '' : draft[key] }, attrs || {}));
+      i.addEventListener('input', function () { draft[key] = i.value; });
+      return [el('label', { text: label }), i];
+    }
+    var catSel = el('select', {}, [el('option', { value: '', text: t('– choose –', '– चुनें –') })].concat(CATS.map(function (c) {
+      var o = el('option', { value: c[0], text: t(c[1], c[2]) }); if (draft.cat === c[0]) o.selected = true; return o;
+    })));
+    catSel.addEventListener('change', function () { draft.cat = catSel.value; });
+    var incl = el('input', { type: 'checkbox', style: 'width:auto' }); incl.checked = !!draft.inclGst;
+    incl.addEventListener('change', function () { draft.inclGst = incl.checked; });
+    var thumbs = el('div', { 'class': 'thumbs' });
+    function showThumbs() { thumbs.innerHTML = ''; draft.photos.forEach(function (f) { thumbs.appendChild(el('img', { src: URL.createObjectURL(f), alt: '' })); }); }
+    var file = el('input', { type: 'file', accept: 'image/*', capture: 'environment', multiple: 'multiple', style: 'display:none' });
+    file.addEventListener('change', function () { draft.photos = draft.photos.concat(Array.prototype.slice.call(file.files || [])).slice(0, 4); showThumbs(); file.value = ''; });
+    var send = el('button', { 'class': 'primary big', text: t('Send to the shop PC', 'दुकान के कंप्यूटर पर भेजें') });
+    var card = el('div', { 'class': 'card' }, [].concat(
+      el('p', { 'class': 'muted', text: t('The item goes to the shop PC (Stock → From the phone). It is added to stock there after checking.',
+                                         'आइटम दुकान के कंप्यूटर पर जाएगा (स्टॉक → फ़ोन से)। वहाँ जाँचकर स्टॉक में जोड़ा जाएगा।') }),
+      inp('name', t('Item name *', 'आइटम का नाम *'), 'text', { placeholder: t('e.g. Formal Shirt', 'जैसे फ़ॉर्मल शर्ट') }),
+      [el('label', { text: t('Website category', 'वेबसाइट श्रेणी') }), catSel],
+      inp('company', t('Company / brand', 'कंपनी / ब्रांड')),
+      inp('size', t('Size', 'साइज़'), 'text', { placeholder: 'S, M, L, XL, 32…' }),
+      inp('colour', t('Colour', 'रंग')),
+      inp('saleRate', t('Sale rate (₹) *', 'बिक्री रेट (₹) *'), 'number', { inputmode: 'decimal' }),
+      [el('label', { style: 'display:flex;gap:8px;align-items:center' }, [incl, t('Sale rate includes GST', 'बिक्री रेट में GST शामिल है')])],
+      inp('purchaseRate', t('Purchase rate (₹)', 'खरीद रेट (₹)'), 'number', { inputmode: 'decimal' }),
+      inp('qty', t('Quantity (pcs)', 'मात्रा (पीस)'), 'number', { inputmode: 'numeric' }),
+      inp('seller', t('Seller', 'विक्रेता')),
+      inp('note', t('Note', 'नोट')),
+      [el('label', { text: t('Photos (up to 4)', 'फ़ोटो (4 तक)') }), thumbs,
+       el('button', { text: '📷 ' + t('Take / choose photos', 'फ़ोटो लें / चुनें'), onclick: function () { file.click(); } }), file, send]
+    ));
+    main.appendChild(card);
+    showThumbs();
+    send.addEventListener('click', function () {
+      if (!(draft.name || '').trim()) { DF.toast(t('Type the item name.', 'आइटम का नाम लिखें।'), true); return; }
+      if (!(+draft.saleRate > 0)) { DF.toast(t('Type the sale rate.', 'बिक्री रेट लिखें।'), true); return; }
+      send.disabled = true; send.textContent = t('Sending…', 'भेज रहे हैं…');
+      DF.fit(draft.photos).then(function (photos) {
+        return DF.add('inbox', {
+          kind: 'item', name: draft.name.trim(), cat: draft.cat || '', company: draft.company || '', size: draft.size || '', colour: draft.colour || '',
+          saleRate: +draft.saleRate || 0, inclGst: !!draft.inclGst, purchaseRate: +draft.purchaseRate || 0, qty: +draft.qty || 0,
+          seller: draft.seller || '', note: draft.note || '', photos: photos, by: DF.session().email, created: new Date().toISOString(),
+        });
+      }).then(function () {
+        draft = { photos: [] };
+        DF.toast(t('Sent to the shop PC: Stock → From the phone.', 'दुकान के कंप्यूटर पर भेज दिया: स्टॉक → फ़ोन से।'));
+        draw();
+      }, function (e) { DF.toast(e.message, true); send.disabled = false; send.textContent = t('Send to the shop PC', 'दुकान के कंप्यूटर पर भेजें'); });
+    });
+  }
+
+  DF.registerSW();
+  start();
+})();
+</script>
+</body>
+</html>
