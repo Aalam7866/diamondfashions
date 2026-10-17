@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function myEmail() { return signedIn() && request.auth.token.email != null ? request.auth.token.email.lower() : ''; }
+    function isAdmin() { return myEmail() == 'dimondfashion95@gmail.com'; }
+    function riderDoc() { return /databases/$(database)/documents/riders/$(myEmail()); }
+    function isRider() { return myEmail() != '' && exists(riderDoc()) && get(riderDoc()).data.active == true; }
+
+    // Shop data everyone can read; only the owner changes it
+    match /products/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /config/{id}   { allow read: if true; allow write: if isAdmin(); }
+    match /secret/{doc=**} { allow read, write: if isAdmin(); }
+
+    // Customer accounts (profile, addresses, own order list)
+    match /users/{uid}/{doc=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+      allow read: if isAdmin();
+    }
+
+    // Reviews: anyone reads, a logged-in customer writes their own
+    match /reviews/{id} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // Cancel / return / exchange / tailoring requests
+    match /requests/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Orders: customers create; owner manages; an active rider sees packed parcels and his own deliveries
+    match /orders/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+      allow read: if isRider() && (resource.data.status == 'packed' || resource.data.get('rider', '') == myEmail());
+      allow update: if isRider()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rider', 'riderName', 'riderAt', 'log', 'deliveredAt', 'cashGot'])
+        && (
+             (resource.data.status == 'packed' && request.resource.data.status == 'shipped' && request.resource.data.rider == myEmail())
+          || (resource.data.status == 'shipped' && resource.data.get('rider', '') == myEmail() && request.resource.data.status == 'delivered' && request.resource.data.rider == myEmail())
+          || (resource.data.status == 'shipped' && resource.data.get('rider', '') == myEmail() && request.resource.data.status == 'packed' && request.resource.data.rider == '')
+        );
+    }
+
+    // Order tracking shown to customers
+    match /track/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow create, update: if isRider()
+        && request.resource.data.s in ['shipped', 'delivered', 'packed']
+        && request.resource.data.s == getAfter(/databases/$(database)/documents/orders/$(id)).data.status
+        && (getAfter(/databases/$(database)/documents/orders/$(id)).data.get('rider', '') == myEmail()
+            || get(/databases/$(database)/documents/orders/$(id)).data.get('rider', '') == myEmail());
+    }
+
+    // Delivery persons: owner adds / blocks; a rider can read only his own entry
+    match /riders/{rid} {
+      allow read, write: if isAdmin();
+      allow get: if signedIn() && rid == myEmail();
+    }
+  }
+}

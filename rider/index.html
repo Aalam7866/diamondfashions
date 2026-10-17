@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Diamond Fashions Rider</title>
+<meta name="theme-color" content="#0B1626">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DF Rider">
+<meta name="application-name" content="DF Rider">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Hind:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#FBF8F2; --surface:#FFFFFF; --ink:#0B1626; --muted:#545B69; --line:#E4DCCB;
+  --gold:#8C6C26; --gold-soft:#F3EAD6; --navy:#0B1626; --on-navy:#F2EEE6; --sign-gold:#CDAA5C;
+  --ok:#1C7A3E; --bad:#A3262A; --warn:#9A5B00; --wa:#1C6E45; --blue:#1F4E8C;
+  --f-brand:'Jost','Hind',system-ui,sans-serif; --f-body:'Hind','Jost',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A1322; --surface:#12203A; --ink:#F2EEE6; --muted:#AEB5C2; --line:#25365A;
+  --gold:#CDAA5C; --gold-soft:#1A2A46; --navy:#060D18; --ok:#4CC27A; --bad:#E0787B; --warn:#E3A44A; --wa:#34A56C; --blue:#7FB0F0; color-scheme:dark } }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45}
+button,input{font:inherit}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+header{background:var(--navy);color:var(--on-navy);padding:14px 0 12px;padding-top:max(14px, env(safe-area-inset-top));position:sticky;top:0;z-index:5}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-brand);letter-spacing:.2em;font-weight:600;font-size:18px}
+.brand small{display:block;letter-spacing:.3em;font-size:10px;color:var(--sign-gold)}
+.hb{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:1px solid rgba(205,170,92,.5);background:transparent;color:var(--on-navy);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer;text-decoration:none;font-weight:600}
+.pill.gold{background:var(--sign-gold);color:#0B1626;border-color:var(--sign-gold)}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:64px;z-index:4;overflow-x:auto}
+.tabs button{flex:1;border:0;background:none;padding:12px 8px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sign-gold)}
+.tabs .n{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:10px;background:var(--bad);color:#fff;font-size:12px;line-height:20px}
+main{padding:14px 0 90px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card.hot{border:2px solid var(--sign-gold)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.num{font-variant-numeric:tabular-nums;font-weight:700}
+.st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--gold-soft);color:var(--gold)}
+.st.ok{background:rgba(28,122,62,.12);color:var(--ok)}.st.bad{background:rgba(163,38,42,.12);color:var(--bad)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:10px 0;font-size:15px}
+.kv>span:nth-child(odd){color:var(--muted)}
+.items{margin:6px 0 10px;padding-left:18px;font-size:15px}
+.cash{display:flex;justify-content:space-between;align-items:center;background:var(--gold-soft);border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:700;font-size:17px}
+.cash.paid{background:rgba(28,122,62,.12);color:var(--ok)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;cursor:pointer;text-decoration:none}
+.btn.gold{background:var(--sign-gold);border-color:var(--sign-gold);color:#0B1626}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}
+.btn.line{background:transparent}
+.btn.sm{min-height:38px;padding:0 12px;font-size:14px}
+.btn[disabled]{opacity:.55}
+.grow{flex:1}
+.muted{color:var(--muted)}.small{font-size:13px}
+.msg{min-height:20px;margin:6px 0 0;font-weight:600}.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.login{max-width:440px;margin:40px auto;padding:0 16px}
+.login .card{padding:22px;text-align:center}
+.gbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;margin-top:10px}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.empty b{display:block;font-size:40px}
+.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.sum div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.sum b{display:block;font-size:22px}.sum span{font-size:12px;color:var(--muted)}
+label.chk{display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:600}
+label.chk input{width:22px;height:22px}
+</style>
+</head>
+<body>
+<div id="app"><p class="empty">…</p></div>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<script>
+if (/(^|\.)diamondfashions\.in$/.test(location.hostname)) location.replace('https://aalam7866.github.io/rider/');
+(function(){
+/* Diamond Fashions Rider app: the delivery person sees packed home-delivery orders, picks them up and marks them delivered.
+   Access is controlled by the shop owner in Admin → डिलीवरी बॉय (Firestore riders/{gmail}). */
+var CFG = {"apiKey":"AIzaSyDEnVBUgdbQQnpy0aXKS4TFa8EmkuBnKW4","authDomain":"diamond-fashions.firebaseapp.com","projectId":"diamond-fashions","storageBucket":"diamond-fashions.firebasestorage.app","messagingSenderId":"548211132063","appId":"1:548211132063:web:0ee6dca5768f4ec7b3c4aa"};
+var SHOP = {name:'Diamond Fashions', phone:'918874129818', lat:27.2019871, lng:83.3498289};
+firebase.initializeApp(CFG);
+var auth = firebase.auth(), db = firebase.firestore();
+try { db.settings({experimentalAutoDetectLongPolling:true, merge:true}); } catch(e){}
+var app = document.getElementById('app');
+var riderUnsub = null, me = null, myEmail = '', rider = null, tab = 'ready', ready = [], mine = [], unsubs = [], seen = null;
+var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+var instEvt = null, sw = null;
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ sw = r; }).catch(function(){});
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; });
+window.addEventListener('appinstalled', function(){ instEvt = null; IS_APP = true; draw(); });
+
+function el(tag, a, kids){ var n = document.createElement(tag); if (a) for (var k in a){ var v = a[k];
+  if (k==='text') n.textContent = v; else if (k==='html') n.innerHTML = v; else if (k.slice(0,2)==='on') n.addEventListener(k.slice(2), v);
+  else if (v!==null && v!==undefined && v!==false) n.setAttribute(k, v); }
+  (kids||[]).forEach(function(c){ if (c) n.appendChild(typeof c==='string' ? document.createTextNode(c) : c); }); return n; }
+function rupees(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
+function now(){ return new Date().toISOString(); }
+function when(iso){ if (!iso) return ''; var d = new Date(iso); return d.toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
+function digits(s){ return String(s||'').replace(/\D/g,''); }
+function isHome(o){ return o.home === true || /deliver|घर/i.test(o.how||''); }
+function toCollect(o){
+  if (o.pay === 'upi') return o.paid ? 0 : (o.total||0);
+  return Math.max(0, (o.total||0) - (o.feePaid||0));
+}
+function mapsTo(o){
+  if (o.loc && o.loc.lat) return 'https://www.google.com/maps/dir/?api=1&destination='+o.loc.lat+','+o.loc.lng;
+  return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([o.addr, o.land, o.pin].filter(Boolean).join(', '));
+}
+function km(o){
+  if (!(o.loc && o.loc.lat)) return o.distKm ? o.distKm+' km' : '';
+  var R = 6371, r = Math.PI/180, a = o.loc, dLa = (a.lat-SHOP.lat)*r, dLo = (a.lng-SHOP.lng)*r;
+  var x = Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(SHOP.lat*r)*Math.cos(a.lat*r)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return (Math.round(2*R*Math.asin(Math.sqrt(x))*1.25*10)/10)+' km';
+}
+
+/* ---------- sound + notification for new parcels ---------- */
+var actx = null;
+function chime(){
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume();
+    [0,.2].forEach(function(dt,i){ var o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = [988,1319][i];
+      g.gain.setValueAtTime(.0001, actx.currentTime+dt); g.gain.exponentialRampToValueAtTime(.35, actx.currentTime+dt+.02); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dt+.5);
+      o.connect(g); g.connect(actx.destination); o.start(actx.currentTime+dt); o.stop(actx.currentTime+dt+.55); }); } catch(e){}
+  try { navigator.vibrate && navigator.vibrate([200,100,200]); } catch(e){}
+}
+document.addEventListener('pointerdown', function(){ try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch(e){} }, {once:true});
+function notify(title, body){
+  chime();
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  var opt = {body:body, icon:'icon-192.png', badge:'icon-96.png', tag:'ready', renotify:true, vibrate:[200,100,200]};
+  try { (sw ? sw.showNotification(title, opt) : Promise.reject()).catch(function(){ new Notification(title, opt); }); } catch(e){}
+}
+
+/* ---------- screens ---------- */
+function gIcon(){ return '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>'; }
+function installBtn(){
+  if (IS_APP) return null;
+  return el('button',{'class':'pill gold',type:'button',text:'📲 ऐप इंस्टॉल करें',onclick:function(){
+    if (instEvt){ instEvt.prompt(); instEvt.userChoice.then(function(){ instEvt = null; draw(); }); }
+    else alert(/iphone|ipad|ipod/i.test(navigator.userAgent) ? 'iPhone पर: नीचे Share (□↑) दबाएँ → “Add to Home Screen” चुनें।' : 'Chrome में ऊपर दाईं ओर ⋮ दबाएँ → “Install app” या “Add to Home screen” → “Install”। होम स्क्रीन पर DF Rider आ जाएगा।');
+  }});
+}
+function drawLogin(msg){
+  app.innerHTML = '';
+  var m = el('p',{'class':'msg err',text:msg||''});
+  app.appendChild(el('div',{'class':'login'},[ el('div',{'class':'card'},[
+    el('div',{'class':'brand',style:'color:var(--ink)',html:'DIAMOND<small style="color:var(--gold)">FASHIONS · RIDER</small>'}),
+    el('p',{'class':'muted',text:'डिलीवरी बॉय का लॉग-इन। वही Gmail चुनें जो दुकान मालिक ने Admin में जोड़ा है।'}),
+    el('button',{'class':'gbtn',type:'button',html:gIcon()+'<span>Google से लॉग-इन करें</span>',onclick:function(){
+      var p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
+      auth.signInWithPopup(p).catch(function(e){ if (/popup-blocked|operation-not-supported/.test(e.code||'')) return auth.signInWithRedirect(p); m.textContent = 'लॉग-इन नहीं हुआ: ' + (e.code||e.message); });
+    }}),
+    el('div',{style:'margin-top:14px'},[ installBtn() ]), m ]) ]));
+}
+function drawBlocked(text){
+  app.innerHTML = '';
+  app.appendChild(el('div',{'class':'login'},[ el('div',{'class':'card'},[
+    el('div',{style:'font-size:44px',text:'🚫'}), el('h2',{text:text}),
+    el('p',{'class':'muted',text:'लॉग-इन: '+myEmail}),
+    el('p',{'class':'muted',text:'दुकान मालिक से बात करें: +91 88741 29818'}),
+    el('div',{'class':'row',style:'justify-content:center'},[
+      el('a',{'class':'btn wa',href:'https://wa.me/'+SHOP.phone+'?text='+encodeURIComponent('नमस्ते, मैं डिलीवरी के लिए Rider ऐप चलाना चाहता हूँ। मेरा Gmail: '+myEmail),target:'_blank',rel:'noopener',text:'WhatsApp करें'}),
+      el('button',{'class':'btn line',type:'button',text:'दूसरे Gmail से लॉग-इन',onclick:function(){ auth.signOut(); }}) ]) ]) ]));
+}
+function draw(){
+  if (!rider) return;
+  var y = window.scrollY; app.innerHTML = '';
+  var alertB = ('Notification' in window && Notification.permission === 'default') ? el('button',{'class':'pill',type:'button',text:'🔔 सूचना चालू',onclick:function(){ Notification.requestPermission().then(function(){ chime(); draw(); }); }}) : null;
+  app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[
+    el('div',{'class':'brand',html:'DIAMOND<small>RIDER · '+(rider.name||myEmail)+'</small>'}),
+    el('div',{'class':'hb'},[ installBtn(), alertB, el('button',{'class':'pill',type:'button',text:'लॉग-आउट',onclick:function(){ if (confirm('लॉग-आउट करें?')) auth.signOut(); }}) ]) ]) ]));
+  var going = mine.filter(function(o){ return o.status === 'shipped'; }), done = mine.filter(function(o){ return o.status === 'delivered'; });
+  var tabs = [['ready','पिकअप के लिए तैयार',ready.length],['going','मेरी डिलीवरी',going.length],['done','पूरी हुई',0]];
+  app.appendChild(el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(t){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); window.scrollTo(0,0); }},[ t[1], t[2] ? el('span',{'class':'n',text:String(t[2])}) : null ]); })));
+  var main = el('main',{'class':'wrap'}); app.appendChild(main);
+  var today = new Date().toDateString();
+  var doneToday = done.filter(function(o){ return o.deliveredAt && new Date(o.deliveredAt).toDateString() === today; });
+  var cashToday = doneToday.reduce(function(s, o){ return s + (o.cashGot || 0); }, 0);
+  main.appendChild(el('div',{'class':'sum'},[
+    el('div',null,[ el('b',{text:String(ready.length)}), el('span',{text:'उठाने हैं'}) ]),
+    el('div',null,[ el('b',{text:String(going.length)}), el('span',{text:'रास्ते में'}) ]),
+    el('div',null,[ el('b',{text:String(doneToday.length)}), el('span',{text:'आज पहुँचाए · '+rupees(cashToday)}) ]) ]));
+  var list = tab === 'ready' ? ready : tab === 'going' ? going : done.slice().sort(function(a,b){ return String(b.deliveredAt||'').localeCompare(String(a.deliveredAt||'')); }).slice(0, 40);
+  if (!list.length){
+    main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='ready' ? '📦' : tab==='going' ? '🛵' : '✅'}),
+      tab==='ready' ? 'अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।' : tab==='going' ? 'अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।' : 'अभी कोई डिलीवरी पूरी नहीं हुई।' ]));
+  }
+  list.forEach(function(o){ main.appendChild(card(o)); });
+  window.scrollTo(0, y);
+}
+function card(o){
+  var c = el('div',{'class':'card'+(o.status==='packed'?' hot':'')});
+  var st = {packed:['पैक – उठाना है',''], shipped:['रास्ते में',''], delivered:['पहुँच गया','ok']}[o.status] || [o.status,''];
+  c.appendChild(el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:17px',text:o.id}), el('span',{'class':'st '+st[1],text:st[0]}) ]));
+  var addr = [o.addr, o.land, o.pin ? 'PIN '+o.pin : ''].filter(Boolean).join(', ');
+  c.appendChild(el('div',{'class':'kv'},[
+    el('span',{text:'ग्राहक'}), el('b',{text:o.name||''}),
+    el('span',{text:'पता'}), el('span',{text:addr || '—'}),
+    km(o) ? el('span',{text:'दूरी'}) : null, km(o) ? el('span',{text:km(o)+' (दुकान से)'}) : null,
+    o.note ? el('span',{text:'नोट'}) : null, o.note ? el('span',{text:o.note}) : null,
+    o.status==='delivered' && o.deliveredAt ? el('span',{text:'पहुँचाया'}) : null, o.status==='delivered' && o.deliveredAt ? el('span',{text:when(o.deliveredAt)}) : null ]));
+  c.appendChild(el('ul',{'class':'items'}, (o.items||[]).map(function(i){ return el('li',{text:i.name+(i.size?' ('+i.size+')':'')+' × '+(i.qty||1)}); })));
+  var amt = toCollect(o);
+  if (o.status !== 'delivered') c.appendChild(el('div',{'class':'cash'+(amt?'':' paid')},[ el('span',{text: amt ? '💵 ग्राहक से लेना है' : '✓ पैसे पहले ही मिल गए'}), el('span',{text: amt ? rupees(amt) : ''}) ]));
+  else if (o.cashGot) c.appendChild(el('div',{'class':'cash paid'},[ el('span',{text:'💵 लिया'}), el('span',{text:rupees(o.cashGot)}) ]));
+  var tel = digits(o.phone).slice(-10);
+  var acts = el('div',{'class':'row'});
+  if (tel) acts.appendChild(el('a',{'class':'btn sm line',href:'tel:+91'+tel,text:'📞 कॉल'}));
+  if (tel) acts.appendChild(el('a',{'class':'btn sm wa',href:'https://wa.me/91'+tel+'?text='+encodeURIComponent('नमस्ते '+(o.name||'')+' जी, मैं Diamond Fashions से आपका ऑर्डर '+o.id+' लेकर आ रहा हूँ।'),target:'_blank',rel:'noopener',text:'WhatsApp'}));
+  acts.appendChild(el('a',{'class':'btn sm line',href:mapsTo(o),target:'_blank',rel:'noopener',text:'🧭 रास्ता'}));
+  c.appendChild(acts);
+  var m = el('p',{'class':'msg'});
+  if (o.status === 'packed'){
+    c.appendChild(el('div',{'class':'row',style:'margin-top:10px'},[ el('button',{'class':'btn gold grow',type:'button',text:'📦 पार्सल उठाया – डिलीवरी शुरू',onclick:function(e){ take(o, e.target, m); }}) ]));
+  } else if (o.status === 'shipped'){
+    var got = el('input',{type:'checkbox'});
+    if (amt) c.appendChild(el('label',{'class':'chk'},[ got, ' '+rupees(amt)+' कैश ले लिया' ]));
+    c.appendChild(el('div',{'class':'row',style:'margin-top:6px'},[
+      el('button',{'class':'btn ok grow',type:'button',text:'✓ डिलीवर हो गया',onclick:function(e){ if (amt && !got.checked){ m.textContent = 'पहले कैश लेकर ✓ लगाएँ।'; m.className = 'msg err'; return; } deliver(o, amt, e.target, m); }}),
+      el('button',{'class':'btn line sm',type:'button',text:'↩ वापस दुकान',onclick:function(e){ if (confirm('यह पार्सल वापस दुकान पर लौटा रहे हैं?')) giveBack(o, e.target, m); }}) ]));
+  }
+  c.appendChild(m);
+  return c;
+}
+
+/* ---------- actions (Firestore rules allow only these exact changes for an active rider) ---------- */
+function trackSet(batch, o, s, t){
+  var at = {}; at[s] = t;
+  batch.set(db.collection('track').doc(o.id), {s:s, pick:false, at:at}, {merge:true});
+}
+function take(o, b, m){
+  b.disabled = true; m.textContent = '…'; m.className = 'msg';
+  var t = now(), batch = db.batch();
+  batch.update(db.collection('orders').doc(o.id), {status:'shipped', rider:myEmail, riderName:rider.name||'', riderAt:t, log:firebase.firestore.FieldValue.arrayUnion({at:t, s:'shipped', by:myEmail})});
+  trackSet(batch, o, 'shipped', t);
+  batch.commit().then(function(){ tab = 'going'; draw(); }, function(e){ b.disabled = false; m.textContent = 'नहीं हुआ: '+(e.code||e.message)+' (शायद किसी और ने उठा लिया)'; m.className = 'msg err'; });
+}
+function deliver(o, amt, b, m){
+  b.disabled = true; m.textContent = '…'; m.className = 'msg';
+  var t = now(), batch = db.batch();
+  batch.update(db.collection('orders').doc(o.id), {status:'delivered', deliveredAt:t, cashGot:amt||0, log:firebase.firestore.FieldValue.arrayUnion({at:t, s:'delivered', by:myEmail})});
+  trackSet(batch, o, 'delivered', t);
+  batch.commit().then(function(){ m.textContent = '✓'; }, function(e){ b.disabled = false; m.textContent = 'नहीं हुआ: '+(e.code||e.message); m.className = 'msg err'; });
+}
+function giveBack(o, b, m){
+  b.disabled = true;
+  var t = now(), batch = db.batch();
+  batch.update(db.collection('orders').doc(o.id), {status:'packed', rider:'', riderName:'', riderAt:t, log:firebase.firestore.FieldValue.arrayUnion({at:t, s:'packed', by:myEmail, note:'returned to shop by rider'})});
+  trackSet(batch, o, 'packed', t);
+  batch.commit().catch(function(e){ b.disabled = false; m.textContent = 'नहीं हुआ: '+(e.code||e.message); m.className = 'msg err'; });
+}
+
+/* ---------- data ---------- */
+function stop(){ unsubs.forEach(function(u){ try { u(); } catch(e){} }); unsubs = []; }
+function listen(){
+  stop();
+  unsubs.push(db.collection('orders').where('status','==','packed').onSnapshot(function(s){
+    var list = []; s.forEach(function(d){ var o = d.data(); if (isHome(o)) list.push(o); });
+    list.sort(function(a,b){ return String(a.created||'').localeCompare(String(b.created||'')); });
+    var fresh = seen ? list.filter(function(o){ return !seen[o.id]; }) : [];
+    if (!seen) seen = {}; list.forEach(function(o){ seen[o.id] = 1; });
+    fresh.forEach(function(o){ notify('📦 नया पार्सल तैयार', (o.name||'')+' · '+[o.addr, o.pin].filter(Boolean).join(', ')+' · '+rupees(toCollect(o))); });
+    ready = list; try { if (navigator.setAppBadge){ if (list.length) navigator.setAppBadge(list.length); else navigator.clearAppBadge(); } } catch(e){}
+    draw();
+  }, function(e){ drawBlocked('ऑर्डर नहीं खुले ('+(e.code||e.message)+')'); }));
+  unsubs.push(db.collection('orders').where('rider','==',myEmail).onSnapshot(function(s){
+    mine = []; s.forEach(function(d){ mine.push(d.data()); }); draw();
+  }, function(){}));
+}
+auth.getRedirectResult().catch(function(){});
+auth.onAuthStateChanged(function(u){
+  stop(); if (riderUnsub){ riderUnsub(); riderUnsub = null; } me = u; rider = null; seen = null;
+  if (!u){ drawLogin(); return; }
+  myEmail = String(u.email||'').toLowerCase();
+  app.innerHTML = '<p class="empty">…</p>';
+  riderUnsub = db.collection('riders').doc(myEmail).onSnapshot(function(s){
+    var r = s.exists ? s.data() : null;
+    if (!r){ stop(); drawBlocked('आपका Gmail अभी डिलीवरी लिस्ट में नहीं है'); return; }
+    if (r.active === false){ stop(); rider = null; drawBlocked('आपको दुकान मालिक ने ब्लॉक किया है'); return; }
+    var first = !rider; rider = r;
+    if (first) listen(); else draw();
+  }, function(){ drawBlocked('आपका Gmail अभी डिलीवरी लिस्ट में नहीं है'); });
+});
+})();
+</script>
+</body>
+</html>
