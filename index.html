@@ -113,6 +113,9 @@ section.block{padding-block:44px}
 .field input,.field select,.field textarea{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
 .field textarea{min-height:80px;resize:vertical}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.alt-l{color:var(--muted);font-weight:400;font-size:.88em}
+h2+.alt-h{margin:4px 0 0;font-size:17px}
+.services h3 .alt-l{font-family:inherit}
 .osum{position:relative;background:var(--surface);color:var(--ink);width:min(520px,100%);max-height:100%;overflow:auto;border-radius:16px;padding:22px 20px 18px;display:flex;flex-direction:column;gap:12px}
 .osum h2{font-size:22px;font-weight:600;padding-right:44px;margin:0}
 .osum h3{font-size:15px;margin:4px 0 0;color:var(--muted);font-weight:600}
@@ -841,6 +844,7 @@ function el(tag, attrs, kids){
 function waLink(text){ return 'https://wa.me/' + SHOP.waNumber + '?text=' + encodeURIComponent(text); }
 function cartCount(){ return cart.reduce(function(s,c){return s+c.qty;},0); }
 function opts(list){ return list.map(function(o,i){ return '<option value="'+i+'">'+o+'</option>'; }).join(''); }
+function lis2(list, alt){ return list.map(function(o, i){ return '<li>'+o+(alt && alt[i] && alt[i] !== o ? ' <span class="alt-l">· '+alt[i]+'</span>' : '')+'</li>'; }).join(''); }
 function lis(list){ return list.map(function(o){ return '<li>'+o+'</li>'; }).join(''); }
 
 var FORM_IDS = ['tr-id','o-name','o-phone','o-how','o-addr','o-pin','o-land','o-note','r-order','r-phone','r-item','r-reason','r-want','r-note','t-name','t-phone','t-for','t-what','t-date','t-cloth','t-note'];
@@ -850,7 +854,7 @@ function restoreForms(){ FORM_IDS.forEach(function(id){ var n=document.getElemen
 /* ---------- frame ---------- */
 var app = document.getElementById('app');
 function renderFrame(){
-  var t = T();
+  var t = T(), tAlt = S[lang === 'hi' ? 'en' : 'hi'];
   document.documentElement.lang = lang;
   var hc = t.hc.map(function(h){ return '<div><b>'+h[0]+'</b>'+h[1]+'</div>'; }).join('');
   app.innerHTML =
@@ -937,10 +941,10 @@ function renderFrame(){
   '</form><div class="panel" id="tr-out" aria-live="polite"></div></div>' +
  '</div></section>' +
  '<section class="block tailor" id="tailor"><div class="wrap">' +
-  '<div class="sec-head"><div><div class="eyebrow">'+t.eb_tailor+'</div><h2>'+t.sec_tailor+'</h2></div></div>' +
+  '<div class="sec-head"><div><div class="eyebrow">'+t.eb_tailor+'</div><h2>'+t.sec_tailor+'</h2><p class="alt-l alt-h">'+tAlt.sec_tailor+'</p></div></div>' +
   '<div class="services">' +
-   '<div class="panel"><h3>'+t.t_ladies+'</h3><ul>'+lis(t.t_ladies_items)+'</ul></div>' +
-   '<div class="panel"><h3>'+t.t_gents+'</h3><ul>'+lis(t.t_gents_items)+'</ul></div>' +
+   '<div class="panel"><h3>'+t.t_ladies+' <span class="alt-l">/ '+tAlt.t_ladies+'</span></h3><ul>'+lis2(t.t_ladies_items, tAlt.t_ladies_items)+'</ul></div>' +
+   '<div class="panel"><h3>'+t.t_gents+' <span class="alt-l">/ '+tAlt.t_gents+'</span></h3><ul>'+lis2(t.t_gents_items, tAlt.t_gents_items)+'</ul></div>' +
   '</div>' +
   '<div class="tl" id="tl"></div>' +
  '</div></section>' +
