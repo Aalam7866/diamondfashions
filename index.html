@@ -1279,7 +1279,15 @@ function ytId(u){ var m = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|sho
 function goLink(link){
   link = String(link||'');
   if (/^cat:/.test(link)){ filter = link.slice(4); try{ localStorage.setItem('df-filter',filter); }catch(e){} renderChips(); renderGrid(); var c = document.getElementById('chips'); if (c) c.scrollIntoView({behavior:'smooth'}); return; }
-  if (/^p:/.test(link)){ var code = link.slice(2).toUpperCase(), pp = products.filter(function(x){ return x.code === code; })[0]; if (pp) openProduct(pp.id); return; }
+  if (/^p:/.test(link)){
+    var code = link.slice(2).trim().toUpperCase(), bare = function(c){ return String(c||'').toUpperCase().replace(/^DF-?/,'').replace(/[^A-Z0-9]/g,''); };
+    var pp = products.filter(function(x){ return String(x.code||'').toUpperCase() === code; })[0]
+      || products.filter(function(x){ return x.id === link.slice(2).trim(); })[0]
+      || products.filter(function(x){ return bare(x.code) === bare(code); })[0]
+      || products.filter(function(x){ return code.indexOf(String(x.code||'').toUpperCase()+'-') === 0; })[0];
+    if (pp){ openProduct(pp.id); return; }
+    query = link.slice(2).trim(); var qi = document.getElementById('q'); if (qi) qi.value = query; renderGrid(); var sh = document.getElementById('shop'); if (sh) sh.scrollIntoView({behavior:'smooth'}); return;
+  }
   if (/^sec:/.test(link)){ var sec = document.getElementById(link.slice(4)); if (sec) sec.scrollIntoView({behavior:'smooth'}); return; }
   if (/^https?:\/\//.test(link)) window.open(link, '_blank', 'noopener');
 }
