@@ -44,7 +44,7 @@
       if (c.adminLink) {
         any = true;
         main.appendChild(el('button', { 'class': 'gold big', onclick: function () { location.href = c.adminLink; } },
-          ['₹ ' + t('Payments & delivery (admin)', 'पेमेंट और डिलीवरी (एडमिन)'), el('small', { text: t('Orders, take payment, deliver', 'ऑर्डर, पेमेंट लें, डिलीवर करें') })]));
+          ['★ ' + t('Owner admin', 'मालिक एडमिन'), el('small', { text: t('Tailoring orders, tailors, website orders', 'सिलाई ऑर्डर, कारीगर, वेबसाइट ऑर्डर') })]));
       }
       var work = c.workLinks || [];
       if (work.length) {
@@ -70,8 +70,8 @@
       if (!any) {
         main.appendChild(el('div', { 'class': 'card' }, [
           el('b', { text: t('The tailoring links are not switched on yet.', 'सिलाई के लिंक अभी चालू नहीं हैं।') }),
-          el('p', { 'class': 'muted', text: t('On the shop PC: TailorShop → Settings → Online work link → Set up…, switch on the order and admin links. They appear here within a few minutes.',
-                                             'दुकान के कंप्यूटर पर: TailorShop → सेटिंग्स → Online work link → Set up…, ऑर्डर और एडमिन लिंक चालू करें। कुछ मिनट में यहाँ दिखेंगे।') }),
+          el('p', { 'class': 'muted', text: t('On the shop PC: TailorShop → Settings → Website → Save login. The tailors\' links appear here within a few minutes.',
+                                             'दुकान के कंप्यूटर पर: TailorShop → सेटिंग्स → Website → Save login। कारीगरों के लिंक कुछ मिनट में यहाँ दिखेंगे।') }),
         ]));
       }
       main.appendChild(el('p', { 'class': 'muted', text: t('Updated', 'अपडेट') + ': ' + (c.updated ? new Date(c.updated).toLocaleString() : '–') }));

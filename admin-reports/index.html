@@ -54,6 +54,13 @@
         tile(t('Returns', 'वापसी'), DF.money(r.returnsTotal)),
         tile(t('New tailoring orders', 'नए सिलाई ऑर्डर'), String(r.newOrdersToday || 0)),
       ]));
+      main.appendChild(el('h2', { text: t('Website orders', 'वेबसाइट ऑर्डर') }));
+      main.appendChild(el('div', { 'class': 'tiles' }, [
+        tile(t('Online orders today', 'आज के ऑनलाइन ऑर्डर'), String(r.onlineOrdersToday || 0), true),
+        tile(t('Online sales today', 'आज की ऑनलाइन बिक्री'), DF.money(r.onlineSalesToday), true),
+        tile(t('Delivery boys\' cash today', 'डिलीवरी बॉय का कैश (आज)'), DF.money(r.riderCashToday)),
+        tile(t('Still open', 'अभी चालू'), String(r.onlineActive || 0), (r.onlineActive || 0) > 0),
+      ]));
       var by = r.byMethod || {};
       if (Object.keys(by).length) {
         main.appendChild(el('h2', { text: t('Collected by method', 'तरीके के हिसाब से जमा') }));

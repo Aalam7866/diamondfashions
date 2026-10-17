@@ -1,6 +1,6 @@
 /* DF Reports: opens fast and without internet with the last copy; always tries the newest version first.
    Firebase (the shop's data) is never stored here – it always comes live. */
-var CACHE = 'admin-reports-v1';
+var CACHE = 'admin-reports-v2';
 var CORE = ['./', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', '/admin-shared/df.js', '/admin-shared/df.css'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(CORE); }).then(function () { return self.skipWaiting(); })); });
 self.addEventListener('activate', function (e) {
