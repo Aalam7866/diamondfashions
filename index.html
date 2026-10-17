@@ -115,9 +115,14 @@ section.block{padding-block:44px}
 .hint{font-size:14px;color:var(--muted);margin:0}
 .pg-bar,.pg-x{display:none}
 body.pg #app>section,body.pg #app>footer{display:none}
-body.pg-track #app>#track,body.pg-returns #app>#returns{display:block;min-height:calc(100vh - 140px);padding-top:14px}
+body.pg-track #app>#track,body.pg-returns #app>#returns,body.pg-order #app>#order{display:block;min-height:calc(100vh - 140px);padding-top:14px}
 body.pg .pg-bar{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
 .pg-back{width:40px;height:40px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;color:var(--ink);background:var(--bg);border:1px solid var(--line)}
+.pg-more{margin-left:auto;font-size:14px;font-weight:600;white-space:nowrap}
+.pg-shop{display:none;margin-top:12px}body.pg .pg-shop{display:inline-flex}
+body.pg-order .bar{display:none!important}
+body.pg-order #order.is-empty #order-form{display:none}
+body.pg-order #order.is-empty .slip{grid-template-columns:minmax(0,1fr)}
 .pg-bar small{display:block;color:var(--muted);font-size:13px}.pg-bar small a{color:inherit}.pg-bar b{font-size:18px;font-weight:600}
 body.pg .pg-x{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:600}
 .pg-x svg{width:24px;height:24px;flex:none;color:var(--accent,#8a6a1f)}.pg-x span{flex:1}.pg-x b{font-size:22px;color:var(--muted)}
@@ -625,7 +630,7 @@ var S = {
   err_cart:'Add at least one item to your order first.', err_contact:'Please write your name and a 10-digit mobile number so the shop can reach you.',
   wa_greet:'Hello Diamond Fashions! I would like to know about your clothes.',
   wa_order:'Hello Diamond Fashions! I would like to order:', wa_size:'size', wa_total:'Total', wa_name:'Name', wa_mobile:'Mobile', wa_how:'Delivery', wa_addr:'Address', wa_note:'Note',
-  pg_home:'Home', pg_help:'Help centre', pg_to_ret:'Cancel, return or exchange an order', pg_to_track:'Track your order', pg_go:'Open', eb_tailor:'Tailoring', sec_tailor:'Tailoring centre for women and men',
+  pg_cart:'My cart', pg_shop:'Continue shopping', pg_home:'Home', pg_help:'Help centre', pg_to_ret:'Cancel, return or exchange an order', pg_to_track:'Track your order', pg_go:'Open', eb_tailor:'Tailoring', sec_tailor:'Tailoring centre for women and men',
   t_ladies:'Ladies tailoring', t_ladies_items:['Suit stitching','Blouse stitching','Fall-pico','Fitting &amp; alteration'],
   t_gents:'Gents tailoring', t_gents_items:['Shirt stitching','Pant stitching','Kurta pajama','Fitting &amp; alteration'],
   t_name:'Your name', t_phone:'Mobile number', t_for:'For whom', t_for_opts:['Women','Men','Boy','Girl'],
@@ -720,7 +725,7 @@ var S = {
   err_cart:'पहले कम से कम एक कपड़ा ऑर्डर में जोड़ें।', err_contact:'अपना नाम और 10 अंकों का मोबाइल नंबर लिखें, ताकि दुकान आपसे बात कर सके।',
   wa_greet:'नमस्ते डायमंड फैशन्स! मुझे कपड़ों के बारे में जानकारी चाहिए।',
   wa_order:'नमस्ते डायमंड फैशन्स! मुझे यह ऑर्डर करना है:', wa_size:'साइज़', wa_total:'कुल', wa_name:'नाम', wa_mobile:'मोबाइल', wa_how:'कैसे लेंगे', wa_addr:'पता', wa_note:'बात',
-  pg_home:'होम', pg_help:'मदद केंद्र', pg_to_ret:'ऑर्डर कैंसिल, वापसी या बदलाव', pg_to_track:'अपना ऑर्डर ट्रैक करें', pg_go:'खोलें', eb_tailor:'Tailoring', sec_tailor:'सिलाई सेंटर: लेडीज़ और जेंट्स',
+  pg_cart:'मेरा कार्ट', pg_shop:'और खरीदारी करें', pg_home:'होम', pg_help:'मदद केंद्र', pg_to_ret:'ऑर्डर कैंसिल, वापसी या बदलाव', pg_to_track:'अपना ऑर्डर ट्रैक करें', pg_go:'खोलें', eb_tailor:'Tailoring', sec_tailor:'सिलाई सेंटर: लेडीज़ और जेंट्स',
   t_ladies:'लेडीज़ सिलाई', t_ladies_items:['सूट सिलाई','ब्लाउज़ सिलाई','फॉल-पीको','फिटिंग व ऑल्टरेशन'],
   t_gents:'जेंट्स सिलाई', t_gents_items:['शर्ट सिलाई','पैंट सिलाई','कुर्ता-पायजामा','फिटिंग व ऑल्टरेशन'],
   t_name:'आपका नाम', t_phone:'मोबाइल नंबर', t_for:'किसके लिए', t_for_opts:['महिला','पुरुष','लड़का','लड़की'],
@@ -854,13 +859,13 @@ function el(tag, attrs, kids){
 function waLink(text){ return 'https://wa.me/' + SHOP.waNumber + '?text=' + encodeURIComponent(text); }
 function cartCount(){ return cart.reduce(function(s,c){return s+c.qty;},0); }
 function opts(list){ return list.map(function(o,i){ return '<option value="'+i+'">'+o+'</option>'; }).join(''); }
-function pgBar(t, title){ return '<div class="pg-bar"><a class="pg-back" href="#shop" aria-label="'+t.pg_home+'">←</a><div><small><a href="#shop">'+t.pg_home+'</a> › '+t.pg_help+'</small><b>'+title+'</b></div></div>'; }
+function pgBar(t, title, crumb){ return '<div class="pg-bar"><a class="pg-back" href="#shop" aria-label="'+t.pg_home+'">←</a><div><small><a href="#shop">'+t.pg_home+'</a> › '+(crumb||t.pg_help)+'</small><b>'+title+'</b></div>'+(crumb ? '<a class="pg-more" href="#shop">'+t.pg_shop+'</a>' : '')+'</div>'; }
 function pgLink(href, ico, text){ return '<a class="pg-x" href="'+href+'">'+ico+'<span>'+text+'</span><b aria-hidden="true">›</b></a>'; }
 /* Track and Returns open as their own pages (like Flipkart/Amazon help pages) */
 var pgCur = '';
 function applyPage(){
-  var h = location.hash || '', pg = /^#track(-|$)/.test(h) ? 'track' : h === '#returns' ? 'returns' : '';
-  var b = document.body; b.classList.toggle('pg', !!pg); b.classList.toggle('pg-track', pg === 'track'); b.classList.toggle('pg-returns', pg === 'returns');
+  var h = location.hash || '', pg = /^#track(-|$)/.test(h) ? 'track' : h === '#returns' ? 'returns' : h === '#order' ? 'order' : '';
+  var b = document.body; b.classList.toggle('pg', !!pg); b.classList.toggle('pg-track', pg === 'track'); b.classList.toggle('pg-returns', pg === 'returns'); b.classList.toggle('pg-order', pg === 'order');
   if (pg && pg !== pgCur) window.scrollTo(0, 0);
   else if (!pg && pgCur){ var id = h.replace(/^#/, ''), tg = id && document.getElementById(id); setTimeout(function(){ if (tg && !/^p-/.test(id)) tg.scrollIntoView(); else if (!tg) window.scrollTo(0, 0); }, 0); }
   pgCur = pg;
@@ -911,7 +916,7 @@ function renderFrame(){
   '<div class="toolbar"><div class="count-line" id="count-line" aria-live="polite"></div><label class="row" for="sort">'+t.sort_lbl+' <select id="sort">'+opts(t.sort_opts)+'</select></label></div>' +
   '<div class="grid" id="grid"></div>' +
  '</div></section>' +
- '<section class="block" id="order" style="padding-top:8px"><div class="wrap">' +
+ '<section class="block" id="order" style="padding-top:8px"><div class="wrap">' + pgBar(t, t.co_title, t.pg_cart) +
   '<div class="sec-head"><div><div class="eyebrow">'+t.co_eb+'</div><h2>'+t.co_title+'</h2></div></div>' +
   '<div id="co-done"></div>' +
   '<div class="slip" id="co-main"><div class="panel"><ul class="cart-list" id="cart-list"></ul><div id="cart-total"></div>' +
@@ -1566,7 +1571,7 @@ function openProduct(id, from){
   }});
   var buyB = el('button',{type:'button','class':'btn btn-wa',text:t.buy_now,disabled:avail(p)?null:'disabled',onclick:function(){
     if (!ok()) return; addToCart(p, size, qty, isM(p)?meters:0); placed = null; renderDone(); closeProduct();
-    document.getElementById('order').scrollIntoView({behavior:'smooth'});
+    setTimeout(function(){ if (location.hash !== '#order') location.hash = '#order'; setTimeout(function(){ window.scrollTo(0, 0); }, 80); }, 0);
     setTimeout(function(){ var n=document.getElementById('o-name'); if (n) n.focus({preventScroll:true}); }, 500);
   }});
   var check = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
@@ -1633,7 +1638,8 @@ function renderCart(){
   document.getElementById('bar').hidden = n===0;
   var bnc = document.getElementById('bn-count'); if (bnc){ bnc.textContent = n; bnc.hidden = n===0; }
   var totalBox = document.getElementById('cart-total'); totalBox.innerHTML='';
-  if (!cart.length) list.appendChild(el('li',{'class':'empty',text:t.cart_empty}));
+  var osec = document.getElementById('order'); if (osec) osec.classList.toggle('is-empty', !cart.length);
+  if (!cart.length) list.appendChild(el('li',{'class':'empty'},[ t.cart_empty, el('br'), el('a',{'class':'btn btn-gold pg-shop',href:'#shop',text:t.pg_shop}) ]));
   var total = 0, priced = true;
   cart.forEach(function(c, i){
     var p = findP(c.id);
@@ -1819,7 +1825,7 @@ function commitOrder(order){
   if ((window.DF && DF.saveOrder) || orderFormUrl(order)){ order.sent = 'sending'; sendOrderDirect(order); }
   cart = []; saveCart(); orderLoc = null; renderCart();
   renderDone();
-  document.getElementById('order').scrollIntoView({behavior:'smooth'});
+  if (location.hash !== '#order') location.hash = '#order'; window.scrollTo(0, 0);
 }
 /* Pre-filled Google Form link for a new order (no WhatsApp needed). Placeholders in SHOP.orderFormUrl:
    ORDERID NAME MOBILE ITEMS TOTAL PAYMENT DELIVERY ADDRESS NOTE. The Items lines use the same format Seller Hub reads. */
@@ -2887,7 +2893,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     var t = L(), tr = (window.DF && DF.getTrack(id)) || (data.track || {})[id], s = tr ? tr.s : 'waiting';
     return {s:s, label:(t.st[s] || s), cls: s==='delivered'||s==='returned'||s==='return_ok' ? 'ok' : (s==='rejected'||s==='cancelled'||s==='return_no' ? 'bad' : '')};
   }
-  function goCart(){ closeModal(); var o = document.getElementById('order'); if (o) o.scrollIntoView({behavior:'smooth'}); }
+  function goCart(){ closeModal(); if (location.hash !== '#order') location.hash = '#order'; else window.scrollTo(0, 0); }
   function itemProduct(i){ return window.DF ? DF.productBySku(i.sku || '') : null; }
   function itemMetres(i){ var m = /([\d.]+)\s*m$/.exec(i.name || ''); return m ? parseFloat(m[1]) : 0; }
   function addItem(i){
