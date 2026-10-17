@@ -2139,6 +2139,8 @@ window.DF = {
   photo: function(p){ return p && p.photos && p.photos[0] ? p.photos[0] : ''; },
   art: function(p){ return p ? artSvg(p.art) : ''; },
   cartCount: function(){ return cart.length; },
+  shopLoc: function(){ return SHOP.shopLat ? {lat:+SHOP.shopLat, lng:+SHOP.shopLng} : null; },
+  setOrderLoc: function(l){ orderLoc = l || null; try { showLoc(); } catch(e){} },
   getTrack: function(id){ return TRACK[id]; },
   setBanners: function(list){ BANNERS = list || null; renderBanners(); },
   ratings: {},
@@ -2599,6 +2601,16 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
 .acct-mini button.danger{color:var(--danger)}
 .acct-pick{display:flex;flex-direction:column;gap:4px}
 .acct-pick select{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:0 12px}
+.acct-av{width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none;border:1px solid rgba(205,170,92,.7)}
+.acct-hello-ph{display:flex;align-items:center;gap:14px}
+.acct-ph{display:flex;align-items:center;gap:12px}
+.acct-ph-pic{position:relative;width:72px;height:72px;border-radius:50%;overflow:hidden;flex:none;background:var(--surface);border:2px solid var(--sign-gold,#CDAA5C);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.acct-ph-pic img{width:100%;height:100%;object-fit:cover}.acct-ph-pic svg{width:34px;height:34px;color:var(--muted)}
+.acct-ph-act{display:flex;flex-direction:column;align-items:flex-start;gap:4px}.acct-ph-msg{color:var(--muted)}
+.acct-hello-ph>.acct-ph+div{min-width:0}
+.acct-map{height:240px;border-radius:10px;overflow:hidden;border:1px solid var(--line);z-index:0}
+.acct-map-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.acct-loc{display:block;font-size:13px;margin-top:4px}
 .acct-hello{background:var(--gold-soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px}
 .acct-ocard{cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
 .acct-ocard:hover{border-color:var(--gold)}
@@ -2633,7 +2645,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       name:'Full name', mobile:'Mobile number (10 digits)', line:'House no., street, village', city:'Town / city', pin:'PIN code', land:'Landmark (optional)',
       save:'Save', saved:'Saved.', err_prof:'Please fill name, 10-digit mobile, address and 6-digit PIN.',
       hello:'Hello', addrs:'My addresses', add_addr:'Add new address', def:'Default', use_def:'Make default', edit:'Edit', del:'Delete',
-      orders:'My orders', no_orders:'No orders yet.', view:'View details', back:'← My orders', placed:'Placed on', pay_l:'Payment', deliv_l:'Delivery', addr_l:'Address', total_l:'Total', items_l:'Items', status_l:'Order status', add_cart:'Add to cart', added:'Added to cart ✓', buy_again:'Add all to cart (buy again)', go_cart:'Go to cart', my_cart:'My cart', p_upi:'UPI (online)', p_cod:'Cash on delivery', gone:'No longer available', size:'Size', qty:'Qty', st:{waiting:'Waiting for shop',accepted:'Accepted',packed:'Packed',shipped:'Shipped',pickup:'Ready for pickup',delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',return_req:'Return requested',return_ok:'Return approved',returned:'Returned',return_no:'Return not approved'}, track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
+      ph_add:'📷 Add your photo', ph_ch:'Change photo', ph_rm:'Remove', ph_saving:'Saving photo…', ph_ok:'Photo saved ✓', ml_title:'Home location on map', ml_hint:'Tap “Use my current location”, or move the map and tap on your house to put the pin there.', ml_gps:'📍 Use my current location', ml_wait:'Finding your location…', ml_ok:'Pin set ✓', ml_rm:'Remove pin', ml_err:'Could not get your location. Turn on GPS, or tap your house on the map.', ml_den:'Location permission is off. Tap your house on the map instead.', ml_has:'📍 Location on map saved', orders:'My orders', no_orders:'No orders yet.', view:'View details', back:'← My orders', placed:'Placed on', pay_l:'Payment', deliv_l:'Delivery', addr_l:'Address', total_l:'Total', items_l:'Items', status_l:'Order status', add_cart:'Add to cart', added:'Added to cart ✓', buy_again:'Add all to cart (buy again)', go_cart:'Go to cart', my_cart:'My cart', p_upi:'UPI (online)', p_cod:'Cash on delivery', gone:'No longer available', size:'Size', qty:'Qty', st:{waiting:'Waiting for shop',accepted:'Accepted',packed:'Packed',shipped:'Shipped',pickup:'Ready for pickup',delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',return_req:'Return requested',return_ok:'Return approved',returned:'Returned',return_no:'Return not approved'}, track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
       pick:'Deliver to', other:'Another address (type below)', hint_login:'Login to save your address for next time.', welcome:'Logged in as ',
       e_gen:'Something went wrong. Please try again.', e_cred:'Email or password is wrong.', e_used:'This email already has an account. Tap Login.', e_weak:'Password must be at least 6 letters.', e_mail:'Please write a correct email.', e_dom:'Login is not enabled for this website address yet.', e_net:'No internet. Please try again.' },
     hi:{ login:'लॉग-इन', account:'मेरा खाता', title:'लॉग-इन करें या खाता बनाएँ', sub:'एक बार पता सेव करें, अगली बार जल्दी ऑर्डर करें।',
@@ -2643,7 +2655,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       name:'पूरा नाम', mobile:'मोबाइल नंबर (10 अंक)', line:'मकान नं., गली, गांव', city:'कस्बा / शहर', pin:'पिन कोड', land:'लैंडमार्क (चाहें तो)',
       save:'सेव करें', saved:'सेव हो गया।', err_prof:'नाम, 10 अंक का मोबाइल, पता और 6 अंक का पिन भरें।',
       hello:'नमस्ते', addrs:'मेरे पते', add_addr:'नया पता जोड़ें', def:'मुख्य', use_def:'मुख्य बनाएँ', edit:'बदलें', del:'हटाएँ',
-      orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', view:'पूरी जानकारी', back:'← मेरे ऑर्डर', placed:'ऑर्डर की तारीख', pay_l:'पेमेंट', deliv_l:'डिलीवरी', addr_l:'पता', total_l:'कुल', items_l:'सामान', status_l:'ऑर्डर का स्टेटस', add_cart:'कार्ट में डालें', added:'कार्ट में डाल दिया ✓', buy_again:'सब फिर से कार्ट में डालें', go_cart:'कार्ट देखें', my_cart:'मेरा कार्ट', p_upi:'UPI (ऑनलाइन)', p_cod:'कैश ऑन डिलीवरी', gone:'अब उपलब्ध नहीं', size:'साइज़', qty:'मात्रा', st:{waiting:'दुकान के जवाब का इंतज़ार',accepted:'मंज़ूर',packed:'पैक हो गया',shipped:'भेज दिया',pickup:'दुकान से ले जाएँ',delivered:'पहुँच गया',rejected:'रद्द (दुकान ने)',cancelled:'रद्द',return_req:'वापसी की रिक्वेस्ट',return_ok:'वापसी मंज़ूर',returned:'वापस हो गया',return_no:'वापसी मंज़ूर नहीं'}, track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
+      ph_add:'📷 अपनी फ़ोटो लगाएँ', ph_ch:'फ़ोटो बदलें', ph_rm:'हटाएँ', ph_saving:'फ़ोटो सेव हो रही है…', ph_ok:'फ़ोटो सेव हो गई ✓', ml_title:'मैप पर घर की लोकेशन', ml_hint:'“मेरी अभी की लोकेशन” दबाएँ, या मैप खिसकाकर अपने घर पर टैप करें — वहाँ पिन लग जाएगा।', ml_gps:'📍 मेरी अभी की लोकेशन', ml_wait:'लोकेशन ढूँढ रहे हैं…', ml_ok:'पिन लग गया ✓', ml_rm:'पिन हटाएँ', ml_err:'लोकेशन नहीं मिली। GPS चालू करें, या मैप पर अपने घर पर टैप करें।', ml_den:'लोकेशन की इजाज़त बंद है। मैप पर अपने घर पर टैप कर दें।', ml_has:'📍 मैप पर लोकेशन सेव है', orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', view:'पूरी जानकारी', back:'← मेरे ऑर्डर', placed:'ऑर्डर की तारीख', pay_l:'पेमेंट', deliv_l:'डिलीवरी', addr_l:'पता', total_l:'कुल', items_l:'सामान', status_l:'ऑर्डर का स्टेटस', add_cart:'कार्ट में डालें', added:'कार्ट में डाल दिया ✓', buy_again:'सब फिर से कार्ट में डालें', go_cart:'कार्ट देखें', my_cart:'मेरा कार्ट', p_upi:'UPI (ऑनलाइन)', p_cod:'कैश ऑन डिलीवरी', gone:'अब उपलब्ध नहीं', size:'साइज़', qty:'मात्रा', st:{waiting:'दुकान के जवाब का इंतज़ार',accepted:'मंज़ूर',packed:'पैक हो गया',shipped:'भेज दिया',pickup:'दुकान से ले जाएँ',delivered:'पहुँच गया',rejected:'रद्द (दुकान ने)',cancelled:'रद्द',return_req:'वापसी की रिक्वेस्ट',return_ok:'वापसी मंज़ूर',returned:'वापस हो गया',return_no:'वापसी मंज़ूर नहीं'}, track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
       pick:'कहाँ भेजें', other:'दूसरा पता (नीचे लिखें)', hint_login:'लॉग-इन करें, अगली बार के लिए पता सेव हो जाएगा।', welcome:'लॉग-इन: ',
       e_gen:'कुछ गड़बड़ हुई। फिर से कोशिश करें।', e_cred:'ईमेल या पासवर्ड गलत है।', e_used:'इस ईमेल का खाता पहले से है। लॉग-इन दबाएँ।', e_weak:'पासवर्ड कम से कम 6 अक्षर का हो।', e_mail:'सही ईमेल लिखें।', e_dom:'इस वेबसाइट पते पर लॉग-इन अभी चालू नहीं है।', e_net:'इंटरनेट नहीं है। फिर से कोशिश करें।' }
   };
@@ -2688,7 +2700,8 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     var b = $('acct-btn');
     if (!b){ b = mk('button',{type:'button','class':'pill acct-btn',id:'acct-btn',onclick:function(){ openModal(); }}); bar.insertBefore(b, bar.firstChild); }
     var t = L(), nm = prof && prof.name ? prof.name.split(' ')[0] : '';
-    b.innerHTML = ICO + '<span>' + (user ? (nm || t.account) : t.login) + '</span>';
+    var av = user && ((prof && prof.photo) || user.photoURL);
+    b.innerHTML = (av ? '<img class="acct-av" alt="" src="'+String(av).replace(/"/g,'&quot;')+'">' : ICO) + '<span>' + (user ? (nm || t.account) : t.login) + '</span>';
     b.setAttribute('aria-label', user ? t.account : t.login);
   }
 
@@ -2715,7 +2728,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     var apply = function(){
       var a = list.filter(function(x){ return x.id === sel.value; })[0];
       var pin = $('o-pin'), land = $('o-land');
-      if (a){ addrI.value = [a.line, a.city].filter(Boolean).join(', '); if (pin) pin.value = a.pin || ''; if (land) land.value = a.land || ''; }
+      if (a){ addrI.value = [a.line, a.city].filter(Boolean).join(', '); if (pin) pin.value = a.pin || ''; if (land) land.value = a.land || ''; if (window.DF && DF.setOrderLoc) DF.setOrderLoc(a.loc && a.loc.lat ? {lat:a.loc.lat, lng:a.loc.lng, acc:0} : null); }
       else { addrI.value = ''; if (pin) pin.value = ''; if (land) land.value = ''; addrI.focus(); }
       ['o-addr','o-pin','o-land','o-name','o-phone'].forEach(function(id){ var n = $(id); if (n) try { n.dispatchEvent(new Event('input',{bubbles:true})); } catch(e){} });
     };
@@ -2778,6 +2791,61 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
   function msgEl(){ return mk('p',{'class':'acct-msg','aria-live':'polite'}); }
   function setMsg(m, text, cls){ m.textContent = text || ''; m.className = 'acct-msg' + (cls ? ' '+cls : ''); }
 
+  /* ---------- profile photo ---------- */
+  function squarePhoto(file){ return new Promise(function(res){ var r = new FileReader(); r.onload = function(){ var im = new Image(); im.onload = function(){ var S = 320, c = document.createElement('canvas'), m = Math.min(im.width, im.height); c.width = S; c.height = S; c.getContext('2d').drawImage(im, (im.width-m)/2, (im.height-m)/2, m, m, 0, 0, S, S); res(c.toDataURL('image/jpeg', .8)); }; im.onerror = function(){ res(''); }; im.src = r.result; }; r.readAsDataURL(file); }); }
+  function photoEditor(t){
+    var src = (prof && prof.photo) || (user && user.photoURL) || '';
+    var msg = mk('small',{'class':'acct-ph-msg','aria-live':'polite'});
+    var take = function(f){ if (!f) return; msg.textContent = t.ph_saving;
+      squarePhoto(f).then(function(d){ if (!d) throw new Error('img'); return saveProfile({photo:d}); }).then(function(){ placeButton(); var nx = photoEditor(t); if (root.parentNode) root.parentNode.replaceChild(nx, root); nx.querySelector('.acct-ph-msg').textContent = t.ph_ok; }, function(e){ msg.textContent = errText(e); }); };
+    var mkFile = function(){ var i = mk('input',{type:'file',accept:'image/*','aria-label':t.ph_add,style:'position:absolute;inset:0;opacity:0;cursor:pointer'}); i.onchange = function(){ take(i.files && i.files[0]); }; return i; };
+    var fi = mkFile();
+    var root = mk('div',{'class':'acct-ph'},[
+      mk('label',{'class':'acct-ph-pic',title:src ? t.ph_ch : t.ph_add},[ src ? mk('img',{src:src,alt:''}) : mk('span',{html:ICO}), fi ]),
+      mk('div',{'class':'acct-ph-act'},[
+        mk('label',{'class':'acct-link',style:'position:relative;overflow:hidden;cursor:pointer'},[ src ? t.ph_ch : t.ph_add, mkFile() ]),
+        (prof && prof.photo) ? mk('button',{type:'button','class':'acct-link danger',text:t.ph_rm,onclick:function(){ saveProfile({photo:''}).then(function(){ placeButton(); var nx = photoEditor(t); if (root.parentNode) root.parentNode.replaceChild(nx, root); }); }}) : null,
+        msg ]) ]);
+    return root;
+  }
+  /* ---------- home location on a map (Leaflet + OpenStreetMap) ---------- */
+  var pickLoc = null, leafletP = null;
+  function loadLeaflet(){
+    if (window.L && window.L.map) return Promise.resolve(window.L);
+    if (leafletP) return leafletP;
+    leafletP = new Promise(function(res, rej){
+      var c = document.createElement('link'); c.rel = 'stylesheet'; c.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(c);
+      var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload = function(){ res(window.L); }; s.onerror = function(){ leafletP = null; rej(new Error('map')); }; document.head.appendChild(s);
+    });
+    return leafletP;
+  }
+  function mapPicker(t){
+    var st = mk('small',{'class':'hint','aria-live':'polite',text: pickLoc ? t.ml_ok : t.ml_hint});
+    var box = mk('div',{'class':'acct-map'}), map = null, pin = null;
+    var setPin = function(lat, lng, pan){ pickLoc = {lat:+(+lat).toFixed(6), lng:+(+lng).toFixed(6)}; st.textContent = t.ml_ok; rm.hidden = false;
+      if (map){ var Lf = window.L; if (!pin){ pin = Lf.marker([lat, lng], {draggable:true}).addTo(map); pin.on('dragend', function(){ var q = pin.getLatLng(); setPin(q.lat, q.lng, false); }); } else pin.setLatLng([lat, lng]); if (pan) map.setView([lat, lng], 17); } };
+    var gps = mk('button',{type:'button','class':'btn btn-line',text:t.ml_gps,onclick:function(){
+      if (!navigator.geolocation){ st.textContent = t.ml_err; return; }
+      st.textContent = t.ml_wait; gps.disabled = true;
+      navigator.geolocation.getCurrentPosition(function(p){ gps.disabled = false; setPin(p.coords.latitude, p.coords.longitude, true); },
+        function(e){ gps.disabled = false; st.textContent = e && e.code === 1 ? t.ml_den : t.ml_err; }, {enableHighAccuracy:true, timeout:20000, maximumAge:60000});
+    }});
+    var rm = mk('button',{type:'button','class':'acct-link danger',text:t.ml_rm,onclick:function(){ pickLoc = null; if (pin && map){ map.removeLayer(pin); pin = null; } rm.hidden = true; st.textContent = t.ml_hint; }});
+    rm.hidden = !pickLoc;
+    setTimeout(function(){
+      loadLeaflet().then(function(Lf){
+        if (!document.body.contains(box)) return;
+        var c = pickLoc || (window.DF && DF.shopLoc && DF.shopLoc()) || {lat:27.2019871, lng:83.3498289};
+        map = Lf.map(box, {zoomControl:true, attributionControl:true}).setView([c.lat, c.lng], pickLoc ? 17 : 14);
+        Lf.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(map);
+        Lf.Icon.Default.imagePath = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/';
+        if (pickLoc) setPin(pickLoc.lat, pickLoc.lng, false);
+        map.on('click', function(e){ setPin(e.latlng.lat, e.latlng.lng, false); });
+        setTimeout(function(){ map.invalidateSize(); }, 200);
+      }, function(){ box.hidden = true; });
+    }, 0);
+    return mk('div',{'class':'field acct-mapf'},[ mk('label',{text:t.ml_title}), mk('div',{'class':'acct-map-tools'},[ gps, rm ]), box, st ]);
+  }
   function draw(){
     var t = L();
     if (view === 'login'){
@@ -2817,6 +2885,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       var box2 = shell(view==='addr' ? (a.id ? t.edit : t.add_addr) : (first ? t.prof_title : t.edit_prof), first ? t.prof_sub : '');
       var m2 = msgEl();
       if (view === 'profile'){
+        box2.appendChild(mk('div',{'class':'acct-hello acct-hello-ph'},[ photoEditor(t) ]));
         box2.appendChild(field('a-name', t.name, {autocomplete:'name',value:(prof && prof.name) || (user.displayName||'')}));
         box2.appendChild(field('a-mob', t.mobile, {inputmode:'tel',autocomplete:'tel',maxlength:'13',value:(prof && prof.phone) || ''}));
       }
@@ -2825,6 +2894,8 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
         box2.appendChild(field('a-line', t.line, {autocomplete:'street-address',value:a.line||''}));
         box2.appendChild(mk('div',{'class':'two'},[ field('a-city', t.city, {autocomplete:'address-level2',value:a.city||''}), field('a-pin', t.pin, {inputmode:'numeric',maxlength:'6',autocomplete:'postal-code',value:a.pin||''}) ]));
         box2.appendChild(field('a-land', t.land, {value:a.land||''}));
+        pickLoc = a.loc ? {lat:a.loc.lat, lng:a.loc.lng} : null;
+        box2.appendChild(mapPicker(t));
       }
       box2.appendChild(mk('button',{type:'button','class':'btn btn-gold',text:t.save,onclick:function(){
         var p = {};
@@ -2833,7 +2904,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
           if (!p.name || p.phone.length !== 10){ setMsg(m2, t.err_prof, 'err'); return; }
         }
         if (needAddr){
-          var na = {id: a.id || uid6(), line:$('a-line').value.trim(), city:$('a-city').value.trim(), pin:digits($('a-pin').value), land:$('a-land').value.trim()};
+          var na = {id: a.id || uid6(), line:$('a-line').value.trim(), city:$('a-city').value.trim(), pin:digits($('a-pin').value), land:$('a-land').value.trim(), loc: pickLoc ? {lat:pickLoc.lat, lng:pickLoc.lng} : null};
           if (!na.line || na.pin.length !== 6){ setMsg(m2, t.err_prof, 'err'); return; }
           var list = ((prof && prof.addresses) || []).filter(function(x){ return x.id !== na.id; });
           var idx = ((prof && prof.addresses) || []).findIndex(function(x){ return x.id === na.id; });
@@ -2852,12 +2923,12 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     if (view === 'order' && curOrder){ drawOrder(t); return; }
     // account
     var box3 = shell(t.account);
-    box3.appendChild(mk('div',{'class':'acct-hello'},[ mk('b',{text:t.hello+', '+((prof && prof.name) || '')}), mk('div',{'class':'meta',text:[user.email, prof && prof.phone].filter(Boolean).join(' · ')}) ]));
+    box3.appendChild(mk('div',{'class':'acct-hello acct-hello-ph'},[ photoEditor(t), mk('div',null,[ mk('b',{text:t.hello+', '+((prof && prof.name) || '')}), mk('div',{'class':'meta',text:[user.email, prof && prof.phone].filter(Boolean).join(' · ')}) ]) ]));
     box3.appendChild(mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.edit_prof,onclick:function(){ openModal('profile'); }}), mk('button',{type:'button',text:t.my_cart+(window.DF?' ('+DF.cartCount()+')':''),onclick:goCart}) ]));
     box3.appendChild(mk('h3',{'class':'acct-h',text:t.addrs}));
     ((prof && prof.addresses) || []).forEach(function(a){
       var isDef = prof.defaultAddr === a.id;
-      var card = mk('div',{'class':'acct-card'},[ mk('div',null,[ mk('span',{text:addrText(a)}), isDef ? mk('span',{'class':'acct-badge',text:t.def}) : null ]) ]);
+      var card = mk('div',{'class':'acct-card'},[ mk('div',null,[ mk('span',{text:addrText(a)}), isDef ? mk('span',{'class':'acct-badge',text:t.def}) : null, a.loc ? mk('a',{'class':'acct-loc',href:'https://maps.google.com/?q='+a.loc.lat+','+a.loc.lng,target:'_blank',rel:'noopener',text:t.ml_has}) : null ]) ]);
       var tools = mk('div',{'class':'acct-mini'});
       if (!isDef) tools.appendChild(mk('button',{type:'button',text:t.use_def,onclick:function(){ saveProfile({defaultAddr:a.id}).then(function(){ fillCheckout(true); draw(); }); }}));
       tools.appendChild(mk('button',{type:'button',text:t.edit,onclick:function(){ editAddr = a; openModal('addr'); }}));
