@@ -39,12 +39,12 @@ service cloud.firestore {
 
     match /requests/{id} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isAdmin() || dfStaff();
     }
 
     match /orders/{id} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isAdmin() || dfStaff();
       allow read: if isRider() && (resource.data.status == 'packed' || resource.data.get('rider', '') == myEmail());
       allow update: if isRider()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rider', 'riderName', 'riderAt', 'log', 'deliveredAt', 'cashGot'])
@@ -57,7 +57,7 @@ service cloud.firestore {
 
     match /track/{id} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || dfStaff();
       allow create, update: if isRider()
         && request.resource.data.s in ['shipped', 'delivered', 'packed']
         && request.resource.data.s == getAfter(/databases/$(database)/documents/orders/$(id)).data.status
@@ -67,19 +67,20 @@ service cloud.firestore {
 
     // Tailors (कारीगर): each has a secret link /karigar/?k=<id>; blocked = link stops at once
     match /karigars/{tok} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() || dfStaff();
       allow get: if resource.data.active == true;
       match /jobs/{jid} {
-        allow read, write: if isAdmin();
+        allow read, write: if isAdmin() || dfStaff();
         allow read: if get(/databases/$(database)/documents/karigars/$(tok)).data.active == true;
         allow update: if get(/databases/$(database)/documents/karigars/$(tok)).data.active == true
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kstatus', 'kAt', 'knote']);
       }
     }
-    match /{path=**}/jobs/{jid} { allow read: if isAdmin(); }
+    match /{path=**}/jobs/{jid} { allow read: if isAdmin() || dfStaff(); }
 
     match /riders/{rid} {
       allow read, write: if isAdmin();
+      allow read: if dfStaff();
       allow get: if signedIn() && rid == myEmail();
     }
   }
