@@ -98,13 +98,18 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.se
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; });
 window.addEventListener('appinstalled', function(){ instEvt = null; IS_APP = true; draw(); });
 
+var LANG = (function(){ try { return localStorage.getItem('rider-lang') || 'hi'; } catch(e){ return 'hi'; } })();
+var EN = {"📲 ऐप इंस्टॉल करें": "📲 Install app", "iPhone पर: नीचे Share (□↑) दबाएँ → “Add to Home Screen” चुनें।": "On iPhone: tap Share (□↑) → “Add to Home Screen”.", "Chrome में ऊपर दाईं ओर ⋮ दबाएँ → “Install app” या “Add to Home screen” → “Install”। होम स्क्रीन पर DF Rider आ जाएगा।": "In Chrome tap ⋮ (top right) → “Install app” or “Add to Home screen” → “Install”. DF Rider will appear on your home screen.", "डिलीवरी बॉय का लॉग-इन। वही Gmail चुनें जो दुकान मालिक ने Admin में जोड़ा है।": "Delivery staff login. Choose the same Gmail that the shop owner added in Admin.", "<span>Google से लॉग-इन करें</span>": "<span>Log in with Google</span>", "लॉग-इन नहीं हुआ: ": "Could not log in: ", "लॉग-इन: ": "Logged in: ", "दुकान मालिक से बात करें: +91 88741 29818": "Talk to the shop owner: +91 88741 29818", "WhatsApp करें": "WhatsApp", "दूसरे Gmail से लॉग-इन": "Log in with another Gmail", "🔔 सूचना चालू": "🔔 Turn on alerts", "लॉग-आउट": "Logout", "लॉग-आउट करें?": "Log out?", "पिकअप के लिए तैयार": "Ready for pickup", "मेरी डिलीवरी": "My deliveries", "पूरी हुई": "Completed", "उठाने हैं": "To pick up", "रास्ते में": "On the way", "आज पहुँचाए · ": "Delivered today · ", "अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।": "No parcel ready yet. When a parcel is packed at the shop it will appear here (with a sound).", "अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।": "You have no deliveries right now. Pick up a parcel from “Ready for pickup”.", "अभी कोई डिलीवरी पूरी नहीं हुई।": "No deliveries completed yet.", "पैक – उठाना है": "Packed – pick up", "पहुँच गया": "Delivered", "ग्राहक": "Customer", "पता": "Address", "दूरी": "Distance", " (दुकान से)": " (from shop)", "नोट": "Note", "पहुँचाया": "Delivered at", "💵 ग्राहक से लेना है": "💵 Collect from customer", "✓ पैसे पहले ही मिल गए": "✓ Already paid", "💵 लिया": "💵 Collected", "📞 कॉल": "📞 Call", "🧭 रास्ता": "🧭 Directions", "📦 पार्सल उठाया – डिलीवरी शुरू": "📦 Picked up – start delivery", " कैश ले लिया": " cash collected", "✓ डिलीवर हो गया": "✓ Delivered", "पहले कैश लेकर ✓ लगाएँ।": "Collect the cash first and tick ✓.", "↩ वापस दुकान": "↩ Back to shop", "यह पार्सल वापस दुकान पर लौटा रहे हैं?": "Return this parcel to the shop?", "नहीं हुआ: ": "Failed: ", " (शायद किसी और ने उठा लिया)": " (maybe someone else picked it up)", "📦 नया पार्सल तैयार": "📦 New parcel ready", "ऑर्डर नहीं खुले (": "Could not load orders (", "आपका Gmail अभी डिलीवरी लिस्ट में नहीं है": "Your Gmail is not on the delivery list yet", "आपको दुकान मालिक ने ब्लॉक किया है": "You have been blocked by the shop owner"};
+function L(h){ return LANG === 'en' && EN[h] !== undefined ? EN[h] : h; }
+function langBtn(cls){ return el('button',{'class':cls||'pill',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('rider-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}); }
+document.documentElement.lang = LANG;
 function el(tag, a, kids){ var n = document.createElement(tag); if (a) for (var k in a){ var v = a[k];
   if (k==='text') n.textContent = v; else if (k==='html') n.innerHTML = v; else if (k.slice(0,2)==='on') n.addEventListener(k.slice(2), v);
   else if (v!==null && v!==undefined && v!==false) n.setAttribute(k, v); }
   (kids||[]).forEach(function(c){ if (c) n.appendChild(typeof c==='string' ? document.createTextNode(c) : c); }); return n; }
 function rupees(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
 function now(){ return new Date().toISOString(); }
-function when(iso){ if (!iso) return ''; var d = new Date(iso); return d.toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
+function when(iso){ if (!iso) return ''; var d = new Date(iso); return d.toLocaleString(LANG==='en'?'en-IN':'hi-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
 function digits(s){ return String(s||'').replace(/\D/g,''); }
 function isHome(o){ return o.home === true || /deliver|घर/i.test(o.how||''); }
 function toCollect(o){
@@ -143,9 +148,9 @@ function notify(title, body){
 function gIcon(){ return '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>'; }
 function installBtn(){
   if (IS_APP) return null;
-  return el('button',{'class':'pill gold',type:'button',text:'📲 ऐप इंस्टॉल करें',onclick:function(){
+  return el('button',{'class':'pill gold',type:'button',text:L('📲 ऐप इंस्टॉल करें'),onclick:function(){
     if (instEvt){ instEvt.prompt(); instEvt.userChoice.then(function(){ instEvt = null; draw(); }); }
-    else alert(/iphone|ipad|ipod/i.test(navigator.userAgent) ? 'iPhone पर: नीचे Share (□↑) दबाएँ → “Add to Home Screen” चुनें।' : 'Chrome में ऊपर दाईं ओर ⋮ दबाएँ → “Install app” या “Add to Home screen” → “Install”। होम स्क्रीन पर DF Rider आ जाएगा।');
+    else alert(/iphone|ipad|ipod/i.test(navigator.userAgent) ? L('iPhone पर: नीचे Share (□↑) दबाएँ → “Add to Home Screen” चुनें।') : L('Chrome में ऊपर दाईं ओर ⋮ दबाएँ → “Install app” या “Add to Home screen” → “Install”। होम स्क्रीन पर DF Rider आ जाएगा।'));
   }});
 }
 function drawLogin(msg){
@@ -153,79 +158,79 @@ function drawLogin(msg){
   var m = el('p',{'class':'msg err',text:msg||''});
   app.appendChild(el('div',{'class':'login'},[ el('div',{'class':'card'},[
     el('div',{'class':'brand',style:'color:var(--ink)',html:'DIAMOND<small style="color:var(--gold)">FASHIONS · RIDER</small>'}),
-    el('p',{'class':'muted',text:'डिलीवरी बॉय का लॉग-इन। वही Gmail चुनें जो दुकान मालिक ने Admin में जोड़ा है।'}),
-    el('button',{'class':'gbtn',type:'button',html:gIcon()+'<span>Google से लॉग-इन करें</span>',onclick:function(){
+    el('p',{'class':'muted',text:L('डिलीवरी बॉय का लॉग-इन। वही Gmail चुनें जो दुकान मालिक ने Admin में जोड़ा है।')}),
+    el('button',{'class':'gbtn',type:'button',html:gIcon()+L('<span>Google से लॉग-इन करें</span>'),onclick:function(){
       var p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
-      auth.signInWithPopup(p).catch(function(e){ if (/popup-blocked|operation-not-supported/.test(e.code||'')) return auth.signInWithRedirect(p); m.textContent = 'लॉग-इन नहीं हुआ: ' + (e.code||e.message); });
+      auth.signInWithPopup(p).catch(function(e){ if (/popup-blocked|operation-not-supported/.test(e.code||'')) return auth.signInWithRedirect(p); m.textContent = L('लॉग-इन नहीं हुआ: ') + (e.code||e.message); });
     }}),
-    el('div',{style:'margin-top:14px'},[ installBtn() ]), m ]) ]));
+    el('div',{'class':'row',style:'margin-top:14px;justify-content:center'},[ installBtn(), langBtn('btn sm line') ]), m ]) ]));
 }
 function drawBlocked(text){
   app.innerHTML = '';
   app.appendChild(el('div',{'class':'login'},[ el('div',{'class':'card'},[
     el('div',{style:'font-size:44px',text:'🚫'}), el('h2',{text:text}),
-    el('p',{'class':'muted',text:'लॉग-इन: '+myEmail}),
-    el('p',{'class':'muted',text:'दुकान मालिक से बात करें: +91 88741 29818'}),
+    el('p',{'class':'muted',text:L('लॉग-इन: ')+myEmail}),
+    el('p',{'class':'muted',text:L('दुकान मालिक से बात करें: +91 88741 29818')}),
     el('div',{'class':'row',style:'justify-content:center'},[
-      el('a',{'class':'btn wa',href:'https://wa.me/'+SHOP.phone+'?text='+encodeURIComponent('नमस्ते, मैं डिलीवरी के लिए Rider ऐप चलाना चाहता हूँ। मेरा Gmail: '+myEmail),target:'_blank',rel:'noopener',text:'WhatsApp करें'}),
-      el('button',{'class':'btn line',type:'button',text:'दूसरे Gmail से लॉग-इन',onclick:function(){ auth.signOut(); }}) ]) ]) ]));
+      el('a',{'class':'btn wa',href:'https://wa.me/'+SHOP.phone+'?text='+encodeURIComponent('नमस्ते, मैं डिलीवरी के लिए Rider ऐप चलाना चाहता हूँ। मेरा Gmail: '+myEmail),target:'_blank',rel:'noopener',text:L('WhatsApp करें')}),
+      el('button',{'class':'btn line',type:'button',text:L('दूसरे Gmail से लॉग-इन'),onclick:function(){ auth.signOut(); }}) ]) ]) ]));
 }
 function draw(){
   if (!rider) return;
   var y = window.scrollY; app.innerHTML = '';
-  var alertB = ('Notification' in window && Notification.permission === 'default') ? el('button',{'class':'pill',type:'button',text:'🔔 सूचना चालू',onclick:function(){ Notification.requestPermission().then(function(){ chime(); draw(); }); }}) : null;
+  var alertB = ('Notification' in window && Notification.permission === 'default') ? el('button',{'class':'pill',type:'button',text:L('🔔 सूचना चालू'),onclick:function(){ Notification.requestPermission().then(function(){ chime(); draw(); }); }}) : null;
   app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[
     el('div',{'class':'brand',html:'DIAMOND<small>RIDER · '+(rider.name||myEmail)+'</small>'}),
-    el('div',{'class':'hb'},[ installBtn(), alertB, el('button',{'class':'pill',type:'button',text:'लॉग-आउट',onclick:function(){ if (confirm('लॉग-आउट करें?')) auth.signOut(); }}) ]) ]) ]));
+    el('div',{'class':'hb'},[ installBtn(), alertB, langBtn(), el('button',{'class':'pill',type:'button',text:L('लॉग-आउट'),onclick:function(){ if (confirm(L('लॉग-आउट करें?'))) auth.signOut(); }}) ]) ]) ]));
   var going = mine.filter(function(o){ return o.status === 'shipped'; }), done = mine.filter(function(o){ return o.status === 'delivered'; });
-  var tabs = [['ready','पिकअप के लिए तैयार',ready.length],['going','मेरी डिलीवरी',going.length],['done','पूरी हुई',0]];
+  var tabs = [['ready',L('पिकअप के लिए तैयार'),ready.length],['going',L('मेरी डिलीवरी'),going.length],['done',L('पूरी हुई'),0]];
   app.appendChild(el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(t){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); window.scrollTo(0,0); }},[ t[1], t[2] ? el('span',{'class':'n',text:String(t[2])}) : null ]); })));
   var main = el('main',{'class':'wrap'}); app.appendChild(main);
   var today = new Date().toDateString();
   var doneToday = done.filter(function(o){ return o.deliveredAt && new Date(o.deliveredAt).toDateString() === today; });
   var cashToday = doneToday.reduce(function(s, o){ return s + (o.cashGot || 0); }, 0);
   main.appendChild(el('div',{'class':'sum'},[
-    el('div',null,[ el('b',{text:String(ready.length)}), el('span',{text:'उठाने हैं'}) ]),
-    el('div',null,[ el('b',{text:String(going.length)}), el('span',{text:'रास्ते में'}) ]),
-    el('div',null,[ el('b',{text:String(doneToday.length)}), el('span',{text:'आज पहुँचाए · '+rupees(cashToday)}) ]) ]));
+    el('div',null,[ el('b',{text:String(ready.length)}), el('span',{text:L('उठाने हैं')}) ]),
+    el('div',null,[ el('b',{text:String(going.length)}), el('span',{text:L('रास्ते में')}) ]),
+    el('div',null,[ el('b',{text:String(doneToday.length)}), el('span',{text:L('आज पहुँचाए · ')+rupees(cashToday)}) ]) ]));
   var list = tab === 'ready' ? ready : tab === 'going' ? going : done.slice().sort(function(a,b){ return String(b.deliveredAt||'').localeCompare(String(a.deliveredAt||'')); }).slice(0, 40);
   if (!list.length){
     main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='ready' ? '📦' : tab==='going' ? '🛵' : '✅'}),
-      tab==='ready' ? 'अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।' : tab==='going' ? 'अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।' : 'अभी कोई डिलीवरी पूरी नहीं हुई।' ]));
+      tab==='ready' ? L('अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।') : tab==='going' ? L('अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।') : L('अभी कोई डिलीवरी पूरी नहीं हुई।') ]));
   }
   list.forEach(function(o){ main.appendChild(card(o)); });
   window.scrollTo(0, y);
 }
 function card(o){
   var c = el('div',{'class':'card'+(o.status==='packed'?' hot':'')});
-  var st = {packed:['पैक – उठाना है',''], shipped:['रास्ते में',''], delivered:['पहुँच गया','ok']}[o.status] || [o.status,''];
+  var st = {packed:[L('पैक – उठाना है'),''], shipped:[L('रास्ते में'),''], delivered:[L('पहुँच गया'),'ok']}[o.status] || [o.status,''];
   c.appendChild(el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:17px',text:o.id}), el('span',{'class':'st '+st[1],text:st[0]}) ]));
   var addr = [o.addr, o.land, o.pin ? 'PIN '+o.pin : ''].filter(Boolean).join(', ');
   c.appendChild(el('div',{'class':'kv'},[
-    el('span',{text:'ग्राहक'}), el('b',{text:o.name||''}),
-    el('span',{text:'पता'}), el('span',{text:addr || '—'}),
-    km(o) ? el('span',{text:'दूरी'}) : null, km(o) ? el('span',{text:km(o)+' (दुकान से)'}) : null,
-    o.note ? el('span',{text:'नोट'}) : null, o.note ? el('span',{text:o.note}) : null,
-    o.status==='delivered' && o.deliveredAt ? el('span',{text:'पहुँचाया'}) : null, o.status==='delivered' && o.deliveredAt ? el('span',{text:when(o.deliveredAt)}) : null ]));
+    el('span',{text:L('ग्राहक')}), el('b',{text:o.name||''}),
+    el('span',{text:L('पता')}), el('span',{text:addr || '—'}),
+    km(o) ? el('span',{text:L('दूरी')}) : null, km(o) ? el('span',{text:km(o)+L(' (दुकान से)')}) : null,
+    o.note ? el('span',{text:L('नोट')}) : null, o.note ? el('span',{text:o.note}) : null,
+    o.status==='delivered' && o.deliveredAt ? el('span',{text:L('पहुँचाया')}) : null, o.status==='delivered' && o.deliveredAt ? el('span',{text:when(o.deliveredAt)}) : null ]));
   c.appendChild(el('ul',{'class':'items'}, (o.items||[]).map(function(i){ return el('li',{text:i.name+(i.size?' ('+i.size+')':'')+' × '+(i.qty||1)}); })));
   var amt = toCollect(o);
-  if (o.status !== 'delivered') c.appendChild(el('div',{'class':'cash'+(amt?'':' paid')},[ el('span',{text: amt ? '💵 ग्राहक से लेना है' : '✓ पैसे पहले ही मिल गए'}), el('span',{text: amt ? rupees(amt) : ''}) ]));
-  else if (o.cashGot) c.appendChild(el('div',{'class':'cash paid'},[ el('span',{text:'💵 लिया'}), el('span',{text:rupees(o.cashGot)}) ]));
+  if (o.status !== 'delivered') c.appendChild(el('div',{'class':'cash'+(amt?'':' paid')},[ el('span',{text: amt ? L('💵 ग्राहक से लेना है') : L('✓ पैसे पहले ही मिल गए')}), el('span',{text: amt ? rupees(amt) : ''}) ]));
+  else if (o.cashGot) c.appendChild(el('div',{'class':'cash paid'},[ el('span',{text:L('💵 लिया')}), el('span',{text:rupees(o.cashGot)}) ]));
   var tel = digits(o.phone).slice(-10);
   var acts = el('div',{'class':'row'});
-  if (tel) acts.appendChild(el('a',{'class':'btn sm line',href:'tel:+91'+tel,text:'📞 कॉल'}));
+  if (tel) acts.appendChild(el('a',{'class':'btn sm line',href:'tel:+91'+tel,text:L('📞 कॉल')}));
   if (tel) acts.appendChild(el('a',{'class':'btn sm wa',href:'https://wa.me/91'+tel+'?text='+encodeURIComponent('नमस्ते '+(o.name||'')+' जी, मैं Diamond Fashions से आपका ऑर्डर '+o.id+' लेकर आ रहा हूँ।'),target:'_blank',rel:'noopener',text:'WhatsApp'}));
-  acts.appendChild(el('a',{'class':'btn sm line',href:mapsTo(o),target:'_blank',rel:'noopener',text:'🧭 रास्ता'}));
+  acts.appendChild(el('a',{'class':'btn sm line',href:mapsTo(o),target:'_blank',rel:'noopener',text:L('🧭 रास्ता')}));
   c.appendChild(acts);
   var m = el('p',{'class':'msg'});
   if (o.status === 'packed'){
-    c.appendChild(el('div',{'class':'row',style:'margin-top:10px'},[ el('button',{'class':'btn gold grow',type:'button',text:'📦 पार्सल उठाया – डिलीवरी शुरू',onclick:function(e){ take(o, e.target, m); }}) ]));
+    c.appendChild(el('div',{'class':'row',style:'margin-top:10px'},[ el('button',{'class':'btn gold grow',type:'button',text:L('📦 पार्सल उठाया – डिलीवरी शुरू'),onclick:function(e){ take(o, e.target, m); }}) ]));
   } else if (o.status === 'shipped'){
     var got = el('input',{type:'checkbox'});
-    if (amt) c.appendChild(el('label',{'class':'chk'},[ got, ' '+rupees(amt)+' कैश ले लिया' ]));
+    if (amt) c.appendChild(el('label',{'class':'chk'},[ got, ' '+rupees(amt)+L(' कैश ले लिया') ]));
     c.appendChild(el('div',{'class':'row',style:'margin-top:6px'},[
-      el('button',{'class':'btn ok grow',type:'button',text:'✓ डिलीवर हो गया',onclick:function(e){ if (amt && !got.checked){ m.textContent = 'पहले कैश लेकर ✓ लगाएँ।'; m.className = 'msg err'; return; } deliver(o, amt, e.target, m); }}),
-      el('button',{'class':'btn line sm',type:'button',text:'↩ वापस दुकान',onclick:function(e){ if (confirm('यह पार्सल वापस दुकान पर लौटा रहे हैं?')) giveBack(o, e.target, m); }}) ]));
+      el('button',{'class':'btn ok grow',type:'button',text:L('✓ डिलीवर हो गया'),onclick:function(e){ if (amt && !got.checked){ m.textContent = L('पहले कैश लेकर ✓ लगाएँ।'); m.className = 'msg err'; return; } deliver(o, amt, e.target, m); }}),
+      el('button',{'class':'btn line sm',type:'button',text:L('↩ वापस दुकान'),onclick:function(e){ if (confirm(L('यह पार्सल वापस दुकान पर लौटा रहे हैं?'))) giveBack(o, e.target, m); }}) ]));
   }
   c.appendChild(m);
   return c;
@@ -241,21 +246,21 @@ function take(o, b, m){
   var t = now(), batch = db.batch();
   batch.update(db.collection('orders').doc(o.id), {status:'shipped', rider:myEmail, riderName:rider.name||'', riderAt:t, log:firebase.firestore.FieldValue.arrayUnion({at:t, s:'shipped', by:myEmail})});
   trackSet(batch, o, 'shipped', t);
-  batch.commit().then(function(){ tab = 'going'; draw(); }, function(e){ b.disabled = false; m.textContent = 'नहीं हुआ: '+(e.code||e.message)+' (शायद किसी और ने उठा लिया)'; m.className = 'msg err'; });
+  batch.commit().then(function(){ tab = 'going'; draw(); }, function(e){ b.disabled = false; m.textContent = L('नहीं हुआ: ')+(e.code||e.message)+L(' (शायद किसी और ने उठा लिया)'); m.className = 'msg err'; });
 }
 function deliver(o, amt, b, m){
   b.disabled = true; m.textContent = '…'; m.className = 'msg';
   var t = now(), batch = db.batch();
   batch.update(db.collection('orders').doc(o.id), {status:'delivered', deliveredAt:t, cashGot:amt||0, log:firebase.firestore.FieldValue.arrayUnion({at:t, s:'delivered', by:myEmail})});
   trackSet(batch, o, 'delivered', t);
-  batch.commit().then(function(){ m.textContent = '✓'; }, function(e){ b.disabled = false; m.textContent = 'नहीं हुआ: '+(e.code||e.message); m.className = 'msg err'; });
+  batch.commit().then(function(){ m.textContent = '✓'; }, function(e){ b.disabled = false; m.textContent = L('नहीं हुआ: ')+(e.code||e.message); m.className = 'msg err'; });
 }
 function giveBack(o, b, m){
   b.disabled = true;
   var t = now(), batch = db.batch();
   batch.update(db.collection('orders').doc(o.id), {status:'packed', rider:'', riderName:'', riderAt:t, log:firebase.firestore.FieldValue.arrayUnion({at:t, s:'packed', by:myEmail, note:'returned to shop by rider'})});
   trackSet(batch, o, 'packed', t);
-  batch.commit().catch(function(e){ b.disabled = false; m.textContent = 'नहीं हुआ: '+(e.code||e.message); m.className = 'msg err'; });
+  batch.commit().catch(function(e){ b.disabled = false; m.textContent = L('नहीं हुआ: ')+(e.code||e.message); m.className = 'msg err'; });
 }
 
 /* ---------- data ---------- */
@@ -267,10 +272,10 @@ function listen(){
     list.sort(function(a,b){ return String(a.created||'').localeCompare(String(b.created||'')); });
     var fresh = seen ? list.filter(function(o){ return !seen[o.id]; }) : [];
     if (!seen) seen = {}; list.forEach(function(o){ seen[o.id] = 1; });
-    fresh.forEach(function(o){ notify('📦 नया पार्सल तैयार', (o.name||'')+' · '+[o.addr, o.pin].filter(Boolean).join(', ')+' · '+rupees(toCollect(o))); });
+    fresh.forEach(function(o){ notify(L('📦 नया पार्सल तैयार'), (o.name||'')+' · '+[o.addr, o.pin].filter(Boolean).join(', ')+' · '+rupees(toCollect(o))); });
     ready = list; try { if (navigator.setAppBadge){ if (list.length) navigator.setAppBadge(list.length); else navigator.clearAppBadge(); } } catch(e){}
     draw();
-  }, function(e){ drawBlocked('ऑर्डर नहीं खुले ('+(e.code||e.message)+')'); }));
+  }, function(e){ drawBlocked(L('ऑर्डर नहीं खुले (')+(e.code||e.message)+')'); }));
   unsubs.push(db.collection('orders').where('rider','==',myEmail).onSnapshot(function(s){
     mine = []; s.forEach(function(d){ mine.push(d.data()); }); draw();
   }, function(){}));
@@ -283,11 +288,11 @@ auth.onAuthStateChanged(function(u){
   app.innerHTML = '<p class="empty">…</p>';
   riderUnsub = db.collection('riders').doc(myEmail).onSnapshot(function(s){
     var r = s.exists ? s.data() : null;
-    if (!r){ stop(); drawBlocked('आपका Gmail अभी डिलीवरी लिस्ट में नहीं है'); return; }
-    if (r.active === false){ stop(); rider = null; drawBlocked('आपको दुकान मालिक ने ब्लॉक किया है'); return; }
+    if (!r){ stop(); drawBlocked(L('आपका Gmail अभी डिलीवरी लिस्ट में नहीं है')); return; }
+    if (r.active === false){ stop(); rider = null; drawBlocked(L('आपको दुकान मालिक ने ब्लॉक किया है')); return; }
     var first = !rider; rider = r;
     if (first) listen(); else draw();
-  }, function(){ drawBlocked('आपका Gmail अभी डिलीवरी लिस्ट में नहीं है'); });
+  }, function(){ drawBlocked(L('आपका Gmail अभी डिलीवरी लिस्ट में नहीं है')); });
 });
 })();
 </script>
