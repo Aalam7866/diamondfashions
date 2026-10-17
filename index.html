@@ -164,6 +164,16 @@ h2+.alt-h{margin:4px 0 0;font-size:17px}
 .os-fee b{font-size:17px}.os-fee p{margin:0;font-size:14px;color:var(--muted)}.os-fee .qrwrap{display:flex;flex-direction:column;align-items:center;gap:4px}.os-qr{min-width:170px;min-height:170px}
 .os-shot{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--line);padding-top:10px}.os-shot-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.os-shot-row img{width:56px;height:88px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}.os-shot-row .ok-t{color:#1d7a3a;font-weight:600;font-size:14px}
 .os-nr,.os-fee p.os-nr{white-space:pre-line;margin:6px 0 0;font-size:13.5px;font-weight:600;color:#8a1c14;background:rgba(179,38,30,.07);border:1px solid rgba(179,38,30,.35);border-radius:8px;padding:7px 10px}
+.loc-btns{display:flex;gap:8px;flex-wrap:wrap}.loc-btns .btn{flex:1 1 200px}
+.mp{position:relative;background:var(--surface);color:var(--ink);width:min(720px,100%);height:min(760px,100%);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.mp-top{display:flex;align-items:center;justify-content:space-between}.mp-top h2{margin:0;font-size:20px}.mp .os-x{position:static}
+.mp-q{display:flex;gap:8px}.mp-q input{flex:1;min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;font-size:16px}
+.mp-res{display:flex;flex-direction:column;gap:4px;max-height:34vh;overflow:auto}.mp-res:empty{display:none}.mp-res button{text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;color:var(--ink)}.mp-res small{color:var(--muted)}
+.mp-wrap{position:relative;flex:1;min-height:240px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}.mp-map{position:absolute;inset:0;z-index:0;background:#e8e4da}
+.mp-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);z-index:500;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.mp-st{margin:0;font-size:14px;color:var(--muted);min-height:20px}
+.mp-act{display:flex;gap:10px}.mp-act .btn{flex:1}.mp-act .btn-gold{flex:2}
+@media (max-width:560px){ .mp{border-radius:0;height:100%;width:100%} }
 .os-act{display:flex;gap:10px;position:sticky;bottom:-18px;background:var(--surface);padding:10px 0 4px}.os-act .btn{flex:1}.os-act .btn-gold{flex:2}
 @media (max-width:560px){ .osum{border-radius:0;height:100%;max-height:none;padding:16px max(16px, env(safe-area-inset-left,0px)) 18px max(16px, env(safe-area-inset-right,0px))} }
 
@@ -699,7 +709,7 @@ var S = {
   conf_send:'Send order to shop on WhatsApp', conf_step_form:'Last step: tap “Send order” and press Submit on the form that opens. Your order is confirmed only after the shop receives it.', conf_send_form:'Send order', conf_or_wa:'Or send on WhatsApp', conf_sending:'Sending your order to the shop…', conf_sent:'Your order has been sent to the shop. The shop will call or WhatsApp you to confirm. Keep your order ID to track it.', conf_failed:'Could not send automatically. Tap “Send order” below to send it.', conf_pay_title:'Pay by UPI', conf_amt:'Amount to pay', conf_upi_id:'UPI ID', conf_copy:'Copy UPI ID', conf_copied:'UPI ID copied',
   conf_scan:'Scan this QR with any UPI app', conf_open:'Open UPI app', conf_after:'After paying, send the payment screenshot on WhatsApp.', conf_after_np:'The shop will tell you the final amount on WhatsApp. Then pay to this UPI ID.',
   conf_cod:'Pay cash when your order arrives.', conf_new:'Continue shopping',
-  o_loc:'📍 Share my location on map', o_loc_hint:'Optional — helps our delivery person reach your home easily.', o_loc_wait:'Finding your location…', o_loc_ok:'Location added ✓', o_loc_acc:'accuracy about {m} m', o_loc_view:'See on map', o_loc_again:'Update', o_loc_rm:'Remove', o_loc_den:'Location permission is off. Allow location for this site in your browser settings, then try again.', o_loc_err:'Could not get your location. Turn on GPS/location and try again.', o_loc_unsup:'This browser cannot share location.', wa_loc:'Location (map)', items_l:'Items', fee_far:'Sorry, home delivery is only available within {m} km of our shop (you are about {k} km away). Please choose “pick up from shop”, or call us.', fee_nr:'⚠ Delivery charge is non-refundable — it is not returned even if the order is cancelled or returned.\n⚠ डिलीवरी चार्ज वापस नहीं होगा (Non-refundable) — ऑर्डर कैंसिल या वापस होने पर भी नहीं।', fee_line:'Delivery charge', fee_free:'FREE', fee_tbd:'as per distance', fee_ok:'Home delivery: about {k} km from our shop → {f}', fee_need:'Home delivery is free up to {d} km. After that ₹{f} (+₹{s} for every extra {sk} km). Share your location so we can show the exact charge.', wa_fee:'Delivery charge', wa_dist:'Distance from shop', wa_oid:'Order ID', wa_pay:'Payment', wa_pin:'PIN', wa_land:'Landmark', wa_cod:'Cash on Delivery', wa_upi:'UPI (online)',
+  o_map:'🗺️ Choose or search on map', mp_title:'Choose delivery location', mp_ph:'Search village, area, landmark…', mp_go:'Search', mp_none:'Nothing found. Try another name, or move the map.', mp_wait:'Searching…', mp_gps:'📍 My current location', mp_hint:'Move the map so the pin is on your house, or tap the map.', mp_ok:'✓ Confirm this location', mp_near:'Pin near: ', mp_err:'Map could not load. Check your internet.', o_loc:'📍 Share my location on map', o_loc_hint:'Optional — helps our delivery person reach your home easily.', o_loc_wait:'Finding your location…', o_loc_ok:'Location added ✓', o_loc_acc:'accuracy about {m} m', o_loc_view:'See on map', o_loc_again:'Update', o_loc_rm:'Remove', o_loc_den:'Location permission is off. Allow location for this site in your browser settings, then try again.', o_loc_err:'Could not get your location. Turn on GPS/location and try again.', o_loc_unsup:'This browser cannot share location.', wa_loc:'Location (map)', items_l:'Items', fee_far:'Sorry, home delivery is only available within {m} km of our shop (you are about {k} km away). Please choose “pick up from shop”, or call us.', fee_nr:'⚠ Delivery charge is non-refundable — it is not returned even if the order is cancelled or returned.\n⚠ डिलीवरी चार्ज वापस नहीं होगा (Non-refundable) — ऑर्डर कैंसिल या वापस होने पर भी नहीं।', fee_line:'Delivery charge', fee_free:'FREE', fee_tbd:'as per distance', fee_ok:'Home delivery: about {k} km from our shop → {f}', fee_need:'Home delivery is free up to {d} km. After that ₹{f} (+₹{s} for every extra {sk} km). Share your location so we can show the exact charge.', wa_fee:'Delivery charge', wa_dist:'Distance from shop', wa_oid:'Order ID', wa_pay:'Payment', wa_pin:'PIN', wa_land:'Landmark', wa_cod:'Cash on Delivery', wa_upi:'UPI (online)',
   ret_eb:'Returns', ret_title:'Easy {d}-day return & exchange',
   ret_points:['Return or exchange within {d} days of delivery','Item must be unused, unwashed and with tags','Stitched or altered clothes and innerwear cannot be returned','After the item is checked: exchange for another size, or refund by UPI / cash'],
   ret_order:'Order ID', ret_phone:'Mobile number', ret_item:'Which item', ret_reason:'Reason', ret_reasons:['Size does not fit','Damaged or defective','Different from photo','Changed my mind','Other'],
@@ -794,7 +804,7 @@ var S = {
   conf_send:'WhatsApp पर दुकान को ऑर्डर भेजें', conf_step_form:'आखिरी काम: “ऑर्डर भेजें” दबाएँ और जो फॉर्म खुले उसमें Submit दबाएँ। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।', conf_send_form:'ऑर्डर भेजें', conf_or_wa:'या WhatsApp पर भेजें', conf_sending:'आपका ऑर्डर दुकान को भेजा जा रहा है…', conf_sent:'आपका ऑर्डर दुकान को भेज दिया गया है। दुकान आपको फ़ोन या WhatsApp करके पक्का करेगी। ट्रैक करने के लिए ऑर्डर नंबर संभालकर रखें।', conf_failed:'अपने-आप नहीं भेजा जा सका। नीचे “ऑर्डर भेजें” दबाकर भेजें।', conf_pay_title:'UPI से पेमेंट करें', conf_amt:'देने वाली रकम', conf_upi_id:'UPI ID', conf_copy:'UPI ID कॉपी करें', conf_copied:'UPI ID कॉपी हो गई',
   conf_scan:'किसी भी UPI ऐप से यह QR स्कैन करें', conf_open:'UPI ऐप खोलें', conf_after:'पेमेंट के बाद उसका स्क्रीनशॉट WhatsApp पर भेजें।', conf_after_np:'दुकान WhatsApp पर पूरी रकम बताएगी, फिर इस UPI ID पर पेमेंट करें।',
   conf_cod:'ऑर्डर मिलने पर नकद पैसे दें।', conf_new:'और खरीदारी करें',
-  o_loc:'📍 मैप पर मेरी लोकेशन भेजें', o_loc_hint:'चाहें तो — इससे डिलीवरी वाले भैया आसानी से घर पहुँच जाएँगे।', o_loc_wait:'आपकी लोकेशन ढूँढ रहे हैं…', o_loc_ok:'लोकेशन जुड़ गई ✓', o_loc_acc:'लगभग {m} मीटर तक सही', o_loc_view:'मैप पर देखें', o_loc_again:'दोबारा लें', o_loc_rm:'हटाएँ', o_loc_den:'लोकेशन की इजाज़त बंद है। ब्राउज़र सेटिंग में इस साइट के लिए Location “Allow” करें, फिर दोबारा दबाएँ।', o_loc_err:'लोकेशन नहीं मिली। फ़ोन का GPS/Location चालू करके दोबारा दबाएँ।', o_loc_unsup:'यह ब्राउज़र लोकेशन नहीं भेज सकता।', wa_loc:'लोकेशन (मैप)', items_l:'सामान', fee_far:'माफ़ कीजिए, घर डिलीवरी सिर्फ़ दुकान से {m} km तक होती है (आप लगभग {k} km दूर हैं)। “दुकान से आकर लूंगा” चुनें या हमें फ़ोन करें।', fee_nr:'⚠ डिलीवरी चार्ज वापस नहीं होगा (Non-refundable) — ऑर्डर कैंसिल या वापस होने पर भी नहीं।\n⚠ Delivery charge is non-refundable — it is not returned even if the order is cancelled or returned.', fee_line:'डिलीवरी चार्ज', fee_free:'फ़्री', fee_tbd:'दूरी के हिसाब से', fee_ok:'घर डिलीवरी: दुकान से लगभग {k} km → {f}', fee_need:'{d} km तक घर डिलीवरी फ़्री है। उससे दूर ₹{f} (और हर {sk} km पर +₹{s})। सही चार्ज देखने के लिए अपनी लोकेशन भेजें।', wa_fee:'डिलीवरी चार्ज', wa_dist:'दुकान से दूरी', wa_oid:'ऑर्डर नंबर', wa_pay:'पेमेंट', wa_pin:'पिन', wa_land:'लैंडमार्क', wa_cod:'कैश ऑन डिलीवरी', wa_upi:'UPI (ऑनलाइन)',
+  o_map:'🗺️ मैप पर चुनें या खोजें', mp_title:'डिलीवरी की जगह चुनें', mp_ph:'गांव, मोहल्ला, जगह का नाम खोजें…', mp_go:'खोजें', mp_none:'कुछ नहीं मिला। दूसरा नाम लिखें, या मैप खिसकाएँ।', mp_wait:'खोज रहे हैं…', mp_gps:'📍 मेरी अभी की लोकेशन', mp_hint:'मैप को खिसकाकर पिन अपने घर पर लाएँ, या मैप पर टैप करें।', mp_ok:'✓ यही लोकेशन पक्की करें', mp_near:'पिन के पास: ', mp_err:'मैप नहीं खुला। इंटरनेट देखें।', o_loc:'📍 मैप पर मेरी लोकेशन भेजें', o_loc_hint:'चाहें तो — इससे डिलीवरी वाले भैया आसानी से घर पहुँच जाएँगे।', o_loc_wait:'आपकी लोकेशन ढूँढ रहे हैं…', o_loc_ok:'लोकेशन जुड़ गई ✓', o_loc_acc:'लगभग {m} मीटर तक सही', o_loc_view:'मैप पर देखें', o_loc_again:'दोबारा लें', o_loc_rm:'हटाएँ', o_loc_den:'लोकेशन की इजाज़त बंद है। ब्राउज़र सेटिंग में इस साइट के लिए Location “Allow” करें, फिर दोबारा दबाएँ।', o_loc_err:'लोकेशन नहीं मिली। फ़ोन का GPS/Location चालू करके दोबारा दबाएँ।', o_loc_unsup:'यह ब्राउज़र लोकेशन नहीं भेज सकता।', wa_loc:'लोकेशन (मैप)', items_l:'सामान', fee_far:'माफ़ कीजिए, घर डिलीवरी सिर्फ़ दुकान से {m} km तक होती है (आप लगभग {k} km दूर हैं)। “दुकान से आकर लूंगा” चुनें या हमें फ़ोन करें।', fee_nr:'⚠ डिलीवरी चार्ज वापस नहीं होगा (Non-refundable) — ऑर्डर कैंसिल या वापस होने पर भी नहीं।\n⚠ Delivery charge is non-refundable — it is not returned even if the order is cancelled or returned.', fee_line:'डिलीवरी चार्ज', fee_free:'फ़्री', fee_tbd:'दूरी के हिसाब से', fee_ok:'घर डिलीवरी: दुकान से लगभग {k} km → {f}', fee_need:'{d} km तक घर डिलीवरी फ़्री है। उससे दूर ₹{f} (और हर {sk} km पर +₹{s})। सही चार्ज देखने के लिए अपनी लोकेशन भेजें।', wa_fee:'डिलीवरी चार्ज', wa_dist:'दुकान से दूरी', wa_oid:'ऑर्डर नंबर', wa_pay:'पेमेंट', wa_pin:'पिन', wa_land:'लैंडमार्क', wa_cod:'कैश ऑन डिलीवरी', wa_upi:'UPI (ऑनलाइन)',
   ret_eb:'Returns', ret_title:'{d} दिन में आसान वापसी और बदलाव',
   ret_points:['डिलीवरी के {d} दिन के अंदर वापसी या बदलाव','कपड़ा बिना पहना, बिना धुला और टैग के साथ हो','सिले हुए या ऑल्टर किए कपड़े और इनरवियर वापस नहीं होंगे','जांच के बाद: दूसरे साइज़ से बदलाव, या UPI / नकद में पैसे वापस'],
   ret_order:'ऑर्डर नंबर', ret_phone:'मोबाइल नंबर', ret_item:'कौन सा कपड़ा', ret_reason:'कारण', ret_reasons:['साइज़ ठीक नहीं','कपड़ा खराब या फटा है','फोटो से अलग है','पसंद बदल गई','कुछ और'],
@@ -947,7 +957,7 @@ function renderFrame(){
    '<div class="field"><label for="o-addr">'+t.o_addr+'</label><input id="o-addr" autocomplete="street-address"></div>' +
    '<div class="two"><div class="field"><label for="o-pin">'+t.o_pin+'</label><input id="o-pin" inputmode="numeric" autocomplete="postal-code" maxlength="6"></div>' +
    '<div class="field"><label for="o-land">'+t.o_land+'</label><input id="o-land"></div></div>' +
-   '<div class="field locf"><button type="button" class="btn btn-line" id="o-loc">'+t.o_loc+'</button><p class="hint" id="o-loc-st" aria-live="polite">'+locStatus()+'</p><p class="fee-note" id="o-fee" aria-live="polite" hidden></p></div>' +
+   '<div class="field locf"><div class="loc-btns"><button type="button" class="btn btn-line" id="o-loc">'+t.o_loc+'</button><button type="button" class="btn btn-line" id="o-map">'+t.o_map+'</button></div><p class="hint" id="o-loc-st" aria-live="polite">'+locStatus()+'</p><p class="fee-note" id="o-fee" aria-live="polite" hidden></p></div>' +
    '<div class="field"><label for="o-note">'+t.o_note+'</label><textarea id="o-note"></textarea></div>' +
    '<h3 class="step">'+t.co_pay+'</h3>' +
    '<div class="paylist" role="radiogroup" aria-label="'+t.co_pay+'" id="paylist"></div>' +
@@ -1774,10 +1784,66 @@ function updateFee(){
   tb.appendChild(rows);
 }
 document.addEventListener('change', function(e){ if (e.target && e.target.id === 'o-how') updateFee(); });
+/* ---------- map picker: search (OpenStreetMap) + move the pin ---------- */
+var leafletP2 = null;
+function loadMapLib(){
+  if (window.L && window.L.map) return Promise.resolve(window.L);
+  if (leafletP2) return leafletP2;
+  leafletP2 = new Promise(function(res, rej){
+    var c = document.createElement('link'); c.rel = 'stylesheet'; c.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(c);
+    var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; sc.onload = function(){ res(window.L); }; sc.onerror = function(){ leafletP2 = null; rej(new Error('map')); }; document.head.appendChild(sc);
+  });
+  return leafletP2;
+}
+function pickOnMap(start, cb){
+  var t = T(), prev = document.activeElement, map = null, revT = null;
+  var home = SHOP.shopLat ? {lat:+SHOP.shopLat, lng:+SHOP.shopLng} : {lat:27.2019871, lng:83.3498289};
+  var c0 = start && start.lat ? start : home;
+  var close = function(){ sc.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); try { prev && prev.focus(); } catch(e){} };
+  var onKey = function(e){ if (e.key === 'Escape') close(); };
+  var q = el('input',{type:'search',placeholder:t.mp_ph,'aria-label':t.mp_ph,autocomplete:'off'});
+  var res = el('div',{'class':'mp-res',role:'listbox'}), st = el('p',{'class':'mp-st','aria-live':'polite',text:t.mp_hint});
+  var mapBox = el('div',{'class':'mp-map'}), pin = el('div',{'class':'mp-pin','aria-hidden':'true',html:'<svg viewBox="0 0 24 36" width="34" height="50"><path d="M12 0C5.4 0 0 5.3 0 11.9 0 20.8 12 36 12 36s12-15.2 12-24.1C24 5.3 18.6 0 12 0z" fill="#B3261E"/><circle cx="12" cy="12" r="4.6" fill="#fff"/></svg>'});
+  var near = function(){ if (!map) return; clearTimeout(revT); revT = setTimeout(function(){ var m = map.getCenter();
+    fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&accept-language='+(lang==='hi'?'hi,en':'en')+'&lat='+m.lat+'&lon='+m.lng).then(function(r){ return r.json(); }).then(function(d){ if (d && d.display_name) st.textContent = t.mp_near + d.display_name.split(',').slice(0,4).join(','); }).catch(function(){}); }, 900); };
+  var search = function(){
+    var v = q.value.trim(); if (!v) return; res.innerHTML = ''; st.textContent = t.mp_wait;
+    var vb = (home.lng-0.6)+','+(home.lat+0.6)+','+(home.lng+0.6)+','+(home.lat-0.6);
+    fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=in&viewbox='+vb+'&accept-language='+(lang==='hi'?'hi,en':'en')+'&q='+encodeURIComponent(v))
+      .then(function(r){ return r.json(); }).then(function(list){
+        res.innerHTML = '';
+        if (!list || !list.length){ st.textContent = t.mp_none; return; }
+        st.textContent = t.mp_hint;
+        list.forEach(function(x){ var parts = String(x.display_name||'').split(','); res.appendChild(el('button',{type:'button',role:'option',onclick:function(){ res.innerHTML = ''; if (map) map.setView([+x.lat, +x.lon], 17); }},[ el('b',{text:parts[0]}), el('small',{text:parts.slice(1,4).join(',')}) ])); });
+      }).catch(function(){ st.textContent = t.mp_none; });
+  };
+  q.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); search(); } });
+  var gps = el('button',{type:'button','class':'btn btn-line',text:t.mp_gps,onclick:function(){
+    if (!navigator.geolocation){ st.textContent = t.o_loc_unsup; return; } st.textContent = t.o_loc_wait;
+    navigator.geolocation.getCurrentPosition(function(p){ if (map) map.setView([p.coords.latitude, p.coords.longitude], 18); st.textContent = t.mp_hint; },
+      function(er){ st.textContent = er && er.code === 1 ? t.o_loc_den : t.o_loc_err; }, {enableHighAccuracy:true, timeout:20000, maximumAge:60000}); }});
+  var ok = el('button',{type:'button','class':'btn btn-gold',text:t.mp_ok,disabled:'disabled',onclick:function(){ var m = map.getCenter(); close(); cb({lat:+m.lat.toFixed(6), lng:+m.lng.toFixed(6)}); }});
+  var box = el('div',{'class':'mp',role:'dialog','aria-modal':'true','aria-label':t.mp_title},[
+    el('div',{'class':'mp-top'},[ el('h2',{text:t.mp_title}), el('button',{type:'button','class':'os-x','aria-label':t.sum_close,text:'×',onclick:close}) ]),
+    el('div',{'class':'mp-q'},[ q, el('button',{type:'button','class':'btn btn-gold',text:t.mp_go,onclick:search}) ]), res,
+    el('div',{'class':'mp-wrap'},[ mapBox, pin ]), st,
+    el('div',{'class':'mp-act'},[ gps, ok ]) ]);
+  var sc = el('div',{'class':'scrim',id:'mp-scrim',onclick:function(e){ if (e.target === sc) close(); }},[box]);
+  document.body.appendChild(sc); document.body.style.overflow = 'hidden'; document.addEventListener('keydown', onKey);
+  loadMapLib().then(function(Lf){
+    map = Lf.map(mapBox, {zoomControl:true}).setView([c0.lat, c0.lng], start && start.lat ? 17 : 14);
+    Lf.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(map);
+    map.on('click', function(e){ map.panTo(e.latlng); });
+    map.on('moveend', near);
+    ok.disabled = false; setTimeout(function(){ map.invalidateSize(); }, 150); near();
+  }, function(){ st.textContent = t.mp_err; });
+  setTimeout(function(){ q.focus(); }, 50);
+}
 function showLoc(msg){ var st = document.getElementById('o-loc-st'), b = document.getElementById('o-loc'); if (st) st.innerHTML = msg || locStatus(); if (b){ b.disabled = false; b.textContent = orderLoc ? '📍 '+T().o_loc_again : T().o_loc; } updateFee(); }
 document.addEventListener('click', function(e){
   var rm = e.target.closest && e.target.closest('[data-loc="rm"]');
   if (rm){ e.preventDefault(); orderLoc = null; showLoc(); return; }
+  if (e.target.closest && e.target.closest('#o-map')){ pickOnMap(orderLoc, function(l){ orderLoc = {lat:l.lat, lng:l.lng, acc:0}; showLoc(); }); return; }
   var b = e.target.closest && e.target.closest('#o-loc'); if (!b) return;
   var t = T(), st = document.getElementById('o-loc-st');
   if (!navigator.geolocation){ showLoc('<span style="color:var(--bad,#b3261e)">'+t.o_loc_unsup+'</span>'); return; }
@@ -2218,6 +2284,7 @@ window.DF = {
   photo: function(p){ return p && p.photos && p.photos[0] ? p.photos[0] : ''; },
   art: function(p){ return p ? artSvg(p.art) : ''; },
   cartCount: function(){ return cart.length; },
+  pickOnMap: function(start, cb){ pickOnMap(start, cb); },
   shopLoc: function(){ return SHOP.shopLat ? {lat:+SHOP.shopLat, lng:+SHOP.shopLng} : null; },
   setOrderLoc: function(l){ orderLoc = l || null; try { showLoc(); } catch(e){} },
   getTrack: function(id){ return TRACK[id]; },
@@ -2724,7 +2791,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       name:'Full name', mobile:'Mobile number (10 digits)', line:'House no., street, village', city:'Town / city', pin:'PIN code', land:'Landmark (optional)',
       save:'Save', saved:'Saved.', err_prof:'Please fill name, 10-digit mobile, address and 6-digit PIN.',
       hello:'Hello', addrs:'My addresses', add_addr:'Add new address', def:'Default', use_def:'Make default', edit:'Edit', del:'Delete',
-      ph_add:'📷 Add your photo', ph_ch:'Change photo', ph_rm:'Remove', ph_saving:'Saving photo…', ph_ok:'Photo saved ✓', ml_title:'Home location on map', ml_hint:'Tap “Use my current location”, or move the map and tap on your house to put the pin there.', ml_gps:'📍 Use my current location', ml_wait:'Finding your location…', ml_ok:'Pin set ✓', ml_rm:'Remove pin', ml_err:'Could not get your location. Turn on GPS, or tap your house on the map.', ml_den:'Location permission is off. Tap your house on the map instead.', ml_has:'📍 Location on map saved', orders:'My orders', no_orders:'No orders yet.', view:'View details', back:'← My orders', placed:'Placed on', pay_l:'Payment', deliv_l:'Delivery', addr_l:'Address', total_l:'Total', items_l:'Items', status_l:'Order status', add_cart:'Add to cart', added:'Added to cart ✓', buy_again:'Add all to cart (buy again)', go_cart:'Go to cart', my_cart:'My cart', p_upi:'UPI (online)', p_cod:'Cash on delivery', gone:'No longer available', size:'Size', qty:'Qty', st:{waiting:'Waiting for shop',accepted:'Accepted',packed:'Packed',shipped:'Shipped',pickup:'Ready for pickup',delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',return_req:'Return requested',return_ok:'Return approved',returned:'Returned',return_no:'Return not approved'}, track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
+      ph_add:'📷 Add your photo', ph_ch:'Change photo', ph_rm:'Remove', ph_saving:'Saving photo…', ph_ok:'Photo saved ✓', ml_title:'Home location on map', ml_hint:'Tap “Use my current location”, or move the map and tap on your house to put the pin there.', ml_gps:'📍 Use my current location', ml_search:'🔎 Search on map', ml_wait:'Finding your location…', ml_ok:'Pin set ✓', ml_rm:'Remove pin', ml_err:'Could not get your location. Turn on GPS, or tap your house on the map.', ml_den:'Location permission is off. Tap your house on the map instead.', ml_has:'📍 Location on map saved', orders:'My orders', no_orders:'No orders yet.', view:'View details', back:'← My orders', placed:'Placed on', pay_l:'Payment', deliv_l:'Delivery', addr_l:'Address', total_l:'Total', items_l:'Items', status_l:'Order status', add_cart:'Add to cart', added:'Added to cart ✓', buy_again:'Add all to cart (buy again)', go_cart:'Go to cart', my_cart:'My cart', p_upi:'UPI (online)', p_cod:'Cash on delivery', gone:'No longer available', size:'Size', qty:'Qty', st:{waiting:'Waiting for shop',accepted:'Accepted',packed:'Packed',shipped:'Shipped',pickup:'Ready for pickup',delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',return_req:'Return requested',return_ok:'Return approved',returned:'Returned',return_no:'Return not approved'}, track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
       pick:'Deliver to', other:'Another address (type below)', hint_login:'Login to save your address for next time.', welcome:'Logged in as ',
       e_gen:'Something went wrong. Please try again.', e_cred:'Email or password is wrong.', e_used:'This email already has an account. Tap Login.', e_weak:'Password must be at least 6 letters.', e_mail:'Please write a correct email.', e_dom:'Login is not enabled for this website address yet.', e_net:'No internet. Please try again.' },
     hi:{ login:'लॉग-इन', account:'मेरा खाता', title:'लॉग-इन करें या खाता बनाएँ', sub:'एक बार पता सेव करें, अगली बार जल्दी ऑर्डर करें।',
@@ -2734,7 +2801,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       name:'पूरा नाम', mobile:'मोबाइल नंबर (10 अंक)', line:'मकान नं., गली, गांव', city:'कस्बा / शहर', pin:'पिन कोड', land:'लैंडमार्क (चाहें तो)',
       save:'सेव करें', saved:'सेव हो गया।', err_prof:'नाम, 10 अंक का मोबाइल, पता और 6 अंक का पिन भरें।',
       hello:'नमस्ते', addrs:'मेरे पते', add_addr:'नया पता जोड़ें', def:'मुख्य', use_def:'मुख्य बनाएँ', edit:'बदलें', del:'हटाएँ',
-      ph_add:'📷 अपनी फ़ोटो लगाएँ', ph_ch:'फ़ोटो बदलें', ph_rm:'हटाएँ', ph_saving:'फ़ोटो सेव हो रही है…', ph_ok:'फ़ोटो सेव हो गई ✓', ml_title:'मैप पर घर की लोकेशन', ml_hint:'“मेरी अभी की लोकेशन” दबाएँ, या मैप खिसकाकर अपने घर पर टैप करें — वहाँ पिन लग जाएगा।', ml_gps:'📍 मेरी अभी की लोकेशन', ml_wait:'लोकेशन ढूँढ रहे हैं…', ml_ok:'पिन लग गया ✓', ml_rm:'पिन हटाएँ', ml_err:'लोकेशन नहीं मिली। GPS चालू करें, या मैप पर अपने घर पर टैप करें।', ml_den:'लोकेशन की इजाज़त बंद है। मैप पर अपने घर पर टैप कर दें।', ml_has:'📍 मैप पर लोकेशन सेव है', orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', view:'पूरी जानकारी', back:'← मेरे ऑर्डर', placed:'ऑर्डर की तारीख', pay_l:'पेमेंट', deliv_l:'डिलीवरी', addr_l:'पता', total_l:'कुल', items_l:'सामान', status_l:'ऑर्डर का स्टेटस', add_cart:'कार्ट में डालें', added:'कार्ट में डाल दिया ✓', buy_again:'सब फिर से कार्ट में डालें', go_cart:'कार्ट देखें', my_cart:'मेरा कार्ट', p_upi:'UPI (ऑनलाइन)', p_cod:'कैश ऑन डिलीवरी', gone:'अब उपलब्ध नहीं', size:'साइज़', qty:'मात्रा', st:{waiting:'दुकान के जवाब का इंतज़ार',accepted:'मंज़ूर',packed:'पैक हो गया',shipped:'भेज दिया',pickup:'दुकान से ले जाएँ',delivered:'पहुँच गया',rejected:'रद्द (दुकान ने)',cancelled:'रद्द',return_req:'वापसी की रिक्वेस्ट',return_ok:'वापसी मंज़ूर',returned:'वापस हो गया',return_no:'वापसी मंज़ूर नहीं'}, track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
+      ph_add:'📷 अपनी फ़ोटो लगाएँ', ph_ch:'फ़ोटो बदलें', ph_rm:'हटाएँ', ph_saving:'फ़ोटो सेव हो रही है…', ph_ok:'फ़ोटो सेव हो गई ✓', ml_title:'मैप पर घर की लोकेशन', ml_hint:'“मेरी अभी की लोकेशन” दबाएँ, या मैप खिसकाकर अपने घर पर टैप करें — वहाँ पिन लग जाएगा।', ml_gps:'📍 मेरी अभी की लोकेशन', ml_search:'🔎 मैप पर खोजें', ml_wait:'लोकेशन ढूँढ रहे हैं…', ml_ok:'पिन लग गया ✓', ml_rm:'पिन हटाएँ', ml_err:'लोकेशन नहीं मिली। GPS चालू करें, या मैप पर अपने घर पर टैप करें।', ml_den:'लोकेशन की इजाज़त बंद है। मैप पर अपने घर पर टैप कर दें।', ml_has:'📍 मैप पर लोकेशन सेव है', orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', view:'पूरी जानकारी', back:'← मेरे ऑर्डर', placed:'ऑर्डर की तारीख', pay_l:'पेमेंट', deliv_l:'डिलीवरी', addr_l:'पता', total_l:'कुल', items_l:'सामान', status_l:'ऑर्डर का स्टेटस', add_cart:'कार्ट में डालें', added:'कार्ट में डाल दिया ✓', buy_again:'सब फिर से कार्ट में डालें', go_cart:'कार्ट देखें', my_cart:'मेरा कार्ट', p_upi:'UPI (ऑनलाइन)', p_cod:'कैश ऑन डिलीवरी', gone:'अब उपलब्ध नहीं', size:'साइज़', qty:'मात्रा', st:{waiting:'दुकान के जवाब का इंतज़ार',accepted:'मंज़ूर',packed:'पैक हो गया',shipped:'भेज दिया',pickup:'दुकान से ले जाएँ',delivered:'पहुँच गया',rejected:'रद्द (दुकान ने)',cancelled:'रद्द',return_req:'वापसी की रिक्वेस्ट',return_ok:'वापसी मंज़ूर',returned:'वापस हो गया',return_no:'वापसी मंज़ूर नहीं'}, track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
       pick:'कहाँ भेजें', other:'दूसरा पता (नीचे लिखें)', hint_login:'लॉग-इन करें, अगली बार के लिए पता सेव हो जाएगा।', welcome:'लॉग-इन: ',
       e_gen:'कुछ गड़बड़ हुई। फिर से कोशिश करें।', e_cred:'ईमेल या पासवर्ड गलत है।', e_used:'इस ईमेल का खाता पहले से है। लॉग-इन दबाएँ।', e_weak:'पासवर्ड कम से कम 6 अक्षर का हो।', e_mail:'सही ईमेल लिखें।', e_dom:'इस वेबसाइट पते पर लॉग-इन अभी चालू नहीं है।', e_net:'इंटरनेट नहीं है। फिर से कोशिश करें।' }
   };
@@ -2909,6 +2976,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       navigator.geolocation.getCurrentPosition(function(p){ gps.disabled = false; setPin(p.coords.latitude, p.coords.longitude, true); },
         function(e){ gps.disabled = false; st.textContent = e && e.code === 1 ? t.ml_den : t.ml_err; }, {enableHighAccuracy:true, timeout:20000, maximumAge:60000});
     }});
+    var srch = mk('button',{type:'button','class':'btn btn-line',text:t.ml_search,onclick:function(){ if (window.DF && DF.pickOnMap) DF.pickOnMap(pickLoc, function(l){ if (map) setPin(l.lat, l.lng, true); else { pickLoc = l; st.textContent = t.ml_ok; rm.hidden = false; } }); }});
     var rm = mk('button',{type:'button','class':'acct-link danger',text:t.ml_rm,onclick:function(){ pickLoc = null; if (pin && map){ map.removeLayer(pin); pin = null; } rm.hidden = true; st.textContent = t.ml_hint; }});
     rm.hidden = !pickLoc;
     setTimeout(function(){
@@ -2923,7 +2991,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
         setTimeout(function(){ map.invalidateSize(); }, 200);
       }, function(){ box.hidden = true; });
     }, 0);
-    return mk('div',{'class':'field acct-mapf'},[ mk('label',{text:t.ml_title}), mk('div',{'class':'acct-map-tools'},[ gps, rm ]), box, st ]);
+    return mk('div',{'class':'field acct-mapf'},[ mk('label',{text:t.ml_title}), mk('div',{'class':'acct-map-tools'},[ gps, srch, rm ]), box, st ]);
   }
   function draw(){
     var t = L();
