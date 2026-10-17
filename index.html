@@ -113,9 +113,26 @@ section.block{padding-block:44px}
 .field input,.field select,.field textarea{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
 .field textarea{min-height:80px;resize:vertical}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.cp{display:grid;grid-template-columns:96px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-height:60vh}
+.cp-rail{background:var(--bg);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;max-height:75vh}
+.cp-tab{border:0;background:none;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;border-left:4px solid transparent;text-align:center;line-height:1.2}
+.cp-tab .ico{width:48px;height:48px;border-radius:50%;background:var(--art-bg);display:flex;align-items:center;justify-content:center}.cp-tab .ico svg{width:52%;color:var(--art-line)}
+.cp-tab[aria-selected="true"]{background:var(--surface);border-left-color:var(--gold);color:var(--gold)}
+.cp-main{padding:14px;min-width:0}
+.cp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.cp-head h3{margin:0;font-size:18px}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:16px 10px}
+.cp-tile{border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--ink);padding:0}
+.cp-im{width:76px;height:76px;border-radius:50%;overflow:hidden;background:var(--art-bg);display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.cp-im img{width:100%;height:100%;object-fit:cover}.cp-im svg{width:50%;color:var(--art-line)}
+.cp-tile b{font-size:13px;font-weight:600;line-height:1.25}.cp-tile small{font-size:11.5px;color:var(--muted)}
+.cp-tile:hover .cp-im{border-color:var(--gold)}
+.subchip{margin-left:10px;border:1px solid var(--gold);background:var(--gold-soft,#f6ecd5);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;cursor:pointer}
+@media (min-width:700px){ .cp{grid-template-columns:160px minmax(0,1fr)} .cp-tab{flex-direction:row;justify-content:flex-start;text-align:left;padding:10px 12px;font-size:14px} .cp-tab .ico{width:40px;height:40px;flex:none} .cp-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))} .cp-im{width:96px;height:96px} }
+
 .pg-bar,.pg-x{display:none}
 body.pg #app>section,body.pg #app>footer{display:none}
-body.pg-track #app>#track,body.pg-returns #app>#returns,body.pg-order #app>#order{display:block;min-height:calc(100vh - 140px);padding-top:14px}
+#app>#cats,#app>#order,#app>#returns,#app>#track{display:none}
+body.pg-track #app>#track,body.pg-returns #app>#returns,body.pg-order #app>#order,body.pg-cats #app>#cats{display:block;min-height:calc(100vh - 140px);padding-top:14px}
 body.pg .pg-bar{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
 .pg-back{width:40px;height:40px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;color:var(--ink);background:var(--bg);border:1px solid var(--line)}
 .pg-more{margin-left:auto;font-size:14px;font-weight:600;white-space:nowrap}
@@ -611,7 +628,7 @@ var S = {
   cta_shop:'See clothes', cta_tailor:'Book tailoring',
   hc:[['Women','Suit · Saree · Lehenga · Kurti'],['Men','Shirt · Jeans · Kurta · Sherwani'],['Boys &amp; Girls','T-Shirt · Jeans · Frock · Gown'],['Kids &amp; Baby','Romper · Baby Set · Winter Wear']],
   hc_call:'Call / WhatsApp', hc_route:'Directions to shop',
-  eb_shop:'Collection', sec_shop:'Shop our collection', cat_aria:'Choose a category',
+  eb_shop:'Collection', sec_shop:'Shop our collection', cat_aria:'Choose a category', cp_title:'All categories', cp_crumb:'Categories', cp_all:'All', cp_items:'items', cp_item1:'item', cp_see:'See all ›', cp_other:'Others', cp_clear:'Show all', 
   bell_btn:'Get offer alerts', bell_on:'Alerts on ✓', bell_wait:'Please wait a moment and try again.', bell_ok:'✓ Done! You will get our new arrivals and offers.', bell_ok_wait:'✓ Allowed. Alerts will start in a moment.', bell_denied:'Notifications are blocked for this site. In Chrome tap ⋮ → Settings → Site settings → Notifications → diamondfashions.in → Allow.', bell_unsup:'This browser does not support notifications. Please open the site in Chrome.', bell_err:'Could not turn on alerts. Please try again.',
   app_h:'Get the Diamond Fashions app', app_sub:'Shop faster from your home screen', app_btn:'Install app', app_ios:'On iPhone: tap Share ⬆ then “Add to Home Screen”', app_later:'Not now',
   follow_h:'Follow us', follow_sub:'New arrivals, offers and videos every week', follow_ig:'Instagram', follow_fb:'Facebook', follow_wa:'WhatsApp',
@@ -706,7 +723,7 @@ var S = {
   cta_shop:'कपड़े देखें', cta_tailor:'सिलाई बुक करें',
   hc:[['महिला','सूट · साड़ी · लहंगा · कुर्ती'],['पुरुष','शर्ट · जींस · कुर्ता · शेरवानी'],['लड़के और लड़कियाँ','टी-शर्ट · जींस · फ्रॉक · गाउन'],['बच्चे','रोम्पर · बेबी सेट · सर्दी के कपड़े']],
   hc_call:'कॉल / WhatsApp', hc_route:'दुकान का रास्ता',
-  eb_shop:'Collection', sec_shop:'हमारा सामान', cat_aria:'कैटेगरी चुनें',
+  eb_shop:'Collection', sec_shop:'हमारा सामान', cat_aria:'कैटेगरी चुनें', cp_title:'सभी कैटेगरी', cp_crumb:'कैटेगरी', cp_all:'सभी', cp_items:'सामान', cp_item1:'सामान', cp_see:'सब देखें ›', cp_other:'अन्य', cp_clear:'सब दिखाएँ',
   bell_btn:'ऑफ़र की सूचना पाएँ', bell_on:'सूचना चालू ✓', bell_wait:'एक पल रुककर फिर दबाएँ।', bell_ok:'✓ हो गया! अब आपको नए माल और ऑफ़र की सूचना मिलेगी।', bell_ok_wait:'✓ इजाज़त मिल गई। सूचना थोड़ी देर में चालू हो जाएगी।', bell_denied:'इस वेबसाइट की सूचना ब्लॉक है। Chrome में ⋮ → Settings → Site settings → Notifications → diamondfashions.in → Allow करें।', bell_unsup:'इस ब्राउज़र में सूचना नहीं चलती। वेबसाइट Chrome में खोलें।', bell_err:'सूचना चालू नहीं हुई, फिर कोशिश करें।',
   app_h:'डायमंड फैशन्स का ऐप लें', app_sub:'होम स्क्रीन से जल्दी खरीदारी करें', app_btn:'ऐप इंस्टॉल करें', app_ios:'iPhone पर: Share ⬆ दबाएँ, फिर “Add to Home Screen”', app_later:'अभी नहीं',
   follow_h:'हमें फ़ॉलो करें', follow_sub:'हर हफ़्ते नया माल, ऑफ़र और वीडियो', follow_ig:'Instagram', follow_fb:'Facebook', follow_wa:'WhatsApp',
@@ -864,8 +881,8 @@ function pgLink(href, ico, text){ return '<a class="pg-x" href="'+href+'">'+ico+
 /* Track and Returns open as their own pages (like Flipkart/Amazon help pages) */
 var pgCur = '';
 function applyPage(){
-  var h = location.hash || '', pg = /^#track(-|$)/.test(h) ? 'track' : h === '#returns' ? 'returns' : h === '#order' ? 'order' : '';
-  var b = document.body; b.classList.toggle('pg', !!pg); b.classList.toggle('pg-track', pg === 'track'); b.classList.toggle('pg-returns', pg === 'returns'); b.classList.toggle('pg-order', pg === 'order');
+  var h = location.hash || '', pg = /^#track(-|$)/.test(h) ? 'track' : h === '#returns' ? 'returns' : h === '#order' ? 'order' : h === '#cats' ? 'cats' : '';
+  var b = document.body; b.classList.toggle('pg', !!pg); b.classList.toggle('pg-track', pg === 'track'); b.classList.toggle('pg-returns', pg === 'returns'); b.classList.toggle('pg-order', pg === 'order'); b.classList.toggle('pg-cats', pg === 'cats'); if (pg === 'cats') try { renderCats(); } catch(e){}
   if (pg && pg !== pgCur) window.scrollTo(0, 0);
   else if (!pg && pgCur){ var id = h.replace(/^#/, ''), tg = id && document.getElementById(id); setTimeout(function(){ if (tg && !/^p-/.test(id)) tg.scrollIntoView(); else if (!tg) window.scrollTo(0, 0); }, 0); }
   pgCur = pg;
@@ -916,6 +933,7 @@ function renderFrame(){
   '<div class="toolbar"><div class="count-line" id="count-line" aria-live="polite"></div><label class="row" for="sort">'+t.sort_lbl+' <select id="sort">'+opts(t.sort_opts)+'</select></label></div>' +
   '<div class="grid" id="grid"></div>' +
  '</div></section>' +
+ '<section class="block" id="cats"><div class="wrap">' + pgBar(t, t.cp_title, t.cp_crumb) + '<div class="cp" id="cp"></div></div></section>' +
  '<section class="block" id="order" style="padding-top:8px"><div class="wrap">' + pgBar(t, t.co_title, t.pg_cart) +
   '<div class="sec-head"><div><div class="eyebrow">'+t.co_eb+'</div><h2>'+t.co_title+'</h2></div></div>' +
   '<div id="co-done"></div>' +
@@ -1002,7 +1020,7 @@ function renderFrame(){
  '<a class="wa-float" id="wa-float" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 1.8 1.9 3.6 3.9 4.3l1.3-1.2 1.8.9-.4 1.6c-3.4.4-7.1-3.2-6.7-6.6L10.5 8l.9 1.8z" fill="currentColor" stroke="none"/></svg></a>' +
  '<nav class="bnav" aria-label="Menu">' +
    '<a href="#shop" class="on">'+ICO_U.home+'<span>'+FK().home+'</span></a>' +
-   '<a href="#chips" id="bn-cat">'+ICO_U.cat+'<span>'+FK().cats+'</span></a>' +
+   '<a href="#cats" id="bn-cat">'+ICO_U.cat+'<span>'+FK().cats+'</span></a>' +
    '<a href="#track">'+ICO_U.track+'<span>'+FK().track+'</span></a>' +
    '<button type="button" id="bn-acct">'+ICO_U.user+'<span>'+FK().acct+'</span></button>' +
    '<a href="#order">'+ICO_U.cart+'<span>'+FK().cart+'</span><span class="bc" id="bn-count" hidden>0</span></a>' +
@@ -1055,12 +1073,71 @@ function renderFrame(){
 }
 
 /* ---------- catalog ---------- */
+/* Sub-categories (Flipkart-style category page). A product goes to the first sub whose keywords appear in its name. */
+var SUBS = {
+  women:[['saree','Sarees','साड़ी',['saree','sari','साड़ी','साडी']],['suit','Suits & dress material','सूट और ड्रेस मटीरियल',['suit','salwar','dress material','सूट']],['kurti','Kurtis','कुर्ती',['kurti','kurta','कुर्ती']],['lehenga','Lehenga','लहंगा',['lehenga','लहंगा']],['blouse','Blouses','ब्लाउज़',['blouse','ब्लाउज']],['bottom','Leggings & palazzo','लेगिंग्स-प्लाज़ो',['legging','palazzo','plazo','लेगिंग']],['night','Nightwear','नाइटवियर',['night','नाइट']],['winter','Shawl & sweater','शॉल-स्वेटर',['shawl','cardigan','sweater','jacket','शॉल','स्वेटर']]],
+  men:[['tshirt','T-shirts','टी-शर्ट',['t-shirt','tshirt','t shirt','टी-शर्ट','टीशर्ट']],['shirt','Shirts','शर्ट',['shirt','शर्ट']],['jeans','Jeans','जींस',['jeans','जींस']],['pant','Pants & lowers','पैंट-लोअर',['pant','trouser','lower','track','पैंट','लोअर']],['kurta','Kurta & sherwani','कुर्ता-शेरवानी',['kurta','sherwani','pajama','कुर्ता','शेरवानी']],['winter','Jackets & sweaters','जैकेट-स्वेटर',['jacket','sweater','hoodie','जैकेट','स्वेटर']],['fabric','Suiting & shirting fabric','शूटिंग-शर्टिंग कपड़ा',['material','fabric','cloth','suiting','shirting','कपड़ा']]],
+  boys:[['set','Sets','सेट',['set','shorts','सेट']],['tshirt','T-shirts','टी-शर्ट',['t-shirt','tshirt','t shirt','टी-शर्ट']],['shirt','Shirts','शर्ट',['shirt','शर्ट']],['jeans','Jeans & pants','जींस-पैंट',['jeans','pant','जींस','पैंट']],['kurta','Kurta pajama','कुर्ता-पायजामा',['kurta','कुर्ता']],['winter','Jackets & sweaters','जैकेट-स्वेटर',['jacket','sweater','जैकेट','स्वेटर']]],
+  girls:[['frock','Frocks & gowns','फ्रॉक-गाउन',['frock','gown','फ्रॉक','गाउन']],['lehenga','Lehenga choli','लहंगा-चोली',['lehenga','लहंगा']],['top','Tops & jeans','टॉप-जींस',['top','jeans','टॉप']],['suit','Suits','सूट',['suit','सूट']],['winter','Sweaters','स्वेटर',['sweater','jacket','स्वेटर']]],
+  kids:[['romper','Rompers','रोम्पर',['romper','रोम्पर']],['frock','Baby frocks','बेबी फ्रॉक',['frock','फ्रॉक']],['winter','Winter wear','सर्दी के कपड़े',['winter','sweater','jacket','स्वेटर']],['set','Baby sets','बेबी सेट',['set','सेट']]],
+  footwear:[['ladies','Ladies sandals','लेडीज़ सैंडल',['ladies','women','sandal','लेडीज़','सैंडल']],['gents','Gents chappal','जेंट्स चप्पल',['gents','men','chappal','slipper','जेंट्स','चप्पल']],['sports','Sports shoes','स्पोर्ट्स शूज़',['sports','shoe','sneaker','जूते']],['kidsf','Kids footwear','बच्चों के जूते',['kids','बच्चों']]],
+  jewellery:[['necklace','Necklace sets','हार',['necklace','haar','हार']],['ear','Earrings & jhumka','झुमके',['earring','jhumka','झुमका','झुमके']],['bangle','Bangles & kada','चूड़ी-कड़ा',['bangle','kada','चूड़ी','कड़ा']],['payal','Payal','पायल',['payal','anklet','पायल']]],
+  beauty:[['makeup','Makeup','मेकअप',['lipstick','makeup','मेकअप','लिपस्टिक']],['skin','Skin care','स्किन केयर',['skin','cream','face','क्रीम']],['hair','Hair care','हेयर केयर',['hair','oil','shampoo','बाल']],['bindi','Bindi, kajal & mehndi','बिंदी-काजल-मेहंदी',['bindi','kajal','mehndi','बिंदी','काजल','मेहंदी']]],
+  cookware:[['cooker','Pressure cookers','कुकर',['cooker','कुकर']],['tawa','Tawa & kadai','तवा-कड़ाही',['tawa','kadai','non-stick','तवा','कड़ाही']],['steel','Steel utensils','स्टील बर्तन',['steel','utensil','स्टील']],['tools','Kitchen tools','किचन टूल्स',['tool','टूल']]],
+  stationery:[['note','Notebooks','कॉपी-रजिस्टर',['notebook','register','copy','कॉपी']],['pen','Pens & pencils','पेन-पेंसिल',['pen','pencil','पेन']],['bag','School bags','स्कूल बैग',['bag','बैग']],['geo','Geometry & colours','ज्योमेट्री-कलर',['geometry','colour','color','crayon','कलर']]]
+};
+var subFilter = '', cpCat = '';
+function subOf(p){
+  if (p.sub) return p.sub;
+  var list = SUBS[p.cat] || [], n = ' '+String(p.name||'').toLowerCase()+' ';
+  for (var i = 0; i < list.length; i++){ var ks = list[i][3]; for (var j = 0; j < ks.length; j++){ if (n.indexOf(ks[j]) >= 0) return list[i][0]; } }
+  return 'other';
+}
+function subLabel(cat, key){ if (key === 'other') return T().cp_other; var x = (SUBS[cat]||[]).filter(function(r){ return r[0] === key; })[0]; return x ? (lang === 'hi' ? x[2] : x[1]) : key; }
+function catArt(k){ return {all:'suit',women:'saree',men:'shirt',boys:'tshirt',girls:'frock',kids:'romper',footwear:'shoe',jewellery:'necklace',beauty:'lipstick',cookware:'pot',stationery:'pen'}[k]; }
+function goSub(cat, key){
+  filter = cat; subFilter = key || ''; query = ''; var si = document.getElementById('q'); if (si) si.value = '';
+  try { localStorage.setItem('df-filter', filter); } catch(e){}
+  renderChips(); renderGrid();
+  var toGrid = function(){ var g = document.querySelector('#shop .toolbar') || document.getElementById('grid'), hd = document.querySelector('.top'); if (g) window.scrollTo(0, g.getBoundingClientRect().top + window.scrollY - ((hd && hd.offsetHeight) || 0) - 12); };
+  if (location.hash !== '#shop') location.hash = '#shop'; setTimeout(toGrid, 60);
+}
+function renderCats(){
+  var box = document.getElementById('cp'); if (!box) return;
+  var t = T(); box.innerHTML = '';
+  var keys = CAT_KEYS.filter(function(k){ return k !== 'all'; });
+  if (keys.indexOf(cpCat) < 0) cpCat = keys.indexOf(filter) >= 0 ? filter : keys[0];
+  var rail = el('div',{'class':'cp-rail',role:'tablist','aria-label':t.cat_aria});
+  keys.forEach(function(k){
+    var n = products.filter(function(p){ return p.cat === k; }).length;
+    var b = el('button',{type:'button',role:'tab','class':'cp-tab','aria-selected':String(k === cpCat),onclick:function(){ cpCat = k; renderCats(); }});
+    b.innerHTML = '<span class="ico">'+artSvg(catArt(k))+'</span><span>'+esc(t.cats[k])+'</span>' + (n ? '' : '');
+    rail.appendChild(b);
+  });
+  var mine = products.filter(function(p){ return p.cat === cpCat; });
+  var groups = {}, order = [];
+  (SUBS[cpCat]||[]).forEach(function(r){ groups[r[0]] = []; order.push(r[0]); });
+  groups.other = []; order.push('other');
+  mine.forEach(function(p){ var k = subOf(p); if (!groups[k]){ groups[k] = []; order.splice(order.length-1, 0, k); } groups[k].push(p); });
+  var tile = function(label, n, pics, art, onclick){
+    var ph = pics.filter(function(p){ return p.photos && p.photos.length; })[0];
+    var im = el('span',{'class':'cp-im'}); if (ph) im.appendChild(el('img',{src:ph.photos[0],alt:'',loading:'lazy'})); else im.innerHTML = artSvg(art);
+    return el('button',{type:'button','class':'cp-tile',onclick:onclick},[ im, el('b',{text:label}), el('small',{text:n+' '+(n === 1 ? t.cp_item1 : t.cp_items)}) ]);
+  };
+  var grid = el('div',{'class':'cp-grid'});
+  grid.appendChild(tile(t.cp_all+' '+t.cats[cpCat], mine.length, mine, catArt(cpCat), function(){ goSub(cpCat, ''); }));
+  order.forEach(function(k){ var g = groups[k]; if (!g || !g.length) return; grid.appendChild(tile(subLabel(cpCat, k), g.length, g, g[0].art || catArt(cpCat), function(){ goSub(cpCat, k); })); });
+  var main = el('div',{'class':'cp-main',role:'tabpanel'},[
+    el('div',{'class':'cp-head'},[ el('h3',{text:t.cats[cpCat]}), el('button',{type:'button','class':'linkbtn',text:t.cp_see,onclick:function(){ goSub(cpCat, ''); }}) ]),
+    mine.length ? grid : el('p',{'class':'hint',text:t.empty_cat}) ]);
+  box.appendChild(rail); box.appendChild(main);
+}
 function renderChips(){
   var box = document.getElementById('chips'); box.innerHTML='';
   CAT_KEYS.forEach(function(k){
     var n = k==='all' ? products.length : products.filter(function(p){return catOf(p)===k;}).length;
     var art = {all:'suit',women:'saree',men:'shirt',boys:'tshirt',girls:'frock',kids:'romper',footwear:'shoe',jewellery:'necklace',beauty:'lipstick',cookware:'pot',stationery:'pen'}[k];
-    var b = el('button',{type:'button','class':'catbtn','aria-pressed':String(filter===k),onclick:function(){ filter=k; try{localStorage.setItem('df-filter',filter);}catch(e){} renderChips(); renderGrid(); }});
+    var b = el('button',{type:'button','class':'catbtn','aria-pressed':String(filter===k),onclick:function(){ filter=k; subFilter=''; try{localStorage.setItem('df-filter',filter);}catch(e){} renderChips(); renderGrid(); }});
     b.innerHTML = '<span class="ico">'+artSvg(art)+'</span>'+esc(T().cats[k])+'<small>'+n+'</small>';
     box.appendChild(b);
   });
@@ -1088,6 +1165,7 @@ function visibleList(){
   var q = query.trim().toLowerCase();
   var list = products.filter(function(p){
     if (filter!=='all' && p.cat!==filter) return false;
+    if (subFilter && subOf(p) !== subFilter) return false;
     if (!q) return true;
     return (p.code+' '+p.name+' '+(p.desc||'')+' '+T().cats[p.cat]+' '+S.en.cats[p.cat]).toLowerCase().indexOf(q) >= 0;
   });
@@ -1105,7 +1183,8 @@ function renderGrid(){
   var t = T();
   var grid = document.getElementById('grid'); grid.innerHTML='';
   var list = visibleList();
-  document.getElementById('count-line').textContent = list.length + t.results;
+  var cl = document.getElementById('count-line'); cl.textContent = list.length + t.results;
+  if (subFilter && filter !== 'all') cl.appendChild(el('button',{type:'button','class':'subchip',title:t.cp_clear,onclick:function(){ subFilter = ''; renderGrid(); }},[ subLabel(filter, subFilter)+' ✕' ]));
   if (!list.length){ grid.appendChild(el('p',{'class':'empty',text:query.trim()?t.no_results:t.empty_cat})); return; }
   list.forEach(function(p){
     var sz = sizesOf(p);
