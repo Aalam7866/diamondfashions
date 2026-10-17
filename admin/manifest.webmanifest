@@ -1,0 +1,23 @@
+{
+  "id": "/admin/",
+  "name": "Diamond Fashions Admin",
+  "short_name": "DF Admin",
+  "description": "Diamond Fashions seller app – orders, products, stock, banners and settings.",
+  "start_url": "/admin/?app=1",
+  "scope": "/admin/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1626",
+  "theme_color": "#0B1626",
+  "lang": "hi",
+  "icons": [
+    {"src": "/admin/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/admin/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/admin/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "नए ऑर्डर", "short_name": "ऑर्डर", "url": "/admin/?tab=orders", "icons": [{"src": "/admin/icon-96.png", "sizes": "96x96"}]},
+    {"name": "नया सामान जोड़ें", "short_name": "सामान", "url": "/admin/?tab=products", "icons": [{"src": "/admin/icon-96.png", "sizes": "96x96"}]},
+    {"name": "रिक्वेस्ट", "short_name": "रिक्वेस्ट", "url": "/admin/?tab=requests", "icons": [{"src": "/admin/icon-96.png", "sizes": "96x96"}]}
+  ]
+}
