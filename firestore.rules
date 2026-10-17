@@ -14,7 +14,8 @@ service cloud.firestore {
         'pos@diamondfashions.in',
         'dimondfashion95@gmail.com',
         'a95626201@gmail.com'
-      ];
+      ] || (myEmail() != '' && exists(/databases/$(database)/documents/staff/$(myEmail()))
+            && get(/databases/$(database)/documents/staff/$(myEmail())).data.active == true);
     }
 
     match /products/{id} { allow read: if true; allow write: if isAdmin() || dfStaff(); }
@@ -82,6 +83,12 @@ service cloud.firestore {
     }
     match /{path=**}/deductions/{did} { allow read: if isAdmin() || dfStaff(); }
     match /{path=**}/jobs/{jid} { allow read: if isAdmin() || dfStaff(); }
+
+    // Staff added from Admin → स्टाफ
+    match /staff/{sid} {
+      allow read, write: if isAdmin();
+      allow get: if signedIn() && sid == myEmail();
+    }
 
     match /riders/{rid} {
       allow read, write: if isAdmin();
