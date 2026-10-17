@@ -113,6 +113,21 @@ section.block{padding-block:44px}
 .field input,.field select,.field textarea{min-height:46px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
 .field textarea{min-height:80px;resize:vertical}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.osum{position:relative;background:var(--surface);color:var(--ink);width:min(520px,100%);max-height:100%;overflow:auto;border-radius:16px;padding:22px 20px 18px;display:flex;flex-direction:column;gap:12px}
+.osum h2{font-size:22px;font-weight:600;padding-right:44px;margin:0}
+.osum h3{font-size:15px;margin:4px 0 0;color:var(--muted);font-weight:600}
+.os-sub{color:var(--muted);font-size:15px;margin:-6px 0 0}
+.os-x{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:24px;cursor:pointer}
+.os-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.os-it{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px}
+.os-it img,.os-ph{width:52px;height:52px;border-radius:8px;object-fit:cover;background:var(--bg);display:block}
+.os-nm{display:flex;flex-direction:column;min-width:0}.os-nm b{font-weight:600;overflow:hidden;text-overflow:ellipsis}.os-nm small{color:var(--muted);font-size:13px}
+.os-tot{border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-direction:column;gap:4px}
+.os-row{display:flex;justify-content:space-between;gap:12px;font-size:15px}.os-row.big{font-size:19px;font-weight:700;border-top:2px solid var(--ink);padding-top:8px;margin-top:4px}
+.os-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:15px;background:var(--bg);border-radius:10px;padding:12px}.os-kv>span:nth-child(odd){color:var(--muted)}
+.os-act{display:flex;gap:10px;position:sticky;bottom:-18px;background:var(--surface);padding:10px 0 4px}.os-act .btn{flex:1}.os-act .btn-gold{flex:2}
+@media (max-width:560px){ .osum{border-radius:0;height:100%;max-height:none;padding:16px max(16px, env(safe-area-inset-left,0px)) 18px max(16px, env(safe-area-inset-right,0px))} }
+
 .fee-note{font-size:14px;margin:6px 0 0;padding:8px 10px;border-radius:8px;background:rgba(205,170,92,.14);border:1px solid rgba(205,170,92,.45)}
 .total.sub{font-weight:500;font-size:15px;border-top:0;margin-top:2px;padding-top:6px}
 .error{color:var(--danger);font-size:14px;font-weight:600;min-height:1.2em;margin:0}
@@ -638,7 +653,7 @@ var S = {
   o_pin:'PIN code', o_land:'Landmark (optional)',
   pay_cod:'Cash on Delivery (COD)', pay_cod_d:'Pay cash when you receive your order', pay_upi:'Pay online (UPI)', pay_upi_d:'Google Pay, PhonePe, Paytm or any UPI app',
   pay_upi_off:'Online payment is coming soon', pay_noprice:'Some items do not have a price yet. The shop will confirm the amount on WhatsApp before you pay.',
-  co_place:'Place order', co_hint:'After you place the order, WhatsApp opens with your order. Press Send so the shop receives it.',
+  sum_title:'Check your order', sum_sub:'Please check everything once. Tap “Confirm order” to place it.', sum_items:'Items', sum_to:'Deliver to', sum_pick:'Pick up from shop', sum_edit:'← Change', sum_ok:'✓ Confirm order', sum_close:'Close', co_place:'Place order', co_hint:'After you place the order, WhatsApp opens with your order. Press Send so the shop receives it.',
   err_addr:'For home delivery, write your address and 6-digit PIN code.', err_pay:'Choose a payment method.',
   conf_title:'Order placed!', conf_id:'Order ID: ', conf_step:'Last step: send your order to the shop on WhatsApp. Your order is confirmed only after the shop receives it.',
   conf_send:'Send order to shop on WhatsApp', conf_step_form:'Last step: tap “Send order” and press Submit on the form that opens. Your order is confirmed only after the shop receives it.', conf_send_form:'Send order', conf_or_wa:'Or send on WhatsApp', conf_sending:'Sending your order to the shop…', conf_sent:'Your order has been sent to the shop. The shop will call or WhatsApp you to confirm. Keep your order ID to track it.', conf_failed:'Could not send automatically. Tap “Send order” below to send it.', conf_pay_title:'Pay by UPI', conf_amt:'Amount to pay', conf_upi_id:'UPI ID', conf_copy:'Copy UPI ID', conf_copied:'UPI ID copied',
@@ -733,7 +748,7 @@ var S = {
   o_pin:'पिन कोड', o_land:'लैंडमार्क (चाहें तो)',
   pay_cod:'कैश ऑन डिलीवरी (COD)', pay_cod_d:'सामान मिलने पर नकद पैसे दें', pay_upi:'ऑनलाइन पेमेंट (UPI)', pay_upi_d:'Google Pay, PhonePe, Paytm या कोई भी UPI ऐप',
   pay_upi_off:'ऑनलाइन पेमेंट जल्द शुरू होगा', pay_noprice:'कुछ कपड़ों का दाम अभी नहीं लिखा है। पेमेंट से पहले दुकान WhatsApp पर रकम बताएगी।',
-  co_place:'ऑर्डर करें', co_hint:'ऑर्डर करने पर WhatsApp में आपका ऑर्डर खुलेगा। Send दबाएं ताकि दुकान तक पहुंचे।',
+  sum_title:'अपना ऑर्डर जाँच लें', sum_sub:'एक बार सब देख लें। सही हो तो “ऑर्डर पक्का करें” दबाएँ।', sum_items:'सामान', sum_to:'कहाँ भेजें', sum_pick:'दुकान से लेंगे', sum_edit:'← बदलें', sum_ok:'✓ ऑर्डर पक्का करें', sum_close:'बंद करें', co_place:'ऑर्डर करें', co_hint:'ऑर्डर करने पर WhatsApp में आपका ऑर्डर खुलेगा। Send दबाएं ताकि दुकान तक पहुंचे।',
   err_addr:'घर पर डिलीवरी के लिए पता और 6 अंकों का पिन कोड लिखें।', err_pay:'पेमेंट का तरीका चुनें।',
   conf_title:'ऑर्डर हो गया!', conf_id:'ऑर्डर नंबर: ', conf_step:'आखिरी काम: अपना ऑर्डर WhatsApp पर दुकान को भेजें। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।',
   conf_send:'WhatsApp पर दुकान को ऑर्डर भेजें', conf_step_form:'आखिरी काम: “ऑर्डर भेजें” दबाएँ और जो फॉर्म खुले उसमें Submit दबाएँ। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।', conf_send_form:'ऑर्डर भेजें', conf_or_wa:'या WhatsApp पर भेजें', conf_sending:'आपका ऑर्डर दुकान को भेजा जा रहा है…', conf_sent:'आपका ऑर्डर दुकान को भेज दिया गया है। दुकान आपको फ़ोन या WhatsApp करके पक्का करेगी। ट्रैक करने के लिए ऑर्डर नंबर संभालकर रखें।', conf_failed:'अपने-आप नहीं भेजा जा सका। नीचे “ऑर्डर भेजें” दबाकर भेजें।', conf_pay_title:'UPI से पेमेंट करें', conf_amt:'देने वाली रकम', conf_upi_id:'UPI ID', conf_copy:'UPI ID कॉपी करें', conf_copied:'UPI ID कॉपी हो गई',
@@ -1695,6 +1710,47 @@ function placeOrder(){
   var order = { id:newOrderId(), items: cart.map(function(c){ var p=findP(c.id); return c.m ? {name:p.name+' – '+fmtM(c.m)+' m',sku:p.code,size:'',qty:1,price:lineTotal(p,c)} : {name:p.name,sku:skuFor(p,c.size),size:c.size,qty:c.qty,price:p.price}; }),
     total: ct.total, allPriced: ct.allPriced, pay: payMethod, name: val('o-name'), phone: val('o-phone'), how: optText('o-how'),
     addr: val('o-addr'), pin: val('o-pin'), land: val('o-land'), note: val('o-note'), loc: orderLoc, delivery: dl ? (dl.km != null ? dl.charge : null) : null, distKm: dl && dl.km != null ? dl.km : null };
+  showSummary(order, dl);
+}
+function showSummary(order, dl){
+  var t = T(), prev = document.activeElement;
+  var old = document.getElementById('sum-scrim'); if (old) old.remove();
+  function close(){ sc.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); try { prev && prev.focus(); } catch(e){} }
+  function onKey(e){ if (e.key === 'Escape') close(); }
+  var itemsTotal = order.total - (order.delivery || 0);
+  var rows = cart.map(function(c, i){
+    var p = findP(c.id), it = order.items[i], ph = p && p.photos && p.photos[0];
+    return el('li',{'class':'os-it'},[
+      ph ? el('img',{src:ph,alt:'',loading:'lazy'}) : el('span',{'class':'os-ph','aria-hidden':'true'}),
+      el('div',{'class':'os-nm'},[ el('b',{text:it.name}), el('small',{text:(it.sku||'')+(it.size?' · '+t.size_lbl+it.size:'')+(c.m?'':' · × '+it.qty)}) ]),
+      el('span',{'class':'num',text: it.price ? rupees(it.price*it.qty) : t.price_by_shop})
+    ]);
+  });
+  var line = function(a, b, cls){ return el('div',{'class':'os-row'+(cls?' '+cls:'')},[ el('span',{text:a}), el('span',{'class':'num',text:b}) ]); };
+  var home = /deliver|घर/i.test(order.how||'') || (dl != null);
+  var addr = [order.addr, order.pin ? 'PIN '+order.pin : '', order.land].filter(Boolean).join(', ');
+  var ok = el('button',{'class':'btn btn-gold',type:'button',text:t.sum_ok,onclick:function(){ ok.disabled = true; close(); commitOrder(order); }});
+  var box = el('div',{'class':'osum',role:'dialog','aria-modal':'true','aria-labelledby':'os-h'},[
+    el('button',{'class':'os-x',type:'button','aria-label':t.sum_close,text:'×',onclick:close}),
+    el('h2',{id:'os-h',text:t.sum_title}), el('p',{'class':'os-sub',text:t.sum_sub}),
+    el('h3',{text:t.sum_items+' ('+order.items.length+')'}), el('ul',{'class':'os-list'},rows),
+    el('div',{'class':'os-tot'},[
+      dl ? line(t.items_l, rupees(itemsTotal)) : null,
+      dl ? line(t.fee_line+(order.distKm!=null?' ('+order.distKm+' km)':''), order.delivery==null ? t.fee_tbd : order.delivery ? rupees(order.delivery) : t.fee_free) : null,
+      line(order.allPriced ? t.total : t.total_part, rupees(order.total)+(order.allPriced?'':' + ?'), 'big') ]),
+    el('div',{'class':'os-kv'},[
+      el('span',{text:t.wa_name}), el('span',{text:order.name+' · '+order.phone}),
+      el('span',{text:t.sum_to}), el('span',{text: home ? (addr || order.how) : t.sum_pick}),
+      order.loc ? el('span',{text:t.wa_loc}) : null, order.loc ? el('a',{href:mapLink(order.loc),target:'_blank',rel:'noopener',text:'📍 '+t.o_loc_view}) : null,
+      el('span',{text:t.wa_pay}), el('span',{text:order.pay==='upi'?t.wa_upi:t.wa_cod}),
+      order.note ? el('span',{text:t.wa_note}) : null, order.note ? el('span',{text:order.note}) : null ]),
+    el('div',{'class':'os-act'},[ el('button',{'class':'btn btn-line',type:'button',text:t.sum_edit,onclick:close}), ok ])
+  ]);
+  var sc = el('div',{'class':'scrim',id:'sum-scrim',onclick:function(e){ if (e.target === sc) close(); }},[box]);
+  document.body.appendChild(sc); document.body.style.overflow = 'hidden'; document.addEventListener('keydown', onKey);
+  ok.focus();
+}
+function commitOrder(order){
   try { var hist = JSON.parse(localStorage.getItem('df-orders')||'[]'); hist.unshift({id:order.id, phone:order.phone, items:order.items.map(function(i){return i.sku+' '+i.name;}).join(', ')}); localStorage.setItem('df-orders', JSON.stringify(hist.slice(0,10))); } catch(e) {}
   placed = order;
   try { window.dispatchEvent(new CustomEvent('df-order',{detail:order})); } catch(e){}
