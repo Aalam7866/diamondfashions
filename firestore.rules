@@ -8,31 +8,40 @@ service cloud.firestore {
     function riderDoc() { return /databases/$(database)/documents/riders/$(myEmail()); }
     function isRider() { return myEmail() != '' && exists(riderDoc()) && get(riderDoc()).data.active == true; }
 
-    // Shop data everyone can read; only the owner changes it
-    match /products/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /config/{id}   { allow read: if true; allow write: if isAdmin(); }
+    // Shop PC + staff phones (DF Staff, DF Tailoring, DF Reports) – har staff ka email yahan jodein
+    function dfStaff() {
+      return myEmail() in [
+        'pos@diamondfashions.in',
+        'dimondfashion95@gmail.com',
+        'a95626201@gmail.com'
+      ];
+    }
+
+    match /products/{id} { allow read: if true; allow write: if isAdmin() || dfStaff(); }
+    match /config/{id}   { allow read: if true; allow write: if isAdmin() || dfStaff(); }
     match /secret/{doc=**} { allow read, write: if isAdmin(); }
 
-    // Customer accounts (profile, addresses, own order list)
+    // Staff apps
+    match /reports/{doc}  { allow read, write: if dfStaff(); }
+    match /staffcfg/{doc} { allow read, write: if dfStaff(); }
+    match /inbox/{doc}    { allow read, create, delete: if dfStaff(); }
+
     match /users/{uid}/{doc=**} {
       allow read, write: if signedIn() && request.auth.uid == uid;
       allow read: if isAdmin();
     }
 
-    // Reviews: anyone reads, a logged-in customer writes their own
     match /reviews/{id} {
       allow read: if true;
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow update, delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
-    // Cancel / return / exchange / tailoring requests
     match /requests/{id} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
     }
 
-    // Orders: customers create; owner manages; an active rider sees packed parcels and his own deliveries
     match /orders/{id} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
@@ -46,7 +55,6 @@ service cloud.firestore {
         );
     }
 
-    // Order tracking shown to customers
     match /track/{id} {
       allow read: if true;
       allow write: if isAdmin();
@@ -57,7 +65,6 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/orders/$(id)).data.get('rider', '') == myEmail());
     }
 
-    // Delivery persons: owner adds / blocks; a rider can read only his own entry
     match /riders/{rid} {
       allow read, write: if isAdmin();
       allow get: if signedIn() && rid == myEmail();
