@@ -75,7 +75,12 @@ service cloud.firestore {
         allow update: if get(/databases/$(database)/documents/karigars/$(tok)).data.active == true
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kstatus', 'kAt', 'knote']);
       }
+      match /deductions/{did} {
+        allow read, write: if isAdmin() || dfStaff();
+        allow read: if get(/databases/$(database)/documents/karigars/$(tok)).data.active == true;
+      }
     }
+    match /{path=**}/deductions/{did} { allow read: if isAdmin() || dfStaff(); }
     match /{path=**}/jobs/{jid} { allow read: if isAdmin() || dfStaff(); }
 
     match /riders/{rid} {
