@@ -224,7 +224,7 @@ function orderCard(o){
     (o.loc && o.loc.lat) ? el('span',null,[ el('a',{'class':'btn b-sm b-gold',target:'_blank',rel:'noopener',href:'https://www.google.com/maps/search/?api=1&query='+o.loc.lat+','+o.loc.lng,text:'📍 '+L('मैप पर देखें')}), ' ',
       el('a',{'class':'btn b-sm b-line',target:'_blank',rel:'noopener',href:'https://www.google.com/maps/dir/?api=1&destination='+o.loc.lat+','+o.loc.lng,text:'🧭 '+L('रास्ता')}),
       o.loc.acc ? el('span',{'class':'muted small',text:' ±'+o.loc.acc+' m'}) : null ]) : null,
-    o.delivery != null ? el('span',{text:L('डिलीवरी')}) : null, o.delivery != null ? el('span',{text:(o.delivery ? rupees(o.delivery) : L('फ़्री'))+(o.distKm ? ' · '+o.distKm+' km' : '')}) : null,
+    o.delivery != null ? el('span',{text:L('डिलीवरी')}) : null, o.delivery != null ? el('span',null,[ (o.delivery ? rupees(o.delivery) : L('फ़्री'))+(o.distKm ? ' · '+o.distKm+' km' : ''), o.feeUtr ? el('span',{'class':'st ok',style:'margin-left:6px',text:L('UPI से भरा · UTR ')+o.feeUtr}) : null, o.feeUtr ? el('div',{'class':'muted small',text:L('बैंक/UPI ऐप में यह UTR और ₹')+(o.feePaid||o.delivery)+L(' मिलाकर देख लें')}) : null ]) : null,
     el('span',{text:L('पेमेंट')}), el('span',null,[ o.pay==='upi' ? 'UPI ' : 'COD ', o.pay==='upi' ? el('span',{'class':'st '+(o.paid?'ok':''),text:o.paid?L('पैसे मिले'):L('पैसे बाकी')}) : null ]),
     o.note ? el('span',{text:L('नोट')}) : null, o.note ? el('span',{text:o.note}) : null
   ]));
