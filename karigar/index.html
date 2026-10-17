@@ -76,6 +76,9 @@ label.chk input{width:22px;height:22px}
 </style>
 
 <style>
+.hello{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}.hello .av{width:46px;height:46px;border-radius:50%;background:#7a3e96;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex:none}.hello b{display:block;font-size:19px}.hello small{color:var(--muted)}
+.flt{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}.flt input{min-height:44px;border-radius:10px;border:1px solid var(--line);padding:6px 10px;background:var(--surface);color:var(--ink);font:inherit;max-width:240px}
+.tot{display:flex;justify-content:space-between;align-items:center;background:var(--gold-soft);border-radius:10px;padding:10px 12px;margin-bottom:12px}
 .job{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
 .job.late{border:2px solid var(--bad)}.job.new{border:2px solid var(--sign-gold)}
 .g{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;background:var(--bg)}
@@ -107,7 +110,7 @@ document.documentElement.lang = LANG;
 var tok = new URLSearchParams(location.search).get('k') || '';
 try { if (tok) localStorage.setItem('k-token', tok); else tok = localStorage.getItem('k-token') || ''; } catch(e){}
 if (tok && !/[?&]k=/.test(location.search)) try { history.replaceState(null, '', '?k='+tok); } catch(e){}
-var me = null, jobs = [], tab = 'todo', seen = null, sw = null, instEvt = null;
+var me = null, jobs = [], tab = 'todo', seen = null, sw = null, instEvt = null, fmode = 'month', fday = '', fmonth = '';
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ sw = r; }).catch(function(){});
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; });
@@ -139,9 +142,26 @@ function draw(){
   var late = todo.filter(function(j){ return j.due && j.due < today(); }).length;
   app.appendChild(el('nav',{'class':'tabs'},[ ['todo',L('मेरा काम','My work'),todo.length],['done',L('पूरा हुआ','Done'),0] ].map(function(t){ return el('button',{type:'button','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); }},[ t[1], t[2] ? el('span',{'class':'n',text:String(t[2])}) : null ]); })));
   var main = el('main',{'class':'wrap'}); app.appendChild(main);
+  main.appendChild(el('div',{'class':'hello'},[ el('div',{'class':'av',text:String(me.name||'?').trim().charAt(0).toUpperCase()}), el('div',null,[ el('b',{text:L('नमस्ते, ','Hello, ')+(me.name||'')+L(' जी','')}), el('small',{text:[me.role, L('डायमंड फैशन्स के कारीगर','Diamond Fashions tailor')].filter(Boolean).join(' · ')}) ]) ]));
   main.appendChild(el('div',{'class':'sum'},[ el('div',null,[ el('b',{text:String(todo.length)}), el('span',{text:L('बाकी काम','Pending')}) ]), el('div',null,[ el('b',{style:late?'color:var(--bad)':'',text:String(late)}), el('span',{text:L('लेट','Late')}) ]), el('div',null,[ el('b',{text:String(done.length)}), el('span',{text:L('पूरा','Done')}) ]) ]));
-  var list = (tab === 'todo' ? todo : done).slice().sort(function(a,b){ return String(a.due||'9999').localeCompare(String(b.due||'9999')); });
-  if (!list.length) main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='todo' ? '🧵' : '✅'}), tab==='todo' ? L('अभी कोई काम नहीं। दुकान से काम आते ही यहाँ दिखेगा (आवाज़ के साथ)।','No work right now. New work from the shop appears here (with a sound).') : L('अभी कुछ पूरा नहीं हुआ।','Nothing finished yet.') ]));
+  var list;
+  if (tab === 'todo') list = todo.slice().sort(function(a,b){ return String(a.due||'9999').localeCompare(String(b.due||'9999')); });
+  else {
+    if (!fday) fday = today(); if (!fmonth) fmonth = today().slice(0,7);
+    var dIn = el('input',{type:'date',value:fday,max:today()}), mIn = el('input',{type:'month',value:fmonth,max:today().slice(0,7)});
+    dIn.onchange = function(){ fday = dIn.value || today(); fmode = 'day'; draw(); }; mIn.onchange = function(){ fmonth = mIn.value || today().slice(0,7); fmode = 'month'; draw(); };
+    var seg = function(k, t){ return el('button',{type:'button','class':'btn sm '+(fmode===k?'gold':'line'),text:t,onclick:function(){ fmode = k; draw(); }}); };
+    main.appendChild(el('div',{'class':'flt'},[ el('div',{'class':'row'},[ seg('day', L('तारीख','Date')), seg('month', L('महीना','Month')), seg('all', L('सब','All')) ]),
+      fmode === 'day' ? dIn : fmode === 'month' ? mIn : null ]));
+    var doneAt = function(j){ return String(j.kAt || j.updated || ''); };
+    var localDay = function(iso){ if (!iso) return ''; var d = new Date(iso), p = function(n){ return (n<10?'0':'')+n; }; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); };
+    list = done.filter(function(j){ var d = localDay(doneAt(j)); return fmode === 'all' || (fmode === 'day' ? d === fday : d.slice(0,7) === fmonth); })
+      .sort(function(a,b){ return doneAt(b).localeCompare(doneAt(a)); });
+    var pcs = list.reduce(function(n, j){ return n + (j.items||[]).reduce(function(m, it){ return m + (+it.qty||1); }, 0); }, 0);
+    var lbl = fmode === 'day' ? dmy(fday) : fmode === 'month' ? new Date(fmonth+'-01T12:00:00').toLocaleDateString(LANG==='en'?'en-IN':'hi-IN',{month:'long',year:'numeric'}) : L('अब तक','So far');
+    main.appendChild(el('div',{'class':'tot'},[ el('span',{text:lbl}), el('b',{text:list.length+' '+L('काम','jobs')+' · '+pcs+' '+L('पीस','pcs')}) ]));
+  }
+  if (!list.length) main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='todo' ? '🧵' : '✅'}), tab==='todo' ? L('अभी कोई काम नहीं। दुकान से काम आते ही यहाँ दिखेगा (आवाज़ के साथ)।','No work right now. New work from the shop appears here (with a sound).') : L('इस समय में कोई काम पूरा नहीं हुआ।','No work finished in this period.') ]));
   list.forEach(function(j){ main.appendChild(card(j)); });
   window.scrollTo(0, y);
 }

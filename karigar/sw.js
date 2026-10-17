@@ -1,5 +1,5 @@
 /* Diamond Fashions Karigar page – keeps the app shell available and handles parcel alerts. */
-var CACHE = 'df-karigar-v1';
+var CACHE = 'df-karigar-v2';
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(['./', 'manifest.webmanifest', 'icon-192.png']); }).catch(function(){})); self.skipWaiting(); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k.indexOf('df-karigar-') === 0 && k !== CACHE; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
