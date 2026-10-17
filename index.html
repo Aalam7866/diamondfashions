@@ -131,6 +131,7 @@ section.block{padding-block:44px}
 .os-act{display:flex;gap:10px;position:sticky;bottom:-18px;background:var(--surface);padding:10px 0 4px}.os-act .btn{flex:1}.os-act .btn-gold{flex:2}
 @media (max-width:560px){ .osum{border-radius:0;height:100%;max-height:none;padding:16px max(16px, env(safe-area-inset-left,0px)) 18px max(16px, env(safe-area-inset-right,0px))} }
 
+.fee-note.far{background:rgba(179,38,30,.08);border-color:rgba(179,38,30,.5);color:#8a1c14}
 .fee-note{font-size:14px;margin:6px 0 0;padding:8px 10px;border-radius:8px;background:rgba(205,170,92,.14);border:1px solid rgba(205,170,92,.45)}
 .total.sub{font-weight:500;font-size:15px;border-top:0;margin-top:2px;padding-top:6px}
 .error{color:var(--danger);font-size:14px;font-weight:600;min-height:1.2em;margin:0}
@@ -662,7 +663,7 @@ var S = {
   conf_send:'Send order to shop on WhatsApp', conf_step_form:'Last step: tap “Send order” and press Submit on the form that opens. Your order is confirmed only after the shop receives it.', conf_send_form:'Send order', conf_or_wa:'Or send on WhatsApp', conf_sending:'Sending your order to the shop…', conf_sent:'Your order has been sent to the shop. The shop will call or WhatsApp you to confirm. Keep your order ID to track it.', conf_failed:'Could not send automatically. Tap “Send order” below to send it.', conf_pay_title:'Pay by UPI', conf_amt:'Amount to pay', conf_upi_id:'UPI ID', conf_copy:'Copy UPI ID', conf_copied:'UPI ID copied',
   conf_scan:'Scan this QR with any UPI app', conf_open:'Open UPI app', conf_after:'After paying, send the payment screenshot on WhatsApp.', conf_after_np:'The shop will tell you the final amount on WhatsApp. Then pay to this UPI ID.',
   conf_cod:'Pay cash when your order arrives.', conf_new:'Continue shopping',
-  o_loc:'📍 Share my location on map', o_loc_hint:'Optional — helps our delivery person reach your home easily.', o_loc_wait:'Finding your location…', o_loc_ok:'Location added ✓', o_loc_acc:'accuracy about {m} m', o_loc_view:'See on map', o_loc_again:'Update', o_loc_rm:'Remove', o_loc_den:'Location permission is off. Allow location for this site in your browser settings, then try again.', o_loc_err:'Could not get your location. Turn on GPS/location and try again.', o_loc_unsup:'This browser cannot share location.', wa_loc:'Location (map)', items_l:'Items', fee_line:'Delivery charge', fee_free:'FREE', fee_tbd:'as per distance', fee_ok:'Home delivery: about {k} km from our shop → {f}', fee_need:'Home delivery is free up to {d} km. After that ₹{f} (+₹{s} for every extra {sk} km). Share your location so we can show the exact charge.', wa_fee:'Delivery charge', wa_dist:'Distance from shop', wa_oid:'Order ID', wa_pay:'Payment', wa_pin:'PIN', wa_land:'Landmark', wa_cod:'Cash on Delivery', wa_upi:'UPI (online)',
+  o_loc:'📍 Share my location on map', o_loc_hint:'Optional — helps our delivery person reach your home easily.', o_loc_wait:'Finding your location…', o_loc_ok:'Location added ✓', o_loc_acc:'accuracy about {m} m', o_loc_view:'See on map', o_loc_again:'Update', o_loc_rm:'Remove', o_loc_den:'Location permission is off. Allow location for this site in your browser settings, then try again.', o_loc_err:'Could not get your location. Turn on GPS/location and try again.', o_loc_unsup:'This browser cannot share location.', wa_loc:'Location (map)', items_l:'Items', fee_far:'Sorry, home delivery is only available within {m} km of our shop (you are about {k} km away). Please choose “pick up from shop”, or call us.', fee_line:'Delivery charge', fee_free:'FREE', fee_tbd:'as per distance', fee_ok:'Home delivery: about {k} km from our shop → {f}', fee_need:'Home delivery is free up to {d} km. After that ₹{f} (+₹{s} for every extra {sk} km). Share your location so we can show the exact charge.', wa_fee:'Delivery charge', wa_dist:'Distance from shop', wa_oid:'Order ID', wa_pay:'Payment', wa_pin:'PIN', wa_land:'Landmark', wa_cod:'Cash on Delivery', wa_upi:'UPI (online)',
   ret_eb:'Returns', ret_title:'Easy {d}-day return & exchange',
   ret_points:['Return or exchange within {d} days of delivery','Item must be unused, unwashed and with tags','Stitched or altered clothes and innerwear cannot be returned','After the item is checked: exchange for another size, or refund by UPI / cash'],
   ret_order:'Order ID', ret_phone:'Mobile number', ret_item:'Which item', ret_reason:'Reason', ret_reasons:['Size does not fit','Damaged or defective','Different from photo','Changed my mind','Other'],
@@ -757,7 +758,7 @@ var S = {
   conf_send:'WhatsApp पर दुकान को ऑर्डर भेजें', conf_step_form:'आखिरी काम: “ऑर्डर भेजें” दबाएँ और जो फॉर्म खुले उसमें Submit दबाएँ। दुकान तक पहुंचने के बाद ही ऑर्डर पक्का होगा।', conf_send_form:'ऑर्डर भेजें', conf_or_wa:'या WhatsApp पर भेजें', conf_sending:'आपका ऑर्डर दुकान को भेजा जा रहा है…', conf_sent:'आपका ऑर्डर दुकान को भेज दिया गया है। दुकान आपको फ़ोन या WhatsApp करके पक्का करेगी। ट्रैक करने के लिए ऑर्डर नंबर संभालकर रखें।', conf_failed:'अपने-आप नहीं भेजा जा सका। नीचे “ऑर्डर भेजें” दबाकर भेजें।', conf_pay_title:'UPI से पेमेंट करें', conf_amt:'देने वाली रकम', conf_upi_id:'UPI ID', conf_copy:'UPI ID कॉपी करें', conf_copied:'UPI ID कॉपी हो गई',
   conf_scan:'किसी भी UPI ऐप से यह QR स्कैन करें', conf_open:'UPI ऐप खोलें', conf_after:'पेमेंट के बाद उसका स्क्रीनशॉट WhatsApp पर भेजें।', conf_after_np:'दुकान WhatsApp पर पूरी रकम बताएगी, फिर इस UPI ID पर पेमेंट करें।',
   conf_cod:'ऑर्डर मिलने पर नकद पैसे दें।', conf_new:'और खरीदारी करें',
-  o_loc:'📍 मैप पर मेरी लोकेशन भेजें', o_loc_hint:'चाहें तो — इससे डिलीवरी वाले भैया आसानी से घर पहुँच जाएँगे।', o_loc_wait:'आपकी लोकेशन ढूँढ रहे हैं…', o_loc_ok:'लोकेशन जुड़ गई ✓', o_loc_acc:'लगभग {m} मीटर तक सही', o_loc_view:'मैप पर देखें', o_loc_again:'दोबारा लें', o_loc_rm:'हटाएँ', o_loc_den:'लोकेशन की इजाज़त बंद है। ब्राउज़र सेटिंग में इस साइट के लिए Location “Allow” करें, फिर दोबारा दबाएँ।', o_loc_err:'लोकेशन नहीं मिली। फ़ोन का GPS/Location चालू करके दोबारा दबाएँ।', o_loc_unsup:'यह ब्राउज़र लोकेशन नहीं भेज सकता।', wa_loc:'लोकेशन (मैप)', items_l:'सामान', fee_line:'डिलीवरी चार्ज', fee_free:'फ़्री', fee_tbd:'दूरी के हिसाब से', fee_ok:'घर डिलीवरी: दुकान से लगभग {k} km → {f}', fee_need:'{d} km तक घर डिलीवरी फ़्री है। उससे दूर ₹{f} (और हर {sk} km पर +₹{s})। सही चार्ज देखने के लिए अपनी लोकेशन भेजें।', wa_fee:'डिलीवरी चार्ज', wa_dist:'दुकान से दूरी', wa_oid:'ऑर्डर नंबर', wa_pay:'पेमेंट', wa_pin:'पिन', wa_land:'लैंडमार्क', wa_cod:'कैश ऑन डिलीवरी', wa_upi:'UPI (ऑनलाइन)',
+  o_loc:'📍 मैप पर मेरी लोकेशन भेजें', o_loc_hint:'चाहें तो — इससे डिलीवरी वाले भैया आसानी से घर पहुँच जाएँगे।', o_loc_wait:'आपकी लोकेशन ढूँढ रहे हैं…', o_loc_ok:'लोकेशन जुड़ गई ✓', o_loc_acc:'लगभग {m} मीटर तक सही', o_loc_view:'मैप पर देखें', o_loc_again:'दोबारा लें', o_loc_rm:'हटाएँ', o_loc_den:'लोकेशन की इजाज़त बंद है। ब्राउज़र सेटिंग में इस साइट के लिए Location “Allow” करें, फिर दोबारा दबाएँ।', o_loc_err:'लोकेशन नहीं मिली। फ़ोन का GPS/Location चालू करके दोबारा दबाएँ।', o_loc_unsup:'यह ब्राउज़र लोकेशन नहीं भेज सकता।', wa_loc:'लोकेशन (मैप)', items_l:'सामान', fee_far:'माफ़ कीजिए, घर डिलीवरी सिर्फ़ दुकान से {m} km तक होती है (आप लगभग {k} km दूर हैं)। “दुकान से आकर लूंगा” चुनें या हमें फ़ोन करें।', fee_line:'डिलीवरी चार्ज', fee_free:'फ़्री', fee_tbd:'दूरी के हिसाब से', fee_ok:'घर डिलीवरी: दुकान से लगभग {k} km → {f}', fee_need:'{d} km तक घर डिलीवरी फ़्री है। उससे दूर ₹{f} (और हर {sk} km पर +₹{s})। सही चार्ज देखने के लिए अपनी लोकेशन भेजें।', wa_fee:'डिलीवरी चार्ज', wa_dist:'दुकान से दूरी', wa_oid:'ऑर्डर नंबर', wa_pay:'पेमेंट', wa_pin:'पिन', wa_land:'लैंडमार्क', wa_cod:'कैश ऑन डिलीवरी', wa_upi:'UPI (ऑनलाइन)',
   ret_eb:'Returns', ret_title:'{d} दिन में आसान वापसी और बदलाव',
   ret_points:['डिलीवरी के {d} दिन के अंदर वापसी या बदलाव','कपड़ा बिना पहना, बिना धुला और टैग के साथ हो','सिले हुए या ऑल्टर किए कपड़े और इनरवियर वापस नहीं होंगे','जांच के बाद: दूसरे साइज़ से बदलाव, या UPI / नकद में पैसे वापस'],
   ret_order:'ऑर्डर नंबर', ret_phone:'मोबाइल नंबर', ret_item:'कौन सा कपड़ा', ret_reason:'कारण', ret_reasons:['साइज़ ठीक नहीं','कपड़ा खराब या फटा है','फोटो से अलग है','पसंद बदल गई','कुछ और'],
@@ -1644,18 +1645,19 @@ function deliveryInfo(){
   var cfg = {free:free, fee:fee, sk:sk, sf:sf};
   if (!orderLoc || !SHOP.shopLat) return cfg;
   var km = Math.round(distKm({lat:+SHOP.shopLat, lng:+SHOP.shopLng}, orderLoc) * 1.25 * 10) / 10; /* straight line × 1.25 ≈ road distance */
-  cfg.km = km; cfg.charge = km <= free ? 0 : fee + Math.max(0, Math.ceil((km - free - sk) / sk - 1e-9)) * sf;
+  cfg.km = km; cfg.max = +SHOP.delMaxKm || 30; cfg.far = km > cfg.max;
+  cfg.charge = cfg.far ? null : km <= free ? 0 : fee + Math.max(0, Math.ceil((km - free - sk) / sk - 1e-9)) * sf;
   return cfg;
 }
 function updateFee(){
   var t = T(), d = deliveryInfo(), n = document.getElementById('o-fee'), tb = document.getElementById('cart-total');
-  if (n){ n.hidden = !d; if (d) n.innerHTML = d.km != null ? t.fee_ok.replace('{k}', d.km).replace('{f}', '<b>'+(d.charge ? rupees(d.charge) : t.fee_free)+'</b>') : t.fee_need.replace(/\{d\}/g, d.free).replace('{f}', d.fee).replace('{s}', d.sf).replace('{sk}', d.sk); }
+  if (n){ n.hidden = !d; n.classList.toggle('far', !!(d && d.far)); if (d && d.far) n.innerHTML = t.fee_far.replace('{m}', d.max).replace('{k}', d.km); else if (d) n.innerHTML = d.km != null ? t.fee_ok.replace('{k}', d.km).replace('{f}', '<b>'+(d.charge ? rupees(d.charge) : t.fee_free)+'</b>') : t.fee_need.replace(/\{d\}/g, d.free).replace('{f}', d.fee).replace('{s}', d.sf).replace('{sk}', d.sk); }
   if (!tb) return; var old = tb.querySelector('.fee-rows'); if (old) old.remove();
   var ct = cartTotal(), first = tb.querySelector(':scope > .total > span');
   if (first) first.textContent = (d && d.charge) ? t.items_l : (ct.allPriced ? t.total : t.total_part);
   if (!d || !cart.length) return;
   var rows = el('div',{'class':'fee-rows'},[
-    el('div',{'class':'total sub'},[ el('span',{text:t.fee_line+(d.km != null ? ' ('+d.km+' km)' : '')}), el('span',{'class':'num',text: d.km == null ? t.fee_tbd : d.charge ? rupees(d.charge) : t.fee_free}) ]) ]);
+    el('div',{'class':'total sub'},[ el('span',{text:t.fee_line+(d.km != null ? ' ('+d.km+' km)' : '')}), el('span',{'class':'num',text: d.far ? '—' : d.km == null ? t.fee_tbd : d.charge ? rupees(d.charge) : t.fee_free}) ]) ]);
   if (d.charge) rows.appendChild(el('div',{'class':'total'},[ el('span',{text:ct.allPriced ? t.total : t.total_part}), el('span',{'class':'num',text:rupees(ct.total + d.charge)}) ]));
   tb.appendChild(rows);
 }
@@ -1707,8 +1709,9 @@ function placeOrder(){
   var home = document.getElementById('o-how').value === '1';
   if (home && (!val('o-addr') || !/^\d{6}$/.test(val('o-pin')))){ err.textContent = t.err_addr; document.getElementById(val('o-addr')?'o-pin':'o-addr').focus(); return; }
   if (!payMethod){ err.textContent = t.err_pay; return; }
-  err.textContent = '';
   var ct = cartTotal(), dl = deliveryInfo();
+  if (dl && dl.far){ err.textContent = t.fee_far.replace('{m}', dl.max).replace('{k}', dl.km); document.getElementById('o-how').focus(); return; }
+  err.textContent = '';
   if (dl && dl.charge) ct.total += dl.charge;
   var order = { id:newOrderId(), items: cart.map(function(c){ var p=findP(c.id); return c.m ? {name:p.name+' – '+fmtM(c.m)+' m',sku:p.code,size:'',qty:1,price:lineTotal(p,c)} : {name:p.name,sku:skuFor(p,c.size),size:c.size,qty:c.qty,price:p.price}; }),
     total: ct.total, allPriced: ct.allPriced, pay: payMethod, name: val('o-name'), phone: val('o-phone'), how: optText('o-how'),
@@ -2107,7 +2110,7 @@ window.DF = {
   setRatings: function(map){ DF.ratings = map || {}; if (adminMode) return; try { renderGrid(); } catch(e){} var pr = document.getElementById('pp-rating'); if (pr && openId){ pr.innerHTML = ''; var b = rateBadge(openId, true); if (b) pr.appendChild(b); } },
   setProducts: function(list){ if (!list || !list.length || adminMode) return; try { captureForms(); } catch(e){} if (cartHold.length){ cart = cart.concat(cartHold); cartHold = []; }
     products = list.filter(function(p){ return !p.hidden; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }).map(normalize); renderAll(); openFromHash(); },
-  setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place','igUrl','fbUrl','shopLat','shopLng','delKm','delFee','delStepKm','delStepFee'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); try { updateFee(); } catch(e){} var hb = JSON.stringify(c.hideBnr||[]); if (hb !== JSON.stringify(SHOP.hideBnr||[])){ SHOP.hideBnr = c.hideBnr||[]; try { renderBanners(); } catch(e){} } try { renderSocial(); } catch(e){} },
+  setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place','igUrl','fbUrl','shopLat','shopLng','delKm','delFee','delStepKm','delStepFee','delMaxKm'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); try { updateFee(); } catch(e){} var hb = JSON.stringify(c.hideBnr||[]); if (hb !== JSON.stringify(SHOP.hideBnr||[])){ SHOP.hideBnr = c.hideBnr||[]; try { renderBanners(); } catch(e){} } try { renderSocial(); } catch(e){} },
   setTrack: function(map){ Object.keys(TRACK).forEach(function(k){ if (!map[k]) return; }); Object.keys(map).forEach(function(k){ TRACK[k] = map[k]; }); try { renderTrack(); } catch(e){} },
   rupees: rupees
 };
