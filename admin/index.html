@@ -138,7 +138,7 @@ var ST = {new:L('नया'), accepted:L('मंज़ूर'), packed:L('पै
 var STEN = {new:'New', accepted:'Accepted', packed:'Packed', shipped:'Shipped', pickup:'Ready for pickup', delivered:'Delivered', rejected:'Rejected', cancelled:'Cancelled', return_req:'Return requested', return_ok:'Return approved', returned:'Returned', return_no:'Return not approved'};
 
 var banners = [], reviews = [], riders = [];
-var RIDER_URL = 'https://aalam7866.github.io/rider/';
+var RIDER_URL = 'https://apps.diamondfashions.in/rider/';
 var me = null, tab = 'orders', ofilter = 'active', orders = [], requests = [], products = [], cfg = {}, track = {}, q = '';
 var unsubs = [];
 var app = document.getElementById('app');
@@ -179,7 +179,7 @@ function newCount(){ return orders.filter(function(o){ return o.status==='new'; 
 /* ---------- admin app: install, alerts, badge ---------- */
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 var instEvt = null, adminSW = null;
-var APP_HOST = /(^|\.)github\.io$|^apps\.diamondfashions\.in$/.test(location.hostname), SITE = APP_HOST ? 'https://diamondfashions.in' : '', APP_URL = 'https://aalam7866.github.io/admin/';
+var APP_HOST = /(^|\.)github\.io$|^apps\.diamondfashions\.in$/.test(location.hostname), SITE = APP_HOST ? 'https://diamondfashions.in' : '', APP_URL = 'https://apps.diamondfashions.in/admin/';
 if (APP_HOST && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ adminSW = r; }).catch(function(){});
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; if (me && isAdmin(me)) try { draw(); } catch(x){} else { var ib = document.getElementById('login-inst'); if (ib){ ib.innerHTML = ''; var b = installBtn(); if (b) ib.appendChild(b); } } });
 window.addEventListener('appinstalled', function(){ instEvt = null; IS_APP = true; if (me && isAdmin(me)) try { draw(); } catch(x){} });
@@ -857,7 +857,7 @@ function drawDelivery(main){
     }}), m ]));
 }
 /* ---------- सिलाई (tailoring jobs) + कारीगर (tailors' work links) – all on Firebase, no Google Sheet ---------- */
-var kded = [], karigars = [], kjobs = {}, sfilter = 'active', KARIGAR_URL = 'https://aalam7866.github.io/karigar/?k=';
+var kded = [], karigars = [], kjobs = {}, sfilter = 'active', KARIGAR_URL = 'https://apps.diamondfashions.in/karigar/?k=';
 var TST = {new:L('नया'), cutting:L('कटिंग'), stitching:L('सिलाई चालू'), ready:L('तैयार'), delivered:L('ग्राहक को दिया'), cancelled:L('रद्द')};
 var GARMENTS = ['Suit / सूट','Blouse / ब्लाउज़','Lehenga / लहंगा','Fall-pico / फॉल-पीको','Shirt / शर्ट','Pant / पैंट','Kurta-Pajama / कुर्ता-पायजामा','Safari / सफ़ारी','Alteration / ऑल्टरेशन','Other / और कुछ'];
 function tjobs(){ return requests.filter(function(r){ return r.kind === 'tailoring'; }); }
@@ -1033,7 +1033,7 @@ function drawKarigars(main){
 }
 
 /* ---------- staff (DF Staff / DF Tailoring / DF Reports logins) – no rules editing needed ---------- */
-var staffList = [], STAFF_APPS = 'https://aalam7866.github.io/';
+var staffList = [], STAFF_APPS = 'https://apps.diamondfashions.in/';
 function staffAuth(){ var a = firebase.apps.filter(function(x){ return x.name === 'staffmaker'; })[0] || firebase.initializeApp(CFG, 'staffmaker'); return a.auth(); }
 function drawStaff(main){
   main.appendChild(el('h2',{text:L('स्टाफ')}));
