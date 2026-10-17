@@ -18,6 +18,9 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/staff/$(myEmail())).data.active == true);
     }
 
+    function kActive(tok) { return get(/databases/$(database)/documents/karigars/$(tok)).data.active == true; }
+    function kRate(tok, k, g) { return get(/databases/$(database)/documents/karigars/$(tok)).data.get('rates', {}).get(k, {}).get(g, 0); }
+
     match /products/{id} { allow read: if true; allow write: if isAdmin() || dfStaff(); }
     match /config/{id}   { allow read: if true; allow write: if isAdmin() || dfStaff(); }
     match /secret/{doc=**} { allow read, write: if isAdmin(); }
@@ -80,7 +83,29 @@ service cloud.firestore {
         allow read, write: if isAdmin() || dfStaff();
         allow read: if get(/databases/$(database)/documents/karigars/$(tok)).data.active == true;
       }
+      // pieces the tailor adds himself (order no. typed or barcode scanned); rate comes from the owner's rate list
+      match /work/{wid} {
+        allow read, write: if isAdmin() || dfStaff();
+        allow read: if kActive(tok);
+        allow create: if kActive(tok)
+          && request.resource.data.keys().hasOnly(['bid', 'k', 'type', 'grp', 'pcs', 'rate', 'amt', 'ts', 'day', 'idx'])
+          && request.resource.data.pcs is int && request.resource.data.pcs >= 1 && request.resource.data.pcs <= 500
+          && request.resource.data.rate == kRate(tok, request.resource.data.k, request.resource.data.grp)
+          && request.resource.data.amt == request.resource.data.pcs * request.resource.data.rate
+          && request.resource.data.ts == request.time
+          && exists(/databases/$(database)/documents/tjobs/$(request.resource.data.bid));
+        allow delete: if kActive(tok) && request.time < resource.data.ts + duration.value(1, 'd');
+      }
     }
+
+    // order number lookup for tailors (no name / phone / address in it)
+    match /tjobs/{bid} {
+      allow get: if true;
+      allow list: if isAdmin() || dfStaff();
+      allow create: if request.resource.data.keys().hasOnly(['bid', 'src', 'created', 'items']) && request.resource.data.items is list;
+      allow update, delete: if isAdmin() || dfStaff();
+    }
+    match /{path=**}/work/{wid} { allow read: if isAdmin() || dfStaff(); }
     match /{path=**}/deductions/{did} { allow read: if isAdmin() || dfStaff(); }
     match /{path=**}/jobs/{jid} { allow read: if isAdmin() || dfStaff(); }
 

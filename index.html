@@ -566,6 +566,11 @@ footer.ft{background:#060D18;color:#C9C4B8;padding:34px 0 calc(90px + env(safe-a
 .tl-ph{position:relative;display:inline-block}.tl-ph img{width:72px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--line);display:block}
 .tl-ph button{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:0;background:var(--danger);color:#fff;cursor:pointer}
 .tl-notes{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:8px 10px;font:inherit;resize:vertical}
+.tl-from{display:block;font-size:12px;color:var(--gold);font-weight:700}
+.tl-price{margin:6px 0 0;font-weight:600}.tl-price b{font-size:17px}.tl-price.tl-need{color:var(--gold)}
+.tl-rates{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface)}.tl-rates summary{cursor:pointer;font-weight:700}
+.tl-rt{border-collapse:collapse;width:100%;margin-top:8px;font-size:14px}.tl-rt th,.tl-rt td{border-bottom:1px solid var(--line);padding:6px;text-align:left;white-space:nowrap}.tl-rt th{font-size:12px;color:var(--muted)}
+.tl-tot{display:flex;justify-content:space-between;align-items:center;background:var(--gold-soft,#F3EAD6);border-radius:10px;padding:10px 12px;margin:4px 0 8px;font-weight:700}.tl-tot b{font-size:20px}
 .tl-list{list-style:none;margin:0 0 8px;padding:0}.tl-list li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)}
 .tl-acts{display:grid;grid-template-columns:2fr 1fr;gap:10px}
 @media (max-width:640px){.tl-acts{grid-template-columns:minmax(0,1fr)}}
@@ -1461,6 +1466,15 @@ var GT = [
 ];
 var STL = {neckL:['Neck','गला'],sleeve:['Sleeves','आस्तीन'],fit:['Fit','फिटिंग'],bottom:['Bottom','नीचे'],lining:['Lining','अस्तर'],pad:['Padding','पैड'],collar:['Collar','कॉलर'],pleat:['Front','आगे']};
 var TL = {items:[], seq:0, booked:null};
+/* stitching rates set by the owner in Admin → सिलाई → रेट (config/trates, field c = {garment:{a5,a10,a14,men}}) */
+var TR = {};
+var TG = [['a5',['Age 5–10','5–10 साल']],['a10',['Age 10–14','10–14 साल']],['a14',['Above 14','14 साल से ऊपर']],['men',['Men','पुरुष (जेंट्स)']]];
+function trate(k, g){ var r = TR[k]; return r && +r[g] > 0 ? +r[g] : 0; }
+function tgrps(k){ return TG.filter(function(g){ return trate(k, g[0]) > 0; }); }
+function tgName(g){ var x = TG.filter(function(t){ return t[0] === g; })[0]; return x ? x[1][li()] : ''; }
+function tHasRates(){ return GT.some(function(g){ return tgrps(g.k).length; }); }
+function tDefGrp(k){ var gs = tgrps(k); if (gs.length === 1) return gs[0][0]; var g = gt(k); if (g && g.g === 'gents' && trate(k, 'men')) return 'men'; return ''; }
+function tLine(it){ var r = trate(it.k, it.grp); return r ? r * it.qty : 0; }
 function li(){ return lang === 'hi' ? 1 : 0; }
 function gt(k){ return GT.filter(function(x){ return x.k === k; })[0]; }
 function savedMeas(){ try { return JSON.parse(localStorage.getItem('df-meas') || '{}'); } catch(e){ return {}; } }
@@ -1469,7 +1483,7 @@ function tlWaText(){
   var x = TX(), L = li(), lines = [x.wa_h, ''];
   TL.items.forEach(function(it, i){
     var g = gt(it.k);
-    lines.push((i+1)+'. '+g.n[L]+(it.qty>1?' × '+it.qty:'')+(it.forWho?' ('+it.forWho+')':''));
+    lines.push((i+1)+'. '+g.n[L]+(it.grp?' · '+tgName(it.grp):'')+(it.qty>1?' × '+it.qty:'')+(it.forWho?' ('+it.forWho+')':'')+(trate(it.k, it.grp)?' · ₹'+tLine(it):''));
     lines.push('   '+x.fabric+': '+(it.fab==='shop' ? (it.fabName || x.helpme) : x.own));
     Object.keys(it.style).forEach(function(k){ if (it.style[k]) lines.push('   '+STL[k][L]+': '+it.style[k]); });
     if (it.measMode === 'now'){ var ms = g.m.filter(function(k){ return it.meas[k]; }).map(function(k){ return ML[k][L]+' '+it.meas[k]; }); if (ms.length) lines.push('   '+x.meas+': '+ms.join(', ')); }
@@ -1510,12 +1524,18 @@ function renderTailor(){
     GT.filter(function(g){ return g.g === grp; }).forEach(function(g){
       var n = TL.items.filter(function(it){ return it.k === g.k; }).length;
       row.appendChild(el('button',{type:'button','class':'tl-tile'+(n?' on':''),onclick:function(){
-        TL.items.push({id:++TL.seq, k:g.k, qty:1, forWho:'', fab:'own', fabName:'', style:{}, measMode:g.m.length?'now':'shop', meas:{}, notes:'', photo:''}); renderTailor();
+        TL.items.push({id:++TL.seq, k:g.k, grp:tDefGrp(g.k), qty:1, forWho:'', fab:'own', fabName:'', style:{}, measMode:g.m.length?'now':'shop', meas:{}, notes:'', photo:''}); renderTailor();
         setTimeout(function(){ var c = document.getElementById('tl-i'+TL.seq); if (c) c.scrollIntoView({behavior:'smooth', block:'center'}); }, 60);
-      }},[ el('span',{'class':'ic',html:artSvg(g.art)}), el('span',{text:g.n[L]}), n ? el('span',{'class':'tl-n',text:String(n)}) : el('span',{'class':'tl-plus',text:'+'}) ]));
+      }},[ el('span',{'class':'ic',html:artSvg(g.art)}), el('span',{text:g.n[L]}), (function(){ var rs = tgrps(g.k).map(function(t){ return trate(g.k, t[0]); }); return rs.length ? el('small',{'class':'tl-from',text:'₹'+Math.min.apply(null, rs)+(rs.length>1?(L?' से':'+'):'')}) : null; })(), n ? el('span',{'class':'tl-n',text:String(n)}) : el('span',{'class':'tl-plus',text:'+'}) ]));
     });
     s2.appendChild(row);
   });
+  if (tHasRates()){
+    var rt = el('table',{'class':'tl-rt'},[ el('thead',null,[ el('tr',null,[ el('th',{text:L?'कपड़ा':'Garment'}) ].concat(TG.map(function(t){ return el('th',{text:t[1][L]}); }))) ]),
+      el('tbody',null, GT.filter(function(g){ return tgrps(g.k).length; }).map(function(g){ return el('tr',null,[ el('td',{text:g.n[L]}) ].concat(TG.map(function(t){ var r = trate(g.k, t[0]); return el('td',{'class':'num',text:r?'₹'+r:'—'}); }))); })) ]);
+    s2.appendChild(el('details',{'class':'tl-rates'},[ el('summary',{text:'📋 '+(L?'सिलाई रेट लिस्ट (एक पीस का)':'Stitching rate list (per piece)')}), el('div',{style:'overflow-x:auto'},[rt]),
+      el('p',{'class':'hint',style:'margin:6px 0 0',text:L?'कपड़ा (फ़ैब्रिक) अलग से। खास डिज़ाइन, अस्तर या लेस का दाम दुकान पर बताया जाएगा।':'Fabric is extra. Special designs, lining or lace are priced at the shop.'}) ]));
+  }
   box.appendChild(s2);
   // step 3
   var s3 = el('div',{'class':'tl-card'},[ el('div',{'class':'tl-step'},[ el('b',{text:'3'}), el('span',{text:x.s3}) ]) ]);
@@ -1529,6 +1549,14 @@ function renderTailor(){
       el('input',{'class':'tl-for','aria-label':x.forwho,placeholder:x.forwho,value:it.forWho,oninput:function(e){ it.forWho = e.target.value; }}) ]),
       el('div',{'class':'qty','aria-label':x.qty},[ el('button',{type:'button','aria-label':'−',text:'−',onclick:function(){ if (it.qty>1){ it.qty--; renderTailor(); } }}), el('span',{text:String(it.qty)}), el('button',{type:'button','aria-label':'+',text:'+',onclick:function(){ it.qty++; renderTailor(); }}) ]),
       el('button',{type:'button','class':'tl-x','aria-label':x.remove,title:x.remove,text:'×',onclick:function(){ TL.items.splice(idx,1); renderTailor(); }}) ]));
+    var seg = function(name, val, opts, on){ return el('div',{'class':'tl-seg',role:'radiogroup','aria-label':name}, opts.map(function(o){ return el('button',{type:'button',role:'radio','aria-checked':String(val===o[0]),text:o[1],onclick:function(){ on(o[0]); renderTailor(); }}); })); };
+    var gs = tgrps(it.k);
+    if (gs.length){
+      card.appendChild(el('div',{'class':'lbl',text:L?'उम्र / किसके लिए':'Age / for'}));
+      var gseg = seg('age', it.grp, gs.map(function(t){ return [t[0], t[1][L]+' · ₹'+trate(it.k, t[0])]; }), function(v){ it.grp = v; });
+      gseg.style.gridTemplateColumns = 'repeat('+Math.min(gs.length, 2)+',1fr)'; card.appendChild(gseg);
+      card.appendChild(el('p',{'class':'tl-price'+(it.grp?'':' tl-need')}, it.grp ? [ (L?'सिलाई: ':'Stitching: ')+'₹'+trate(it.k, it.grp)+(it.qty>1?' × '+it.qty+' = ':''), it.qty>1 ? el('b',{text:'₹'+tLine(it)}) : null ] : [ L?'↑ उम्र चुनें, दाम दिखेगा':'↑ Choose age to see the price' ]));
+    }
     // fabric
     var seg = function(name, val, opts, on){ return el('div',{'class':'tl-seg',role:'radiogroup','aria-label':name}, opts.map(function(o){ return el('button',{type:'button',role:'radio','aria-checked':String(val===o[0]),text:o[1],onclick:function(){ on(o[0]); renderTailor(); }}); })); };
     if (it.k !== 'alter'){
@@ -1575,13 +1603,16 @@ function renderTailor(){
   var total = TL.items.reduce(function(a, it){ return a + it.qty; }, 0);
   var bookB = el('button',{type:'button','class':'btn btn-gold',style:'min-height:52px;font-size:17px',text:x.book+(total?' ('+total+x.items+')':''),onclick:function(){
     if (!val('t-name') || val('t-phone').replace(/\D/g,'').length < 10 || !TL.items.length){ err.textContent = x.err; return; }
+    var noG = TL.items.filter(function(it){ return tgrps(it.k).length && !it.grp; })[0];
+    if (noG){ err.textContent = L ? 'हर कपड़े के लिए उम्र / किसके लिए चुनें।' : 'Choose the age / for whom for every garment.'; var nc = document.getElementById('tl-i'+noG.id); if (nc) nc.scrollIntoView({behavior:'smooth', block:'center'}); return; }
     err.textContent = '';
     var sv = savedMeas(); TL.items.forEach(function(it){ if (it.measMode === 'now' && Object.keys(it.meas).some(function(k){ return it.meas[k]; })) sv[it.k] = it.meas; }); try { localStorage.setItem('df-meas', JSON.stringify(sv)); } catch(e){}
     var d = new Date(), id = 'DF-T' + String(d.getFullYear()).slice(2) + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2) + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
     TL.waText = tlWaText();
     var req = {kind:'tailoring', bookingId:id, orderId:id, name:val('t-name'), phone:val('t-phone'), visit:val('t-date'), needBy:val('t-need'), lang:lang,
       items: TL.items.map(function(it){ var g = gt(it.k), meas = {}; g.m.forEach(function(k){ if (it.measMode==='now' && it.meas[k]) meas[ML[k][0]] = it.meas[k]; });
-        return {type:g.n[0], forWho:it.forWho, qty:it.qty, fabric: it.fab==='shop' ? ('Shop: '+(it.fabName||'help choose')) : 'Own cloth', style:it.style, measAt: it.measMode==='now' ? 'given' : 'at shop', meas:meas, notes:it.notes, photo:it.photo}; })};
+        return {type:g.n[0], k:it.k, grp:it.grp||'', grpName:it.grp?TG.filter(function(t){ return t[0]===it.grp; })[0][1][1]:'', rate:trate(it.k, it.grp), forWho:it.forWho, qty:it.qty, fabric: it.fab==='shop' ? ('Shop: '+(it.fabName||'help choose')) : 'Own cloth', style:it.style, measAt: it.measMode==='now' ? 'given' : 'at shop', meas:meas, notes:it.notes, photo:it.photo}; })};
+    req.estimate = TL.items.reduce(function(a, it){ return a + tLine(it); }, 0);
     bookB.disabled = true; msg.textContent = x.sending;
     var go = (window.DF && DF.saveTailor) ? DF.saveTailor(req) : Promise.reject();
     go.then(function(){ TL.booked = id; renderTailor(); var s = document.getElementById('tailor'); if (s) s.scrollIntoView({behavior:'smooth'}); },
@@ -1589,8 +1620,9 @@ function renderTailor(){
   }});
   var wa = el('a',{'class':'btn btn-line',target:'_blank',rel:'noopener',href:'#',text:x.wa,onclick:function(e){ if (!val('t-name') || val('t-phone').replace(/\D/g,'').length < 10 || !TL.items.length){ e.preventDefault(); err.textContent = x.err; return; } wa.href = waLink(tlWaText()); }});
   box.appendChild(el('div',{'class':'tl-card tl-sum'},[ el('div',{'class':'tl-step'},[ el('b',{text:'4'}), el('span',{text:x.s4}) ]),
-    TL.items.length ? el('ul',{'class':'tl-list'}, TL.items.map(function(it){ var g = gt(it.k); return el('li',null,[ el('span',{text:g.n[L]+(it.forWho?' · '+it.forWho:'')}), el('b',{text:'× '+it.qty}) ]); })) : null,
-    el('p',{'class':'hint',text:x.price}), err, el('div',{'class':'tl-acts'},[ bookB, wa ]), msg ]));
+    TL.items.length ? el('ul',{'class':'tl-list'}, TL.items.map(function(it){ var g = gt(it.k), r = trate(it.k, it.grp); return el('li',null,[ el('span',{text:g.n[L]+(it.grp?' · '+tgName(it.grp):'')+(it.forWho?' · '+it.forWho:'')+' × '+it.qty}), el('b',{text: r ? '₹'+tLine(it) : '—'}) ]); })) : null,
+    (function(){ var tot = TL.items.reduce(function(a, it){ return a + tLine(it); }, 0); return tot ? el('div',{'class':'tl-tot'},[ el('span',{text:L?'सिलाई का अनुमानित खर्च':'Estimated stitching charge'}), el('b',{text:'₹'+tot}) ]) : null; })(),
+    el('p',{'class':'hint',text: tHasRates() ? (L ? 'यह रेट लिस्ट के हिसाब से अनुमान है। कपड़ा अलग। पक्का दाम नाप और डिज़ाइन देखकर दुकान बताएगी।' : 'Estimate from the rate list. Fabric is extra. The shop confirms the final charge after measurement.') : x.price}), err, el('div',{'class':'tl-acts'},[ bookB, wa ]), msg ]));
 }
 
 /* ---------- product page ---------- */
@@ -2380,6 +2412,7 @@ function fmtWhen(iso){ try { var d=new Date(iso); return d.toLocaleDateString(la
 var trRedraw = null;
 /* Small API for the customer-account module. */
 window.DF = {
+  setTRates: function(d){ TR = (d && d.c) || {}; renderTailor(); },
   setAcctOrders: function(list){ acctOrders = list || []; try { renderOrderList(); renderRetList(); } catch(e){} },
   trackInto: function(box, id, redraw){ trRedraw = redraw || null; box.innerHTML = ''; fillTrack(box, id, true); },
   setRedraw: function(f){ trRedraw = f || null; },
@@ -3276,6 +3309,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     if (!window.DF) return;
     fs.collection('products').get().then(function(s){ if (!s.empty) DF.setProducts(s.docs.map(function(d){ return d.data(); })); }).catch(function(){});
     fs.collection('config').doc('shop').onSnapshot(function(s){ if (s.exists) DF.setConfig(s.data()); }, function(){});
+    fs.collection('config').doc('trates').onSnapshot(function(s){ DF.setTRates(s.exists ? s.data() : null); }, function(){});
     fs.collection('config').get().then(function(s){ var b = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ return d.data(); }).filter(function(x){ return x.active !== false; }).sort(function(a,c){ return (a.order||0)-(c.order||0); }); DF.setBanners(b); }).catch(function(){});
     fs.collection('track').onSnapshot(function(s){ var m = {}; s.docs.forEach(function(d){ m[d.id] = d.data(); }); DF.setTrack(m); }, function(){});
     DF.saveOrder = function(o){
@@ -3290,7 +3324,12 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
         return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000);
       });
     };
-    DF.saveTailor = function(r){ return withTimeout(fs.collection('requests').add(Object.assign({}, r, {uid:user ? user.uid : '', status:'new', created:new Date().toISOString()})), 15000); };
+    DF.saveTailor = function(r){
+      var p = withTimeout(fs.collection('requests').add(Object.assign({}, r, {uid:user ? user.uid : '', status:'new', created:new Date().toISOString()})), 15000);
+      /* a copy without name / phone so tailors can scan or type the order number and add their pieces */
+      p.then(function(){ var bid = String(r.bookingId||'').toUpperCase().replace(/[^A-Z0-9-]/g,'');
+        if (bid) fs.collection('tjobs').doc(bid).set({bid:bid, src:'web', created:new Date().toISOString(), items:(r.items||[]).map(function(it){ return {k:it.k||'', type:it.type||'', grp:it.grp||'', qty:+it.qty||1}; })}).catch(function(){}); });
+      return p; };
     DF.saveRequest = function(r){
       return withTimeout(fs.collection('requests').add({orderId:r.orderId||'', kind:r.kind||'return', phone:r.phone||'', item:r.item||'', reason:r.reason||'', details:r.details||'',
         uid:user ? user.uid : '', status:'new', created:new Date().toISOString()}), 12000);

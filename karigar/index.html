@@ -98,7 +98,7 @@ textarea{width:100%;min-height:60px;border-radius:10px;border:1px solid var(--li
 <script>
 if (/^(www\.)?diamondfashions\.in$/.test(location.hostname)) location.replace('https://apps.diamondfashions.in/karigar/'+location.search);
 (function(){
-/* Diamond Fashions Karigar page: a tailor opens his own secret link and sees only the jobs given to him.
+/* Diamond Fashions Karigar page: a tailor / cutting master opens his own secret link, scans or types an order number and adds his pieces; rates come from the owner.
    The link (…/karigar/?k=XXXX) is made in Admin → सिलाई → कारीगर. Blocking him there stops the link at once. */
 var CFG = {"apiKey":"AIzaSyDEnVBUgdbQQnpy0aXKS4TFa8EmkuBnKW4","authDomain":"diamond-fashions.firebaseapp.com","projectId":"diamond-fashions","storageBucket":"diamond-fashions.firebasestorage.app","messagingSenderId":"548211132063","appId":"1:548211132063:web:0ee6dca5768f4ec7b3c4aa"};
 firebase.initializeApp(CFG);
@@ -111,7 +111,15 @@ document.documentElement.lang = LANG;
 var tok = new URLSearchParams(location.search).get('k') || '';
 try { if (tok) localStorage.setItem('k-token', tok); else tok = localStorage.getItem('k-token') || ''; } catch(e){}
 if (tok && !/[?&]k=/.test(location.search)) try { history.replaceState(null, '', '?k='+tok); } catch(e){}
-var deds = [], me = null, jobs = [], tab = 'todo', seen = null, sw = null, instEvt = null, fmode = 'month', fday = '', fmonth = '';
+var deds = [], me = null, work = [], tab = 'add', sw = null, instEvt = null, fmode = 'month', fday = '', fmonth = '';
+var found = null, findMsg = '', findBusy = false, lastCode = '', addMsg = {}, pickG = {};
+var RTYPES = {suit:['सलवार सूट','Salwar Suit'],kurti:['कुर्ती / टॉप','Kurti / Top'],blouse:['ब्लाउज़','Blouse'],lehenga:['लहंगा चोली','Lehenga Choli'],petticoat:['पेटीकोट','Petticoat'],fallpico:['साड़ी फॉल-पीको','Saree Fall-Pico'],
+  shirt:['शर्ट','Shirt'],pant:['पैंट','Pant'],kurtapj:['कुर्ता पायजामा','Kurta Pajama'],sherwani:['शेरवानी / कोट','Sherwani / Coat'],safari:['सफ़ारी','Safari'],frock:['बच्चों की फ्रॉक','Kids Frock'],kidskurta:['बच्चों का कुर्ता / सेट','Kids Kurta / Set'],alter:['ऑल्टरेशन / फिटिंग','Alteration'],other:['और कुछ','Other']};
+var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','14+ साल','Above 14'],['men','पुरुष','Men']];
+function tName(k, t){ var x = RTYPES[k]; return x ? (LANG==='en' ? x[1] : x[0]) : (t || k || ''); }
+function gName(g){ var x = RGRP.filter(function(r){ return r[0] === g; })[0]; return x ? (LANG==='en' ? x[2] : x[1]) : ''; }
+function myRate(k, g){ var r = ((me && me.rates) || {})[k] || {}; return +r[g] > 0 ? +r[g] : 0; }
+function rs(n){ return '₹'+(+n||0).toLocaleString('en-IN'); }
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ sw = r; }).catch(function(){});
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); instEvt = e; });
@@ -121,112 +129,142 @@ function el(tag, a, kids){ var n = document.createElement(tag); if (a) for (var 
   (kids||[]).forEach(function(c){ if (c) n.appendChild(typeof c==='string' ? document.createTextNode(c) : c); }); return n; }
 function today(){ var d = new Date(), p = function(n){ return (n<10?'0':'')+n; }; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
 function dmy(s){ return s ? s.split('-').reverse().join('-') : ''; }
-function when(iso){ if (!iso) return ''; return new Date(iso).toLocaleString(LANG==='en'?'en-IN':'hi-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
 var actx = null;
-function chime(){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); [0,.2].forEach(function(dt,i){ var o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = [784,1047][i]; g.gain.setValueAtTime(.0001, actx.currentTime+dt); g.gain.exponentialRampToValueAtTime(.3, actx.currentTime+dt+.02); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dt+.5); o.connect(g); g.connect(actx.destination); o.start(actx.currentTime+dt); o.stop(actx.currentTime+dt+.55); }); } catch(e){} try { navigator.vibrate && navigator.vibrate([200,100,200]); } catch(e){} }
+function chime(){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); [0,.15].forEach(function(dt,i){ var o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = [880,1320][i]; g.gain.setValueAtTime(.0001, actx.currentTime+dt); g.gain.exponentialRampToValueAtTime(.3, actx.currentTime+dt+.02); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dt+.3); o.connect(g); g.connect(actx.destination); o.start(actx.currentTime+dt); o.stop(actx.currentTime+dt+.35); }); } catch(e){} try { navigator.vibrate && navigator.vibrate(120); } catch(e){} }
 document.addEventListener('pointerdown', function(){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); } catch(e){} }, {once:true});
-function notify(t, b){ chime(); if (!('Notification' in window) || Notification.permission !== 'granted') return; var o = {body:b, icon:'icon-192.png', tag:'job', renotify:true}; try { (sw ? sw.showNotification(t, o) : Promise.reject()).catch(function(){ new Notification(t, o); }); } catch(e){} }
 
 function screen(icon, title, text){
   app.innerHTML = '';
   app.appendChild(el('div',{'class':'login'},[ el('div',{'class':'card'},[ el('div',{style:'font-size:44px',text:icon}), el('h2',{text:title}), el('p',{'class':'muted',text:text}),
     el('a',{'class':'btn wa',href:'https://wa.me/918874129818',target:'_blank',rel:'noopener',text:L('दुकान से WhatsApp पर बात करें','WhatsApp the shop')}) ]) ]));
 }
-function draw(){
-  var y = window.scrollY; app.innerHTML = '';
-  var alertB = ('Notification' in window && Notification.permission === 'default') ? el('button',{'class':'pill',type:'button',text:'🔔 '+L('सूचना चालू','Alerts on'),onclick:function(){ Notification.requestPermission().then(function(){ chime(); draw(); }); }}) : null;
-  var inst = IS_APP ? null : el('button',{'class':'pill gold',type:'button',text:'📲 '+L('ऐप इंस्टॉल करें','Install app'),onclick:function(){ if (instEvt){ instEvt.prompt(); } else alert(L('Chrome में ⋮ → “Install app” या “Add to Home screen” दबाएँ।','In Chrome tap ⋮ → “Install app” or “Add to Home screen”.')); }});
-  app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[ el('div',{'class':'brand',html:'DIAMOND<small>'+L('कारीगर','TAILOR')+' · '+(me.name||'')+'</small>'}),
-    el('div',{'class':'hb'},[ inst, alertB, el('button',{'class':'pill',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('k-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}) ]) ]) ]));
-  var todo = jobs.filter(function(j){ return j.kstatus !== 'done' && ['ready','delivered','cancelled'].indexOf(j.tstatus) < 0; });
-  var done = jobs.filter(function(j){ return !(j.kstatus !== 'done' && ['ready','delivered','cancelled'].indexOf(j.tstatus) < 0); });
-  var late = todo.filter(function(j){ return j.due && j.due < today(); }).length;
-  app.appendChild(el('nav',{'class':'tabs'},[ ['todo',L('मेरा काम','My work'),todo.length],['done',L('पूरा हुआ','Done'),0],['ded',L('कटौती','Deductions'),0] ].map(function(t){ return el('button',{type:'button','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); }},[ t[1], t[2] ? el('span',{'class':'n',text:String(t[2])}) : null ]); })));
-  var main = el('main',{'class':'wrap'}); app.appendChild(main);
-  main.appendChild(el('div',{'class':'hello'},[ el('div',{'class':'av',text:String(me.name||'?').trim().charAt(0).toUpperCase()}), el('div',null,[ el('b',{text:L('नमस्ते, ','Hello, ')+(me.name||'')+L(' जी','')}), el('small',{text:[me.role, L('डायमंड फैशन्स के कारीगर','Diamond Fashions tailor')].filter(Boolean).join(' · ')}) ]) ]));
-  main.appendChild(el('div',{'class':'sum'},[ el('div',null,[ el('b',{text:String(todo.length)}), el('span',{text:L('बाकी काम','Pending')}) ]), el('div',null,[ el('b',{style:late?'color:var(--bad)':'',text:String(late)}), el('span',{text:L('लेट','Late')}) ]), el('div',null,[ el('b',{text:String(done.length)}), el('span',{text:L('पूरा','Done')}) ]) ]));
-  var list;
-  if (tab === 'ded'){ drawDed(main); window.scrollTo(0, y); return; }
-  if (tab === 'todo') list = todo.slice().sort(function(a,b){ return String(a.due||'9999').localeCompare(String(b.due||'9999')); });
-  else {
-    if (!fday) fday = today(); if (!fmonth) fmonth = today().slice(0,7);
-    var dIn = el('input',{type:'date',value:fday,max:today()}), mIn = el('input',{type:'month',value:fmonth,max:today().slice(0,7)});
-    dIn.onchange = function(){ fday = dIn.value || today(); fmode = 'day'; draw(); }; mIn.onchange = function(){ fmonth = mIn.value || today().slice(0,7); fmode = 'month'; draw(); };
-    var seg = function(k, t){ return el('button',{type:'button','class':'btn sm '+(fmode===k?'gold':'line'),text:t,onclick:function(){ fmode = k; draw(); }}); };
-    main.appendChild(el('div',{'class':'flt'},[ el('div',{'class':'row'},[ seg('day', L('तारीख','Date')), seg('month', L('महीना','Month')), seg('all', L('सब','All')) ]),
-      fmode === 'day' ? dIn : fmode === 'month' ? mIn : null ]));
-    var doneAt = function(j){ return String(j.kAt || j.updated || ''); };
-    var localDay = function(iso){ if (!iso) return ''; var d = new Date(iso), p = function(n){ return (n<10?'0':'')+n; }; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); };
-    list = done.filter(function(j){ var d = localDay(doneAt(j)); return fmode === 'all' || (fmode === 'day' ? d === fday : d.slice(0,7) === fmonth); })
-      .sort(function(a,b){ return doneAt(b).localeCompare(doneAt(a)); });
-    var pcs = list.reduce(function(n, j){ return n + (j.items||[]).reduce(function(m, it){ return m + (+it.qty||1); }, 0); }, 0);
-    var lbl = fmode === 'day' ? dmy(fday) : fmode === 'month' ? new Date(fmonth+'-01T12:00:00').toLocaleDateString(LANG==='en'?'en-IN':'hi-IN',{month:'long',year:'numeric'}) : L('अब तक','So far');
-    main.appendChild(el('div',{'class':'tot'},[ el('span',{text:lbl}), el('b',{text:list.length+' '+L('काम','jobs')+' · '+pcs+' '+L('पीस','pcs')}) ]));
-    var dd = dedIn(); if (dd.length) main.appendChild(el('div',{'class':'tot bad',onclick:function(){ tab = 'ded'; draw(); }},[ el('span',{text:'⚠ '+L('कटौती','Deductions')+' ('+dd.length+')'}), el('b',{text:'−₹'+dd.reduce(function(a,d){ return a+(+d.amount||0); },0).toLocaleString('en-IN')}) ]));
-  }
-  if (!list.length) main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='todo' ? '🧵' : '✅'}), tab==='todo' ? L('अभी कोई काम नहीं। दुकान से काम आते ही यहाँ दिखेगा (आवाज़ के साथ)।','No work right now. New work from the shop appears here (with a sound).') : L('इस समय में कोई काम पूरा नहीं हुआ।','No work finished in this period.') ]));
-  list.forEach(function(j){ main.appendChild(card(j)); });
-  window.scrollTo(0, y);
-}
-function dedIn(){ return deds.filter(function(d){ var x = String(d.date||''); return fmode === 'all' || (fmode === 'day' ? x === fday : x.slice(0,7) === fmonth); }).sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); }); }
-function drawDed(main){
+function inPeriod(day){ day = String(day||''); return fmode === 'all' || (fmode === 'day' ? day === fday : day.slice(0,7) === fmonth); }
+function periodLabel(){ return fmode === 'day' ? dmy(fday) : fmode === 'month' ? new Date(fmonth+'-01T12:00:00').toLocaleDateString(LANG==='en'?'en-IN':'hi-IN',{month:'long',year:'numeric'}) : L('अब तक','So far'); }
+function filterBar(main){
   if (!fday) fday = today(); if (!fmonth) fmonth = today().slice(0,7);
   var dIn = el('input',{type:'date',value:fday,max:today()}), mIn = el('input',{type:'month',value:fmonth,max:today().slice(0,7)});
   dIn.onchange = function(){ fday = dIn.value || today(); fmode = 'day'; draw(); }; mIn.onchange = function(){ fmonth = mIn.value || today().slice(0,7); fmode = 'month'; draw(); };
   var seg = function(k, t){ return el('button',{type:'button','class':'btn sm '+(fmode===k?'gold':'line'),text:t,onclick:function(){ fmode = k; draw(); }}); };
   main.appendChild(el('div',{'class':'flt'},[ el('div',{'class':'row'},[ seg('day', L('तारीख','Date')), seg('month', L('महीना','Month')), seg('all', L('सब','All')) ]), fmode === 'day' ? dIn : fmode === 'month' ? mIn : null ]));
-  var list = dedIn(), sum = list.reduce(function(a,d){ return a+(+d.amount||0); },0);
-  var lbl = fmode === 'day' ? dmy(fday) : fmode === 'month' ? new Date(fmonth+'-01T12:00:00').toLocaleDateString(LANG==='en'?'en-IN':'hi-IN',{month:'long',year:'numeric'}) : L('अब तक','So far');
-  main.appendChild(el('div',{'class':'tot bad'},[ el('span',{text:lbl+' · '+list.length+' '+L('कटौती','deductions')}), el('b',{text:'−₹'+sum.toLocaleString('en-IN')}) ]));
-  if (!list.length){ main.appendChild(el('div',{'class':'empty'},[ el('b',{text:'👍'}), L('इस समय में कोई कटौती नहीं।','No deductions in this period.') ])); return; }
-  list.forEach(function(d){ main.appendChild(el('div',{'class':'job ded'},[ el('div',{'class':'top'},[ el('span',{text:dmy(d.date)}), el('b',{style:'color:var(--bad);font-size:20px',text:'−₹'+(+d.amount||0).toLocaleString('en-IN')}) ]),
-    el('div',{style:'margin-top:6px;font-weight:600',text:d.reason||''}), d.bookingId ? el('div',{'class':'small muted',text:L('ऑर्डर: ','Order: ')+d.bookingId}) : null ])); });
 }
-function card(j){
-  var late = j.due && j.due < today() && j.kstatus !== 'done';
-  var c = el('div',{'class':'job'+(late?' late':(j.kstatus?'':' new'))});
-  c.appendChild(el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:17px',text:j.bookingId||''}), el('span',{'class':'st '+(j.kstatus==='done'?'ok':''),text: j.kstatus==='done' ? L('पूरा','Done') : j.kstatus==='started' ? L('चालू','Working') : L('नया','New')}) ]));
-  c.appendChild(el('div',{style:'margin-top:6px'},[ L('ग्राहक: ','Customer: ')+(j.cust||'—')+' · ', el('span',{'class':'due'+(late?' late':''),text:L('डिलीवरी: ','Due: ')+(j.due?dmy(j.due):'—')+(late?' ('+L('लेट','late')+')':'')}) ]));
-  if (j.forKarigar) c.appendChild(el('div',{'class':'note',text:'📝 '+j.forKarigar}));
-  (j.items||[]).forEach(function(it, i){
-    var g = el('div',{'class':'g'},[ el('b',{text:(i+1)+'. '+it.type+(it.qty>1?' × '+it.qty:'')+(it.forWho?' · '+it.forWho:'')}) ]);
-    var st = Object.keys(it.style||{}).map(function(k){ return it.style[k]; }).filter(Boolean).join(' · ');
-    if (it.fabric) g.appendChild(el('div',{'class':'small',text:L('कपड़ा: ','Cloth: ')+it.fabric}));
-    if (st) g.appendChild(el('div',{'class':'small',text:L('डिज़ाइन: ','Design: ')+st}));
-    if (it.notes) g.appendChild(el('div',{'class':'small',text:L('नोट: ','Note: ')+it.notes}));
-    var m = it.meas || {}, mk = Object.keys(m);
-    if (mk.length){ g.appendChild(el('div',{'class':'small',style:'font-weight:700;margin-top:6px',text:L('नाप (इंच)','Measurements (inch)')})); g.appendChild(el('div',{'class':'meas'}, mk.map(function(k){ return el('div',null,[ el('span',{text:k}), el('b',{text:m[k]+'"'}) ]); }))); }
-    else if (it.measAt !== 'given') g.appendChild(el('div',{'class':'small muted',text:L('नाप दुकान पर मिलेगा','Measurements at the shop')}));
-    if (it.photo) g.appendChild(el('a',{href:it.photo,target:'_blank'},[ el('img',{src:it.photo,alt:''}) ]));
+function draw(){
+  var y = window.scrollY; app.innerHTML = '';
+  var inst = IS_APP ? null : el('button',{'class':'pill gold',type:'button',text:'📲 '+L('ऐप इंस्टॉल करें','Install app'),onclick:function(){ if (instEvt){ instEvt.prompt(); } else alert(L('Chrome में ⋮ → “Install app” या “Add to Home screen” दबाएँ।','In Chrome tap ⋮ → “Install app” or “Add to Home screen”.')); }});
+  app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[ el('div',{'class':'brand',html:'DIAMOND<small>'+L('कारीगर','TAILOR')+'</small>'}),
+    el('div',{'class':'hb'},[ inst, el('button',{'class':'pill',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('k-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}) ]) ]) ]));
+  app.appendChild(el('nav',{'class':'tabs'},[ ['add','➕ '+L('काम जोड़ें','Add work')],['work',L('मेरा हिसाब','My work')],['ded',L('कटौती','Deductions')] ].map(function(t){ return el('button',{type:'button','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); }},[ t[1] ]); })));
+  var main = el('main',{'class':'wrap'}); app.appendChild(main);
+  main.appendChild(el('div',{'class':'hello'},[ el('div',{'class':'av',text:String(me.name||'?').trim().charAt(0).toUpperCase()}), el('div',null,[ el('b',{text:L('नमस्ते, ','Hello, ')+(me.name||'')+L(' जी','')}), el('small',{text:[me.role, L('डायमंड फैशन्स','Diamond Fashions')].filter(Boolean).join(' · ')}) ]) ]));
+  var m0 = today().slice(0,7), mw = work.filter(function(w){ return String(w.day||'').slice(0,7) === m0; }), md = deds.filter(function(d){ return String(d.date||'').slice(0,7) === m0; });
+  var mEarn = mw.reduce(function(a,w){ return a+(+w.amt||0); },0), mDed = md.reduce(function(a,d){ return a+(+d.amount||0); },0);
+  main.appendChild(el('div',{'class':'sum'},[ el('div',null,[ el('b',{text:String(mw.reduce(function(a,w){ return a+(+w.pcs||0); },0))}), el('span',{text:L('इस महीने पीस','Pcs this month')}) ]),
+    el('div',null,[ el('b',{text:rs(mEarn)}), el('span',{text:L('कमाई','Earned')}) ]), el('div',null,[ el('b',{style:'color:var(--ok)',text:rs(Math.max(0,mEarn-mDed))}), el('span',{text:L('कटौती के बाद','After deductions')}) ]) ]));
+  if (tab === 'add') drawAdd(main); else if (tab === 'work') drawWork(main); else drawDed(main);
+  window.scrollTo(0, y);
+}
+function lookup(code){
+  code = String(code||'').toUpperCase().replace(/[^A-Z0-9-]/g,'');
+  if (!code){ findMsg = L('ऑर्डर नंबर लिखें या स्कैन करें','Type or scan the order number'); draw(); return; }
+  lastCode = code; findBusy = true; findMsg = ''; found = null; draw();
+  var tries = [code]; if (code.indexOf('DF-') !== 0) tries.push('DF-'+code);
+  (function next(i){
+    if (i >= tries.length){ findBusy = false; findMsg = L('यह ऑर्डर नंबर नहीं मिला: ','Order number not found: ')+code; draw(); return; }
+    db.collection('tjobs').doc(tries[i]).get().then(function(s){ if (s.exists){ findBusy = false; found = s.data(); found.bid = found.bid || s.id; addMsg = {}; pickG = {}; chime(); draw(); } else next(i+1); },
+      function(){ findBusy = false; findMsg = L('इंटरनेट चेक करें','Check the internet'); draw(); });
+  })(0);
+}
+function drawAdd(main){
+  var inp = el('input',{value:lastCode,placeholder:'DF-T261018-AB12',autocapitalize:'characters',autocomplete:'off',style:'flex:1;min-width:0;min-height:50px;border-radius:10px;border:1px solid var(--line);padding:6px 12px;font-size:18px;background:var(--bg);color:var(--ink);text-transform:uppercase'});
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') lookup(inp.value); });
+  main.appendChild(el('div',{'class':'card'},[ el('b',{style:'font-size:17px',text:L('ऑर्डर नंबर','Order number')}),
+    el('p',{'class':'small muted',style:'margin:2px 0 8px',text:L('पर्ची का बारकोड स्कैन करें या नंबर लिखें, फिर अपने पीस जोड़ें।','Scan the slip barcode or type the number, then add your pieces.')}),
+    el('div',{'class':'row'},[ inp, el('button',{'class':'btn gold',type:'button',text:'🔍 '+L('खोजें','Find'),onclick:function(){ lookup(inp.value); }}) ]),
+    el('button',{'class':'btn line',type:'button',style:'width:100%;margin-top:8px;min-height:54px;font-size:18px',text:'📷 '+L('बारकोड स्कैन करें','Scan barcode'),onclick:scan}),
+    findBusy ? el('p',{'class':'msg',text:L('ढूँढ रहे हैं…','Searching…')}) : findMsg ? el('p',{'class':'msg err',text:findMsg}) : null ]));
+  if (!found) return;
+  var c = el('div',{'class':'job new'});
+  c.appendChild(el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:18px',text:found.bid}), found.due ? el('span',{'class':'due',text:L('डिलीवरी: ','Due: ')+dmy(found.due)}) : null ]));
+  if (found.note) c.appendChild(el('div',{'class':'note',text:'📝 '+found.note}));
+  (found.items||[]).forEach(function(it, i){
+    var mine = work.filter(function(w){ return w.bid === found.bid && w.idx === i; }), already = mine.reduce(function(a,w){ return a+(+w.pcs||0); },0);
+    var grp = it.grp || pickG[i] || (mine[0] && mine[0].grp) || '', pcs = Math.max(1, (+it.qty||1) - already) || 1;
+    var g = el('div',{'class':'g'});
+    g.appendChild(el('b',{style:'font-size:17px',text:(i+1)+'. '+tName(it.k, it.type)+(it.grp?' · '+gName(it.grp):'')+' × '+(+it.qty||1)}));
+    if (already) g.appendChild(el('div',{'class':'small',style:'color:var(--ok);font-weight:700',text:'✓ '+L('आप जोड़ चुके: ','You added: ')+already+' '+L('पीस','pcs')}));
+    var gsel = null;
+    if (!it.grp){ gsel = el('select',{style:'min-height:44px;border-radius:10px;border:1px solid var(--line);padding:4px 8px;margin-top:6px;background:var(--surface);color:var(--ink);font:inherit'},[ el('option',{value:'',text:L('उम्र / ग्रुप चुनें','Choose age / group')}) ].concat(RGRP.map(function(r){ return el('option',{value:r[0],text:(LANG==='en'?r[2]:r[1])+(myRate(it.k, r[0])?' · '+rs(myRate(it.k, r[0])):'')}); })));
+      gsel.value = grp; gsel.onchange = function(){ grp = pickG[i] = gsel.value; upd(); }; g.appendChild(gsel); }
+    var cnt = el('b',{'class':'num',style:'font-size:22px;min-width:40px;text-align:center',text:String(pcs)}), line = el('div',{'class':'small',style:'font-weight:600'});
+    function upd(){ cnt.textContent = String(pcs); var r = myRate(it.k, grp); line.textContent = grp ? (r ? rs(r)+' × '+pcs+' = '+rs(r*pcs) : L('रेट अभी तय नहीं — दुकान तय करेगी','Rate not set yet — the shop will set it')) : ''; }
+    g.appendChild(el('div',{'class':'row',style:'margin-top:8px'},[ el('span',{text:L('मेरे पीस:','My pieces:')}),
+      el('button',{'class':'btn sm line',type:'button',text:'−',onclick:function(){ if (pcs > 1){ pcs--; upd(); } }}), cnt, el('button',{'class':'btn sm line',type:'button',text:'+',onclick:function(){ if (pcs < 500){ pcs++; upd(); } }}) ]));
+    g.appendChild(line);
+    var msg = el('p',{'class':'msg'+(addMsg[i]?' ok':''),text:addMsg[i]||''});
+    g.appendChild(el('button',{'class':'btn ok',type:'button',style:'width:100%;margin-top:8px',text:'✓ '+L('मेरे काम में जोड़ें','Add to my work'),onclick:function(e){
+      if (!grp){ msg.textContent = L('पहले उम्र / ग्रुप चुनें','Choose the age / group first'); msg.className = 'msg err'; return; }
+      if (already && !confirm(L('आप इस कपड़े के '+already+' पीस पहले जोड़ चुके हैं। फिर से जोड़ें?','You already added '+already+' pcs of this. Add again?'))) return;
+      var rate = myRate(it.k, grp); e.target.disabled = true; msg.textContent = '…'; msg.className = 'msg';
+      db.collection('karigars').doc(tok).collection('work').add({bid:found.bid, k:it.k||'other', type:it.type||'', grp:grp, pcs:pcs, rate:rate, amt:rate*pcs, ts:firebase.firestore.FieldValue.serverTimestamp(), day:today(), idx:i})
+        .then(function(){ chime(); addMsg[i] = '✓ '+pcs+' '+L('पीस जुड़ गए','pcs added')+(rate?' · '+rs(rate*pcs):''); draw(); },
+          function(er){ e.target.disabled = false; msg.textContent = L('नहीं जुड़ा: ','Not added: ')+(er.code||er.message); msg.className = 'msg err'; });
+    }}));
+    g.appendChild(msg); upd();
     c.appendChild(g);
   });
-  var m = el('p',{'class':'msg'});
-  var nt = el('textarea',{placeholder:L('दुकान के लिए कुछ लिखना है? (जैसे कपड़ा कम है)','Message for the shop (e.g. cloth is short)')}); nt.value = j.knote || '';
-  var upd = function(st){ m.textContent = '…'; m.className = 'msg';
-    db.collection('karigars').doc(tok).collection('jobs').doc(j._id).update({kstatus:st, kAt:new Date().toISOString(), knote:nt.value.trim()}).then(function(){ m.textContent = '✓'; m.className = 'msg ok'; }, function(e){ m.textContent = L('नहीं हुआ: ','Failed: ')+(e.code||e.message); m.className = 'msg err'; }); };
-  if (j.kstatus !== 'done' && ['ready','delivered','cancelled'].indexOf(j.tstatus) < 0){
-    c.appendChild(nt);
-    c.appendChild(el('div',{'class':'row',style:'margin-top:8px'},[
-      j.kstatus !== 'started' ? el('button',{'class':'btn gold grow',type:'button',text:'🧵 '+L('काम शुरू किया','Started'),onclick:function(){ upd('started'); }}) : null,
-      el('button',{'class':'btn ok grow',type:'button',text:'✓ '+L('काम पूरा हो गया','Work finished'),onclick:function(){ if (confirm(L('यह काम पूरा हो गया?','Is this work finished?'))) upd('done'); }}) ]));
-  } else if (j.kstatus === 'done') c.appendChild(el('div',{'class':'small muted',style:'margin-top:8px',text:'✓ '+L('पूरा किया: ','Finished: ')+when(j.kAt)}));
-  c.appendChild(m);
-  return c;
+  main.appendChild(c);
+}
+function drawWork(main){
+  filterBar(main);
+  var list = work.filter(function(w){ return inPeriod(w.day); }).sort(function(a,b){ return String(b.day||'').localeCompare(String(a.day||'')) || ((b.ts&&b.ts.seconds)||0)-((a.ts&&a.ts.seconds)||0); });
+  var earn = list.reduce(function(a,w){ return a+(+w.amt||0); },0), pcs = list.reduce(function(a,w){ return a+(+w.pcs||0); },0);
+  var dd = deds.filter(function(d){ return inPeriod(d.date); }), dsum = dd.reduce(function(a,d){ return a+(+d.amount||0); },0);
+  main.appendChild(el('div',{'class':'tot'},[ el('span',{text:periodLabel()+' · '+pcs+' '+L('पीस','pcs')}), el('b',{text:rs(earn)}) ]));
+  if (dsum) main.appendChild(el('div',{'class':'tot bad',onclick:function(){ tab = 'ded'; draw(); }},[ el('span',{text:'⚠ '+L('कटौती','Deductions')+' ('+dd.length+')'}), el('b',{text:'−'+rs(dsum)}) ]));
+  main.appendChild(el('div',{'class':'tot',style:'background:rgba(28,122,62,.12);color:var(--ok)'},[ el('span',{text:L('मिलेगा','To receive')}), el('b',{style:'font-size:20px',text:rs(Math.max(0, earn-dsum))}) ]));
+  if (!list.length){ main.appendChild(el('div',{'class':'empty'},[ el('b',{text:'🧵'}), L('इस समय में कोई काम नहीं जोड़ा। “काम जोड़ें” में ऑर्डर नंबर डालें।','No work added in this period. Use “Add work”.') ])); return; }
+  list.forEach(function(w){
+    var fresh = w.ts && w.ts.toMillis && (Date.now() - w.ts.toMillis() < 23*3600*1000);
+    main.appendChild(el('div',{'class':'job'},[ el('div',{'class':'top'},[ el('span',{'class':'num',text:w.bid}), el('b',{style:'font-size:18px',text:rs(w.amt)}) ]),
+      el('div',{style:'margin-top:4px',text:tName(w.k, w.type)+(w.grp?' · '+gName(w.grp):'')+' · '+w.pcs+' '+L('पीस','pcs')+(w.rate?' × '+rs(w.rate):' · '+L('रेट बाकी','rate pending'))}),
+      el('div',{'class':'row',style:'justify-content:space-between;margin-top:4px'},[ el('span',{'class':'small muted',text:dmy(w.day)}),
+        fresh ? el('button',{'class':'btn sm line',type:'button',style:'color:var(--bad)',text:'✕ '+L('गलती से जोड़ा — हटाएँ','Added by mistake — remove'),onclick:function(){ if (confirm(L('यह एंट्री हटाएँ?','Remove this entry?'))) db.collection('karigars').doc(tok).collection('work').doc(w._id).delete().catch(function(e){ alert(e.message); }); }}) : null ]) ]));
+  });
+}
+function drawDed(main){
+  filterBar(main);
+  var list = deds.filter(function(d){ return inPeriod(d.date); }).sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); }), sum = list.reduce(function(a,d){ return a+(+d.amount||0); },0);
+  main.appendChild(el('div',{'class':'tot bad'},[ el('span',{text:periodLabel()+' · '+list.length+' '+L('कटौती','deductions')}), el('b',{text:'−'+rs(sum)}) ]));
+  if (!list.length){ main.appendChild(el('div',{'class':'empty'},[ el('b',{text:'👍'}), L('इस समय में कोई कटौती नहीं।','No deductions in this period.') ])); return; }
+  list.forEach(function(d){ main.appendChild(el('div',{'class':'job ded'},[ el('div',{'class':'top'},[ el('span',{text:dmy(d.date)}), el('b',{style:'color:var(--bad);font-size:20px',text:'−'+rs(d.amount)}) ]),
+    el('div',{style:'margin-top:6px;font-weight:600',text:d.reason||''}), d.bookingId ? el('div',{'class':'small muted',text:L('ऑर्डर: ','Order: ')+d.bookingId}) : null ])); });
+}
+/* barcode scanner: Chrome on Android has BarcodeDetector built in */
+function scan(){
+  if (!('BarcodeDetector' in window) || !navigator.mediaDevices){ alert(L('इस फ़ोन में स्कैनर नहीं चलता — नंबर लिखकर “खोजें” दबाएँ।','Scanning is not supported on this phone — type the number and tap Find.')); return; }
+  var ov = el('div',{style:'position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center'});
+  var v = el('video',{playsinline:'',muted:'',autoplay:'',style:'width:100%;max-height:75vh;object-fit:cover'});
+  var hint = el('p',{style:'color:#fff;font-weight:700;text-align:center;padding:0 16px',text:L('बारकोड को कैमरे के बीच में रखें','Hold the barcode in the middle')});
+  var stream = null, stop = false;
+  function close(){ stop = true; if (stream) stream.getTracks().forEach(function(t){ t.stop(); }); ov.remove(); }
+  ov.appendChild(v); ov.appendChild(hint); ov.appendChild(el('button',{'class':'btn',type:'button',text:'✕ '+L('बंद करें','Close'),onclick:close}));
+  document.body.appendChild(ov);
+  var fm = ['code_128','qr_code','code_39','code_93','ean_13','ean_8','upc_a','itf','codabar','data_matrix'];
+  (BarcodeDetector.getSupportedFormats ? BarcodeDetector.getSupportedFormats() : Promise.resolve(fm)).then(function(sup){
+    var det = new BarcodeDetector({formats: fm.filter(function(f){ return sup.indexOf(f) >= 0; })});
+    return navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(st){ stream = st; v.srcObject = st; return v.play(); }).then(function(){
+      (function loop(){ if (stop) return; det.detect(v).then(function(r){ if (r && r.length && !stop){ var code = r[0].rawValue; close(); lastCode = code; lookup(code); } else setTimeout(loop, 200); }, function(){ setTimeout(loop, 300); }); })();
+    });
+  }).catch(function(e){ close(); alert(L('कैमरा नहीं खुला — इजाज़त दें या नंबर लिखें।','Camera did not open — allow it or type the number.')); });
 }
 if (!tok){ screen('🔗', L('लिंक अधूरा है','Link is incomplete'), L('दुकान से भेजा गया पूरा लिंक खोलें।','Open the full link the shop sent you.')); return; }
 db.collection('karigars').doc(tok).onSnapshot(function(s){
   if (!s.exists){ screen('🚫', L('यह लिंक बंद है','This link is closed'), L('दुकान मालिक से नया लिंक माँगें।','Ask the shop owner for a new link.')); return; }
   var first = !me; me = s.data();
   if (first){
-    db.collection('karigars').doc(tok).collection('deductions').onSnapshot(function(q){ deds = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; deds.push(x); }); if (jobs) draw(); }, function(){});
-    db.collection('karigars').doc(tok).collection('jobs').onSnapshot(function(q){
-      jobs = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; jobs.push(x); });
-      var fresh = seen ? jobs.filter(function(j){ return !seen[j._id]; }) : [];
-      if (!seen) seen = {}; jobs.forEach(function(j){ seen[j._id] = 1; });
-      fresh.forEach(function(j){ notify('🧵 '+L('नया सिलाई काम','New tailoring work'), (j.bookingId||'')+' · '+(j.items||[]).map(function(i){ return i.type; }).join(', ')+(j.due?' · '+dmy(j.due):'')); });
-      draw();
-    }, function(){ screen('🚫', L('यह लिंक बंद है','This link is closed'), L('दुकान मालिक से बात करें।','Talk to the shop owner.')); });
-  } else draw();
+    db.collection('karigars').doc(tok).collection('deductions').onSnapshot(function(q){ deds = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; deds.push(x); }); draw(); }, function(){});
+    db.collection('karigars').doc(tok).collection('work').onSnapshot(function(q){ work = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; work.push(x); }); draw(); }, function(){});
+  }
+  draw();
 }, function(){ screen('🚫', L('यह लिंक बंद है','This link is closed'), L('दुकान मालिक से नया लिंक माँगें।','Ask the shop owner for a new link.')); });
 })();
 </script>
