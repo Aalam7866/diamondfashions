@@ -863,12 +863,13 @@ var GARMENTS = ['Suit / सूट','Blouse / ब्लाउज़','Lehenga / �
 var RTYPES = [['suit','सलवार सूट','Salwar Suit'],['kurti','कुर्ती / टॉप','Kurti / Top'],['blouse','ब्लाउज़','Blouse'],['lehenga','लहंगा चोली','Lehenga Choli'],['petticoat','पेटीकोट','Petticoat'],['fallpico','साड़ी फॉल-पीको','Saree Fall-Pico'],
   ['shirt','शर्ट','Shirt'],['pant','पैंट','Pant / Trouser'],['kurtapj','कुर्ता पायजामा','Kurta Pajama'],['sherwani','शेरवानी / कोट','Sherwani / Coat'],['safari','सफ़ारी','Safari'],
   ['frock','बच्चों की फ्रॉक','Kids Frock'],['kidskurta','बच्चों का कुर्ता / सेट','Kids Kurta / Set'],['alter','ऑल्टरेशन / फिटिंग','Alteration / Fitting'],['other','और कुछ','Other']];
-var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','बड़े — महिला (14+)','Adult female (14+)'],['men','बड़े — पुरुष (14+)','Adult male (14+)']];
+var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','बड़े (पुरुष / महिला)','Adult (male / female)']];
 var KROLES = [['tailor','सिलाई कारीगर','Tailor'],['cutting','कटिंग मास्टर','Cutting master']];
 var trates = {}, krates = {}, tjobDocs = null, kwork = [], kworkLoaded = false, kwip = [], kwipLoaded = false, kmonth = '', NOCUT = {fallpico:1, alter:1};
 function isApproved(r){ return !!r.approved || r.tstatus === 'cutting' || r.tstatus === 'stitching'; }
 function tName(k){ var x = RTYPES.filter(function(t){ return t[0] === k; })[0]; return x ? (LANG === 'en' ? x[2] : x[1]) : (k || ''); }
-function gName(g){ var x = RGRP.filter(function(t){ return t[0] === g; })[0]; return x ? (LANG === 'en' ? x[2] : x[1]) : ''; }
+function gNorm(g){ return g === 'men' ? 'a14' : g; }
+function gName(g){ g = gNorm(g); var x = RGRP.filter(function(t){ return t[0] === g; })[0]; return x ? (LANG === 'en' ? x[2] : x[1]) : ''; }
 function rkName(k){ var x = KROLES.filter(function(t){ return t[0] === k; })[0]; return x ? (LANG === 'en' ? x[2] : x[1]) : ''; }
 function typeKey(it){
   if (it && it.k) return it.k;
@@ -879,15 +880,15 @@ function typeKey(it){
   return 'other';
 }
 function bidNorm(b){ return String(b || '').toUpperCase().replace(/[^A-Z0-9-]/g, ''); }
-function custRate(k, g){ var r = (trates.c || {})[k]; return r && +r[g] > 0 ? +r[g] : 0; }
-function karRate(rk, k, g){ var r = ((krates[rk] || {})[k]) || {}; return +r[g] > 0 ? +r[g] : 0; }
+function custRate(k, g){ g = gNorm(g); var r = (trates.c || {})[k]; return r && +r[g] > 0 ? +r[g] : 0; }
+function karRate(rk, k, g){ g = gNorm(g); var r = ((krates[rk] || {})[k]) || {}; return +r[g] > 0 ? +r[g] : 0; }
 function workAmt(w){ if (+w.amt > 0) return +w.amt; var kk = karigarById(w._k) || {}; return (+w.pcs || 0) * karRate(kk.rk || 'tailor', w.k, w.grp); }
 function wStage(w){ if (w.st) return w.st; var kk = karigarById(w._k) || {}; return kk.rk === 'cutting' ? 'cut' : 'sew'; }
 function stageDone(bid){ var o = {cut:{}, sew:{}, wip:{}}; kwork.forEach(function(w){ if (w.bid !== bid) return; var st = wStage(w), i = String(+w.idx || 0); o[st][i] = (o[st][i] || 0) + (+w.pcs || 0); });
   kwip.forEach(function(w){ if (w.bid !== bid) return; var i = String(+w.idx || 0); o.wip[i] = (o.wip[i] || 0) + (+w.pcs || 0); }); return o; }
 function tjobOf(r){ var bid = bidNorm(r.bookingId), d = stageDone(bid);
   return {bid:bid, src:r.source || 'web', created:r.created || now(), note:r.forKarigar || '', due:r.due || r.needBy || '', open:isApproved(r) && ['ready','delivered','cancelled'].indexOf(r.tstatus) < 0, cut:d.cut, sew:d.sew, wip:d.wip,
-  items:(r.items || []).map(function(it){ return {k:typeKey(it), type:it.type || '', grp:it.grp || '', qty:+it.qty || 1}; })}; }
+  items:(r.items || []).map(function(it){ return {k:typeKey(it), type:it.type || '', grp:gNorm(it.grp || ''), qty:+it.qty || 1}; })}; }
 function tjSig(x){ return JSON.stringify([x.items, x.note || '', x.due || '', !!x.open, x.cut || {}, x.sew || {}, x.wip || {}]); }
 /* approved order: all pieces cut → status moves to "सिलाई चालू" by itself */
 function autoStatus(){

@@ -1468,12 +1468,12 @@ var STL = {neckL:['Neck','गला'],sleeve:['Sleeves','आस्तीन'],fi
 var TL = {items:[], seq:0, booked:null};
 /* stitching rates set by the owner in Admin → सिलाई → रेट (config/trates, field c = {garment:{a5,a10,a14,men}}) */
 var TR = {};
-var TG = [['a5',['Age 5–10','5–10 साल']],['a10',['Age 10–14','10–14 साल']],['a14',['Adult female','बड़े — महिला']],['men',['Adult male','बड़े — पुरुष']]];
+var TG = [['a5',['Age 5–10','5–10 साल']],['a10',['Age 10–14','10–14 साल']],['a14',['Adult (male / female)','बड़े (पुरुष / महिला)']]];
 function trate(k, g){ var r = TR[k]; return r && +r[g] > 0 ? +r[g] : 0; }
 function tgrps(k){ return TG.filter(function(g){ return trate(k, g[0]) > 0; }); }
 function tgName(g){ var x = TG.filter(function(t){ return t[0] === g; })[0]; return x ? x[1][li()] : ''; }
 function tHasRates(){ return GT.some(function(g){ return tgrps(g.k).length; }); }
-function tDefGrp(k){ var gs = tgrps(k); if (gs.length === 1) return gs[0][0]; var g = gt(k); if (g && g.g === 'gents' && trate(k, 'men')) return 'men'; return ''; }
+function tDefGrp(k){ var gs = tgrps(k); if (gs.length === 1) return gs[0][0]; var g = gt(k); if (g && g.g === 'gents' && trate(k, 'a14')) return 'a14'; return ''; }
 function tLine(it){ var r = trate(it.k, it.grp); return r ? r * it.qty : 0; }
 function li(){ return lang === 'hi' ? 1 : 0; }
 function gt(k){ return GT.filter(function(x){ return x.k === k; })[0]; }
