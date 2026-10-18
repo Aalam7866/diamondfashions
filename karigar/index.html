@@ -130,7 +130,7 @@ function prog(j, i, it){ var q = +it.qty||1, c = cutOf(j, i, it), w = doneOf(j, 
     el('span',{style:'color:'+(w>=q?'var(--ok)':'var(--warn)'),text:'🧵 '+L('सिले','Stitched')+' '+w+'/'+q}), r ? ' · ' : null, r ? el('span',{style:'color:var(--blue)',text:'🔄 '+L('चालू','In work')+' '+r}) : null ]); }
 var RTYPES = {suit:['सलवार सूट','Salwar Suit'],kurti:['कुर्ती / टॉप','Kurti / Top'],blouse:['ब्लाउज़','Blouse'],lehenga:['लहंगा चोली','Lehenga Choli'],petticoat:['पेटीकोट','Petticoat'],fallpico:['साड़ी फॉल-पीको','Saree Fall-Pico'],
   shirt:['शर्ट','Shirt'],pant:['पैंट','Pant'],kurtapj:['कुर्ता पायजामा','Kurta Pajama'],sherwani:['शेरवानी / कोट','Sherwani / Coat'],safari:['सफ़ारी','Safari'],frock:['बच्चों की फ्रॉक','Kids Frock'],kidskurta:['बच्चों का कुर्ता / सेट','Kids Kurta / Set'],alter:['ऑल्टरेशन / फिटिंग','Alteration'],other:['और कुछ','Other']};
-var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','14+ साल','Above 14'],['men','पुरुष','Men']];
+var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','बड़े — महिला','Adult female'],['men','बड़े — पुरुष','Adult male']];
 function tName(k, t){ var x = RTYPES[k]; return x ? (LANG==='en' ? x[1] : x[0]) : (t || k || ''); }
 function gName(g){ var x = RGRP.filter(function(r){ return r[0] === g; })[0]; return x ? (LANG==='en' ? x[2] : x[1]) : ''; }
 function myRate(k, g){ var r = ((me && me.rates) || {})[k] || {}; return +r[g] > 0 ? +r[g] : 0; }

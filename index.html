@@ -1468,7 +1468,7 @@ var STL = {neckL:['Neck','गला'],sleeve:['Sleeves','आस्तीन'],fi
 var TL = {items:[], seq:0, booked:null};
 /* stitching rates set by the owner in Admin → सिलाई → रेट (config/trates, field c = {garment:{a5,a10,a14,men}}) */
 var TR = {};
-var TG = [['a5',['Age 5–10','5–10 साल']],['a10',['Age 10–14','10–14 साल']],['a14',['Above 14','14 साल से ऊपर']],['men',['Men','पुरुष (जेंट्स)']]];
+var TG = [['a5',['Age 5–10','5–10 साल']],['a10',['Age 10–14','10–14 साल']],['a14',['Adult female','बड़े — महिला']],['men',['Adult male','बड़े — पुरुष']]];
 function trate(k, g){ var r = TR[k]; return r && +r[g] > 0 ? +r[g] : 0; }
 function tgrps(k){ return TG.filter(function(g){ return trate(k, g[0]) > 0; }); }
 function tgName(g){ var x = TG.filter(function(t){ return t[0] === g; })[0]; return x ? x[1][li()] : ''; }

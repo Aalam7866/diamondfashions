@@ -863,7 +863,7 @@ var GARMENTS = ['Suit / सूट','Blouse / ब्लाउज़','Lehenga / �
 var RTYPES = [['suit','सलवार सूट','Salwar Suit'],['kurti','कुर्ती / टॉप','Kurti / Top'],['blouse','ब्लाउज़','Blouse'],['lehenga','लहंगा चोली','Lehenga Choli'],['petticoat','पेटीकोट','Petticoat'],['fallpico','साड़ी फॉल-पीको','Saree Fall-Pico'],
   ['shirt','शर्ट','Shirt'],['pant','पैंट','Pant / Trouser'],['kurtapj','कुर्ता पायजामा','Kurta Pajama'],['sherwani','शेरवानी / कोट','Sherwani / Coat'],['safari','सफ़ारी','Safari'],
   ['frock','बच्चों की फ्रॉक','Kids Frock'],['kidskurta','बच्चों का कुर्ता / सेट','Kids Kurta / Set'],['alter','ऑल्टरेशन / फिटिंग','Alteration / Fitting'],['other','और कुछ','Other']];
-var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','14+ साल','Above 14'],['men','पुरुष','Men']];
+var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','बड़े — महिला (14+)','Adult female (14+)'],['men','बड़े — पुरुष (14+)','Adult male (14+)']];
 var KROLES = [['tailor','सिलाई कारीगर','Tailor'],['cutting','कटिंग मास्टर','Cutting master']];
 var trates = {}, krates = {}, tjobDocs = null, kwork = [], kworkLoaded = false, kwip = [], kwipLoaded = false, kmonth = '', NOCUT = {fallpico:1, alter:1};
 function isApproved(r){ return !!r.approved || r.tstatus === 'cutting' || r.tstatus === 'stitching'; }
@@ -1093,7 +1093,7 @@ function drawRates(main){
   var inputs = {};
   function table(key, title, hint, src){
     inputs[key] = {};
-    var t = el('table',{style:'border-collapse:collapse;width:100%;font-size:14px'},[ el('thead',null,[ el('tr',null,[ el('th',{style:'text-align:left;padding:4px',text:L('कपड़ा')}) ].concat(RGRP.map(function(g){ return el('th',{style:'padding:4px;font-size:12px',text:LANG==='en'?g[2]:g[1]}); }))) ]) ]);
+    var t = el('table',{style:'border-collapse:collapse;width:100%;font-size:14px'},[ el('thead',null,[ el('tr',null,[ el('th',{style:'text-align:left;padding:4px',text:LANG==='en'?'Garment':'कपड़ा'}) ].concat(RGRP.map(function(g){ return el('th',{style:'padding:4px;font-size:12px',text:LANG==='en'?g[2]:g[1]}); }))) ]) ]);
     var tb = el('tbody'); t.appendChild(tb);
     RTYPES.forEach(function(ty){ inputs[key][ty[0]] = {};
       tb.appendChild(el('tr',{style:'border-top:1px solid var(--line)'},[ el('td',{style:'padding:4px;white-space:nowrap',text:LANG==='en'?ty[2]:ty[1]}) ].concat(RGRP.map(function(g){
