@@ -112,7 +112,7 @@ var tok = new URLSearchParams(location.search).get('k') || '';
 try { if (tok) localStorage.setItem('k-token', tok); else tok = localStorage.getItem('k-token') || ''; } catch(e){}
 if (tok && !/[?&]k=/.test(location.search)) try { history.replaceState(null, '', '?k='+tok); } catch(e){}
 var deds = [], me = null, work = [], tab = 'add', sw = null, instEvt = null, fmode = 'month', fday = '', fmonth = '';
-var found = null, findMsg = '', findBusy = false, lastCode = '', addMsg = {}, pickG = {}, openJobs = null, olist = 'todo';
+var found = null, findMsg = '', findBusy = false, lastCode = '', addMsg = {}, pickG = {}, openJobs = null, olist = 'todo', openErr = '';
 function stage(){ return me && me.rk === 'cutting' ? 'cut' : 'sew'; }
 function doneOf(j, st, i){ return +((j[st] || {})[String(i)] || 0); }
 var NOCUT = {fallpico:1, alter:1}, mywip = [];
@@ -289,6 +289,7 @@ function drawOpen(main){
   main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin:4px 0 10px'},[ el('b',{style:'font-size:17px',text:(st==='cut'?'✂ '+L('कटिंग के लिए','For cutting'):'🧵 '+L('सिलाई के लिए (कटे हुए)','For stitching (already cut)'))}),
     el('div',{'class':'row'},[ seg('todo', L('मेरे लिए','For me')+' ('+todo.length+')'), seg('all', L('सब खुले','All open')+' ('+all.length+')') ]) ]));
   var list = olist === 'todo' ? todo : all;
+  if (openErr){ main.appendChild(el('div',{'class':'note',style:'background:rgba(163,38,42,.1);color:var(--bad);font-weight:600',text:'⚠ '+L('ऑर्डर की लिस्ट नहीं खुली — दुकान मालिक Firebase Rules अपडेट करें। तब तक ऑर्डर नंबर लिखकर “खोजें” दबाएँ। ','Order list could not load — the shop owner must update the Firebase Rules. Meanwhile type the order number and tap Find. ')+'('+openErr+')'})); }
   if (!list.length){ main.appendChild(el('div',{'class':'empty'},[ el('b',{text:'✅'}), st==='cut' ? L('अभी कटिंग के लिए कुछ नहीं।','Nothing to cut right now.') : L('अभी सिलाई के लिए कुछ नहीं — कटिंग होते ही यहाँ आएगा।','Nothing to stitch right now — it appears here once cut.') ])); return; }
   list.forEach(function(j){
     var late = j.due && j.due < td, left = leftOf(j);
@@ -349,7 +350,7 @@ db.collection('karigars').doc(tok).onSnapshot(function(s){
   if (first){
     db.collection('karigars').doc(tok).collection('deductions').onSnapshot(function(q){ deds = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; deds.push(x); }); draw(); }, function(){});
     db.collection('tjobs').where('open', '==', true).onSnapshot(function(q){ openJobs = []; q.forEach(function(d){ var x = d.data(); x.bid = x.bid || d.id; openJobs.push(x); });
-      if (found){ var f = openJobs.filter(function(j){ return j.bid === found.bid; })[0]; if (f) found = f; } draw(); }, function(){ openJobs = []; draw(); });
+      if (found){ var f = openJobs.filter(function(j){ return j.bid === found.bid; })[0]; if (f) found = f; } draw(); }, function(e){ openJobs = []; openErr = (e && (e.code || e.message)) || 'error'; draw(); });
     db.collection('karigars').doc(tok).collection('wip').onSnapshot(function(q){ mywip = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; mywip.push(x); }); draw(); }, function(){});
     db.collection('karigars').doc(tok).collection('work').onSnapshot(function(q){ work = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; work.push(x); }); draw(); }, function(){});
   }
