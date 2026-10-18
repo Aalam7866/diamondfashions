@@ -135,6 +135,8 @@ function tName(k, t){ var x = RTYPES[k]; return x ? (LANG==='en' ? x[1] : x[0]) 
 function gNorm(g){ return g === 'men' ? 'a14' : (g || ''); }
 function gName(g){ g = gNorm(g); var x = RGRP.filter(function(r){ return r[0] === g; })[0]; return x ? (LANG==='en' ? x[2] : x[1]) : ''; }
 function myRate(k, g){ g = gNorm(g); var r = ((me && me.rates) || {})[k] || {}; return +r[g] > 0 ? +r[g] : 0; }
+/* earning of one entry: if the shop set the rate later, use today's rate */
+function wAmt(w){ return +w.amt > 0 ? +w.amt : (+w.pcs||0) * myRate(w.k, w.grp); }
 function rs(n){ return '₹'+(+n||0).toLocaleString('en-IN'); }
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ sw = r; }).catch(function(){});
@@ -172,7 +174,7 @@ function draw(){
   var main = el('main',{'class':'wrap'}); app.appendChild(main);
   main.appendChild(el('div',{'class':'hello'},[ el('div',{'class':'av',text:String(me.name||'?').trim().charAt(0).toUpperCase()}), el('div',null,[ el('b',{text:L('नमस्ते, ','Hello, ')+(me.name||'')+L(' जी','')}), el('small',{text:[me.role, L('डायमंड फैशन्स','Diamond Fashions')].filter(Boolean).join(' · ')}) ]) ]));
   var m0 = today().slice(0,7), mw = work.filter(function(w){ return String(w.day||'').slice(0,7) === m0; }), md = deds.filter(function(d){ return String(d.date||'').slice(0,7) === m0; });
-  var mEarn = mw.reduce(function(a,w){ return a+(+w.amt||0); },0), mDed = md.reduce(function(a,d){ return a+(+d.amount||0); },0);
+  var mEarn = mw.reduce(function(a,w){ return a+wAmt(w); },0), mDed = md.reduce(function(a,d){ return a+(+d.amount||0); },0);
   main.appendChild(el('div',{'class':'sum'},[ el('div',null,[ el('b',{text:String(mw.reduce(function(a,w){ return a+(+w.pcs||0); },0))}), el('span',{text:L('इस महीने पीस','Pcs this month')}) ]),
     el('div',null,[ el('b',{text:rs(mEarn)}), el('span',{text:L('कमाई','Earned')}) ]), el('div',null,[ el('b',{style:'color:var(--ok)',text:rs(Math.max(0,mEarn-mDed))}), el('span',{text:L('कटौती के बाद','After deductions')}) ]) ]));
   if (tab === 'add') drawAdd(main); else if (tab === 'work') drawWork(main); else drawDed(main);
@@ -303,7 +305,7 @@ function drawOpen(main){
 function drawWork(main){
   filterBar(main);
   var list = work.filter(function(w){ return inPeriod(w.day); }).sort(function(a,b){ return String(b.day||'').localeCompare(String(a.day||'')) || ((b.ts&&b.ts.seconds)||0)-((a.ts&&a.ts.seconds)||0); });
-  var earn = list.reduce(function(a,w){ return a+(+w.amt||0); },0), pcs = list.reduce(function(a,w){ return a+(+w.pcs||0); },0);
+  var earn = list.reduce(function(a,w){ return a+wAmt(w); },0), pcs = list.reduce(function(a,w){ return a+(+w.pcs||0); },0);
   var dd = deds.filter(function(d){ return inPeriod(d.date); }), dsum = dd.reduce(function(a,d){ return a+(+d.amount||0); },0);
   main.appendChild(el('div',{'class':'tot'},[ el('span',{text:periodLabel()+' · '+pcs+' '+L('पीस','pcs')}), el('b',{text:rs(earn)}) ]));
   if (dsum) main.appendChild(el('div',{'class':'tot bad',onclick:function(){ tab = 'ded'; draw(); }},[ el('span',{text:'⚠ '+L('कटौती','Deductions')+' ('+dd.length+')'}), el('b',{text:'−'+rs(dsum)}) ]));
@@ -311,8 +313,8 @@ function drawWork(main){
   if (!list.length){ main.appendChild(el('div',{'class':'empty'},[ el('b',{text:'🧵'}), L('इस समय में कोई काम नहीं जोड़ा। “काम जोड़ें” में ऑर्डर नंबर डालें।','No work added in this period. Use “Add work”.') ])); return; }
   list.forEach(function(w){
     var fresh = w.ts && w.ts.toMillis && (Date.now() - w.ts.toMillis() < 23*3600*1000);
-    main.appendChild(el('div',{'class':'job'},[ el('div',{'class':'top'},[ el('span',{'class':'num',text:w.bid}), el('b',{style:'font-size:18px',text:rs(w.amt)}) ]),
-      el('div',{style:'margin-top:4px',text:tName(w.k, w.type)+(w.grp?' · '+gName(w.grp):'')+' · '+w.pcs+' '+L('पीस','pcs')+(w.rate?' × '+rs(w.rate):' · '+L('रेट बाकी','rate pending'))}),
+    main.appendChild(el('div',{'class':'job'},[ el('div',{'class':'top'},[ el('span',{'class':'num',text:w.bid}), el('b',{style:'font-size:18px',text:rs(wAmt(w))}) ]),
+      el('div',{style:'margin-top:4px',text:tName(w.k, w.type)+(w.grp?' · '+gName(w.grp):'')+' · '+w.pcs+' '+L('पीस','pcs')+(wAmt(w)?' × '+rs(wAmt(w)/(+w.pcs||1)):' · '+L('रेट बाकी — दुकान तय करेगी','rate pending — the shop will set it'))}),
       el('div',{'class':'row',style:'justify-content:space-between;margin-top:4px'},[ el('span',{'class':'small muted',text:dmy(w.day)}),
         fresh ? el('button',{'class':'btn sm line',type:'button',style:'color:var(--bad)',text:'✕ '+L('गलती से जोड़ा — हटाएँ','Added by mistake — remove'),onclick:function(){ if (confirm(L('यह एंट्री हटाएँ?','Remove this entry?'))) { var b = db.batch(), upd = {}; upd[(w.st||stage())+'.'+(+w.idx||0)] = firebase.firestore.FieldValue.increment(-(+w.pcs||0)); b.delete(db.collection('karigars').doc(tok).collection('work').doc(w._id)); b.update(db.collection('tjobs').doc(w.bid), upd); b.commit().catch(function(e){ alert(e.message); }); } }}) : null ]) ]));
   });
