@@ -904,12 +904,14 @@ function syncTjobs(){
   if (!tjobDocs || !kworkLoaded || !kwipLoaded || tjSyncBusy) return;
   autoStatus();
   var todo = tjobs().filter(function(r){ var b = bidNorm(r.bookingId); if (!b) return false; var have = tjobDocs[b];
-    if (!have && r.tstatus === 'cancelled') return false;
+    if (!have && ['ready','delivered','cancelled'].indexOf(r.tstatus) >= 0) return false;
     return !have || tjSig(have) !== tjSig(tjobOf(r)); }).slice(0, 400);
   if (!todo.length) return;
   tjSyncBusy = true;
-  var b = db.batch(); todo.forEach(function(r){ var x = tjobOf(r); b.set(db.collection('tjobs').doc(x.bid), x); tjobDocs[x.bid] = x; });
-  b.commit().then(function(){ tjSyncBusy = false; }, function(){ tjSyncBusy = false; });
+  /* one write per order, so one bad order can never block the others */
+  Promise.all(todo.map(function(r){ var x = tjobOf(r);
+    return db.collection('tjobs').doc(x.bid).set(x).then(function(){ tjobDocs[x.bid] = x; }, function(e){ try { console.warn('tjobs', x.bid, e && e.message); } catch(_){} }); }))
+    .then(function(){ tjSyncBusy = false; });
 }
 function tjobs(){ return requests.filter(function(r){ return r.kind === 'tailoring'; }); }
 function silaiNew(){ return tjobs().filter(function(r){ return r.status === 'new'; }).length; }

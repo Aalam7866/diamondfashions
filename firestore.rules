@@ -113,7 +113,8 @@ service cloud.firestore {
     match /tjobs/{bid} {
       allow get: if true;
       allow list: if isAdmin() || dfStaff() || resource.data.open == true;
-      allow create: if request.resource.data.keys().hasOnly(['bid', 'src', 'created', 'items', 'open']) && request.resource.data.items is list && request.resource.data.get('open', false) == false;
+      allow create: if isAdmin() || dfStaff()
+        || (request.resource.data.keys().hasOnly(['bid', 'src', 'created', 'items', 'open']) && request.resource.data.items is list && request.resource.data.get('open', false) == false);
       allow update: if isAdmin() || dfStaff() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cut', 'sew', 'wip']);
       allow delete: if isAdmin() || dfStaff();
     }
