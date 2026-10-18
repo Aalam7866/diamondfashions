@@ -865,7 +865,7 @@ var RTYPES = [['suit','सलवार सूट','Salwar Suit'],['kurti','क�
   ['frock','बच्चों की फ्रॉक','Kids Frock'],['kidskurta','बच्चों का कुर्ता / सेट','Kids Kurta / Set'],['alter','ऑल्टरेशन / फिटिंग','Alteration / Fitting'],['other','और कुछ','Other']];
 var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','14+ साल','Above 14'],['men','पुरुष','Men']];
 var KROLES = [['tailor','सिलाई कारीगर','Tailor'],['cutting','कटिंग मास्टर','Cutting master']];
-var trates = {}, krates = {}, tjobDocs = null, kwork = [], kmonth = '';
+var trates = {}, krates = {}, tjobDocs = null, kwork = [], kworkLoaded = false, kmonth = '';
 function tName(k){ var x = RTYPES.filter(function(t){ return t[0] === k; })[0]; return x ? (LANG === 'en' ? x[2] : x[1]) : (k || ''); }
 function gName(g){ var x = RGRP.filter(function(t){ return t[0] === g; })[0]; return x ? (LANG === 'en' ? x[2] : x[1]) : ''; }
 function rkName(k){ var x = KROLES.filter(function(t){ return t[0] === k; })[0]; return x ? (LANG === 'en' ? x[2] : x[1]) : ''; }
@@ -881,13 +881,18 @@ function bidNorm(b){ return String(b || '').toUpperCase().replace(/[^A-Z0-9-]/g,
 function custRate(k, g){ var r = (trates.c || {})[k]; return r && +r[g] > 0 ? +r[g] : 0; }
 function karRate(rk, k, g){ var r = ((krates[rk] || {})[k]) || {}; return +r[g] > 0 ? +r[g] : 0; }
 function workAmt(w){ if (+w.amt > 0) return +w.amt; var kk = karigarById(w._k) || {}; return (+w.pcs || 0) * karRate(kk.rk || 'tailor', w.k, w.grp); }
-function tjobOf(r){ return {bid:bidNorm(r.bookingId), src:r.source || 'web', created:r.created || now(), note:r.forKarigar || '', due:r.due || r.needBy || '',
+function wStage(w){ if (w.st) return w.st; var kk = karigarById(w._k) || {}; return kk.rk === 'cutting' ? 'cut' : 'sew'; }
+function stageDone(bid){ var o = {cut:{}, sew:{}}; kwork.forEach(function(w){ if (w.bid !== bid) return; var st = wStage(w), i = String(+w.idx || 0); o[st][i] = (o[st][i] || 0) + (+w.pcs || 0); }); return o; }
+function tjobOf(r){ var bid = bidNorm(r.bookingId), d = stageDone(bid);
+  return {bid:bid, src:r.source || 'web', created:r.created || now(), note:r.forKarigar || '', due:r.due || r.needBy || '', open:['ready','delivered','cancelled'].indexOf(r.tstatus) < 0, cut:d.cut, sew:d.sew,
   items:(r.items || []).map(function(it){ return {k:typeKey(it), type:it.type || '', grp:it.grp || '', qty:+it.qty || 1}; })}; }
+function tjSig(x){ return JSON.stringify([x.items, x.note || '', x.due || '', !!x.open, x.cut || {}, x.sew || {}]); }
 var tjSyncBusy = false;
 function syncTjobs(){
-  if (!tjobDocs || tjSyncBusy) return;
-  var todo = tjobs().filter(function(r){ var b = bidNorm(r.bookingId); if (!b || r.tstatus === 'cancelled') return false; var have = tjobDocs[b], want = tjobOf(r);
-    return !have || JSON.stringify(have.items) !== JSON.stringify(want.items) || (have.note || '') !== want.note || (have.due || '') !== want.due; }).slice(0, 400);
+  if (!tjobDocs || !kworkLoaded || tjSyncBusy) return;
+  var todo = tjobs().filter(function(r){ var b = bidNorm(r.bookingId); if (!b) return false; var have = tjobDocs[b];
+    if (!have && r.tstatus === 'cancelled') return false;
+    return !have || tjSig(have) !== tjSig(tjobOf(r)); }).slice(0, 400);
   if (!todo.length) return;
   tjSyncBusy = true;
   var b = db.batch(); todo.forEach(function(r){ var x = tjobOf(r); b.set(db.collection('tjobs').doc(x.bid), x); tjobDocs[x.bid] = x; });
@@ -952,11 +957,13 @@ function silaiCard(r){
     var patch = {tstatus:k}; patch['tAt_'+k] = now();
     saveJob(r, patch).then(function(){ if ((k === 'ready' || k === 'delivered') && r.phone && confirm(L('ग्राहक को WhatsApp पर बताएँ?'))) window.open(waTo(r.phone, readyMsg(r, k)), '_blank'); }); }}); })));
   var bid = bidNorm(r.bookingId), done = kwork.filter(function(w){ return w.bid === bid; }).sort(function(a,b){ return String(a.day||'').localeCompare(String(b.day||'')); });
-  var wbox = el('div');
+  var wbox = el('div'), sd = stageDone(bid);
+  (r.items||[]).forEach(function(it, i){ var q = +it.qty || 1, c = sd.cut[String(i)] || 0, w = sd.sew[String(i)] || 0;
+    wbox.appendChild(el('div',{'class':'small',style:'font-weight:600'},[ tName(typeKey(it))+' × '+q+': ', el('span',{style:'color:'+(c>=q?'var(--ok)':'var(--warn,#9A5B00)'),text:'✂ '+L('कटिंग')+' '+c+'/'+q}), ' · ', el('span',{style:'color:'+(w>=q?'var(--ok)':'var(--warn,#9A5B00)'),text:'🧵 '+L('सिलाई')+' '+w+'/'+q}) ])); });
   if (!done.length) wbox.appendChild(el('div',{'class':'small muted',text:L('अभी किसी कारीगर ने पीस नहीं जोड़े।')}));
   done.forEach(function(w){ var kk = karigarById(w._k) || {};
     wbox.appendChild(el('div',{'class':'row small',style:'justify-content:space-between;border-bottom:1px dashed var(--line);padding:4px 0'},[
-      el('span',{text:(kk.name||'?')+' ('+rkName(kk.rk||'tailor')+') · '+tName(w.k)+(w.grp?' · '+gName(w.grp):'')+' · '+w.pcs+' '+L('पीस')+' · '+String(w.day||'').split('-').reverse().join('-')}),
+      el('span',{text:(wStage(w)==='cut'?'✂ ':'🧵 ')+(kk.name||'?')+' · '+tName(w.k)+(w.grp?' · '+gName(w.grp):'')+' · '+w.pcs+' '+L('पीस')+' · '+String(w.day||'').split('-').reverse().join('-')}),
       el('span',null,[ el('b',{text:rupees(workAmt(w))}), ' ', el('button',{'class':'btn b-sm b-line',type:'button',text:'✕',title:L('हटाएँ'),onclick:function(){ if (confirm(L('यह एंट्री हटाएँ?'))) db.collection('karigars').doc(w._k).collection('work').doc(w._id).delete(); }}) ]) ])); });
   var dueI = el('input',{type:'date',value:due,style:'max-width:160px'}), priceI = el('input',{type:'number',inputmode:'numeric',value:r.price||r.estimate||'',placeholder:'₹',style:'max-width:110px'}), paidI = el('input',{type:'number',inputmode:'numeric',value:r.paid||'',placeholder:'₹',style:'max-width:110px'});
   var noteI = el('input',{value:r.forKarigar||'',placeholder:L('कारीगर के लिए नोट (स्कैन करने पर दिखेगा)')});
@@ -1983,7 +1990,7 @@ function listen(){
   unsubs.push(db.collection('track').onSnapshot(function(s){ track = {}; s.docs.forEach(function(d){ track[d.id] = d.data(); }); }));
   unsubs.push(db.collection('karigars').onSnapshot(function(s){ karigars = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); }); if (tab === 'silai') redraw(); }, function(){}));
   unsubs.push(db.collectionGroup('deductions').onSnapshot(function(s){ kded = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'silai') redraw(); }, function(){}));
-  unsubs.push(db.collectionGroup('work').onSnapshot(function(s){ kwork = s.docs.map(function(d){ var x = d.data(); x._id = d.id; x._k = d.ref.parent.parent.id; return x; }); if (tab === 'silai') redraw(); }, function(){}));
+  unsubs.push(db.collectionGroup('work').onSnapshot(function(s){ kwork = s.docs.map(function(d){ var x = d.data(); x._id = d.id; x._k = d.ref.parent.parent.id; return x; }); kworkLoaded = true; syncTjobs(); if (tab === 'silai') redraw(); }, function(){}));
   unsubs.push(db.collection('tjobs').onSnapshot(function(s){ tjobDocs = {}; s.docs.forEach(function(d){ tjobDocs[d.id] = d.data(); }); syncTjobs(); }, function(){}));
   unsubs.push(db.collection('config').doc('trates').onSnapshot(function(s){ trates = s.exists ? s.data() : {}; if (tab === 'silai') redraw(); }, function(){}));
   unsubs.push(db.collection('secret').doc('krates').onSnapshot(function(s){ krates = s.exists ? s.data() : {}; if (tab === 'silai') redraw(); }, function(){}));

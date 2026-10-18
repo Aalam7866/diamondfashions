@@ -88,7 +88,8 @@ service cloud.firestore {
         allow read, write: if isAdmin() || dfStaff();
         allow read: if kActive(tok);
         allow create: if kActive(tok)
-          && request.resource.data.keys().hasOnly(['bid', 'k', 'type', 'grp', 'pcs', 'rate', 'amt', 'ts', 'day', 'idx'])
+          && request.resource.data.keys().hasOnly(['bid', 'k', 'type', 'grp', 'pcs', 'rate', 'amt', 'ts', 'day', 'idx', 'st'])
+          && request.resource.data.st == (get(/databases/$(database)/documents/karigars/$(tok)).data.get('rk', 'tailor') == 'cutting' ? 'cut' : 'sew')
           && request.resource.data.pcs is int && request.resource.data.pcs >= 1 && request.resource.data.pcs <= 500
           && request.resource.data.rate == kRate(tok, request.resource.data.k, request.resource.data.grp)
           && request.resource.data.amt == request.resource.data.pcs * request.resource.data.rate
@@ -101,9 +102,10 @@ service cloud.firestore {
     // order number lookup for tailors (no name / phone / address in it)
     match /tjobs/{bid} {
       allow get: if true;
-      allow list: if isAdmin() || dfStaff();
-      allow create: if request.resource.data.keys().hasOnly(['bid', 'src', 'created', 'items']) && request.resource.data.items is list;
-      allow update, delete: if isAdmin() || dfStaff();
+      allow list: if isAdmin() || dfStaff() || resource.data.open == true;
+      allow create: if request.resource.data.keys().hasOnly(['bid', 'src', 'created', 'items', 'open']) && request.resource.data.items is list;
+      allow update: if isAdmin() || dfStaff() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cut', 'sew']);
+      allow delete: if isAdmin() || dfStaff();
     }
     match /{path=**}/work/{wid} { allow read: if isAdmin() || dfStaff(); }
     match /{path=**}/deductions/{did} { allow read: if isAdmin() || dfStaff(); }
