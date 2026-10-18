@@ -3328,7 +3328,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       var p = withTimeout(fs.collection('requests').add(Object.assign({}, r, {uid:user ? user.uid : '', status:'new', created:new Date().toISOString()})), 15000);
       /* a copy without name / phone so tailors can scan or type the order number and add their pieces */
       p.then(function(){ var bid = String(r.bookingId||'').toUpperCase().replace(/[^A-Z0-9-]/g,'');
-        if (bid) fs.collection('tjobs').doc(bid).set({bid:bid, src:'web', open:true, created:new Date().toISOString(), items:(r.items||[]).map(function(it){ return {k:it.k||'', type:it.type||'', grp:it.grp||'', qty:+it.qty||1}; })}).catch(function(){}); });
+        if (bid) fs.collection('tjobs').doc(bid).set({bid:bid, src:'web', open:false, created:new Date().toISOString(), items:(r.items||[]).map(function(it){ return {k:it.k||'', type:it.type||'', grp:it.grp||'', qty:+it.qty||1}; })}).catch(function(){}); });
       return p; };
     DF.saveRequest = function(r){
       return withTimeout(fs.collection('requests').add({orderId:r.orderId||'', kind:r.kind||'return', phone:r.phone||'', item:r.item||'', reason:r.reason||'', details:r.details||'',

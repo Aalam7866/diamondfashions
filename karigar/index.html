@@ -115,7 +115,19 @@ var deds = [], me = null, work = [], tab = 'add', sw = null, instEvt = null, fmo
 var found = null, findMsg = '', findBusy = false, lastCode = '', addMsg = {}, pickG = {}, openJobs = null, olist = 'todo';
 function stage(){ return me && me.rk === 'cutting' ? 'cut' : 'sew'; }
 function doneOf(j, st, i){ return +((j[st] || {})[String(i)] || 0); }
-function leftOf(j){ var st = stage(); return (j.items||[]).reduce(function(a, it, i){ return a + Math.max(0, (+it.qty||1) - doneOf(j, st, i)); }, 0); }
+var NOCUT = {fallpico:1, alter:1}, mywip = [];
+function needCut(it){ return !NOCUT[it.k]; }
+function cutOf(j, i, it){ return needCut(it) ? doneOf(j, 'cut', i) : (+it.qty||1); }
+function wipOf(j, i){ return +((j.wip || {})[String(i)] || 0); }
+/* pieces I can take now: cutting master = not yet cut; tailor = cut but not yet stitched or started by someone */
+function availOf(j, i, it){ var q = +it.qty||1;
+  if (stage() === 'cut') return needCut(it) ? Math.max(0, q - doneOf(j, 'cut', i)) : 0;
+  return Math.max(0, Math.min(q, cutOf(j, i, it)) - doneOf(j, 'sew', i) - wipOf(j, i)); }
+function leftOf(j){ return (j.items||[]).reduce(function(a, it, i){ return a + availOf(j, i, it); }, 0); }
+function prog(j, i, it){ var q = +it.qty||1, c = cutOf(j, i, it), w = doneOf(j, 'sew', i), r = wipOf(j, i);
+  return el('div',{'class':'small',style:'font-weight:700;margin-top:2px'},[
+    needCut(it) ? el('span',{style:'color:'+(c>=q?'var(--ok)':'var(--warn)'),text:'✂ '+L('कटे','Cut')+' '+c+'/'+q}) : el('span',{'class':'muted',text:'✂ '+L('कटिंग नहीं चाहिए','No cutting')}), ' · ',
+    el('span',{style:'color:'+(w>=q?'var(--ok)':'var(--warn)'),text:'🧵 '+L('सिले','Stitched')+' '+w+'/'+q}), r ? ' · ' : null, r ? el('span',{style:'color:var(--blue)',text:'🔄 '+L('चालू','In work')+' '+r}) : null ]); }
 var RTYPES = {suit:['सलवार सूट','Salwar Suit'],kurti:['कुर्ती / टॉप','Kurti / Top'],blouse:['ब्लाउज़','Blouse'],lehenga:['लहंगा चोली','Lehenga Choli'],petticoat:['पेटीकोट','Petticoat'],fallpico:['साड़ी फॉल-पीको','Saree Fall-Pico'],
   shirt:['शर्ट','Shirt'],pant:['पैंट','Pant'],kurtapj:['कुर्ता पायजामा','Kurta Pajama'],sherwani:['शेरवानी / कोट','Sherwani / Coat'],safari:['सफ़ारी','Safari'],frock:['बच्चों की फ्रॉक','Kids Frock'],kidskurta:['बच्चों का कुर्ता / सेट','Kids Kurta / Set'],alter:['ऑल्टरेशन / फिटिंग','Alteration'],other:['और कुछ','Other']};
 var RGRP = [['a5','5–10 साल','Age 5–10'],['a10','10–14 साल','Age 10–14'],['a14','14+ साल','Above 14'],['men','पुरुष','Men']];
@@ -179,8 +191,9 @@ function lookup(code){
 function drawAdd(main){
   var inp = el('input',{value:lastCode,placeholder:'DF-T261018-AB12',autocapitalize:'characters',autocomplete:'off',style:'flex:1;min-width:0;min-height:50px;border-radius:10px;border:1px solid var(--line);padding:6px 12px;font-size:18px;background:var(--bg);color:var(--ink);text-transform:uppercase'});
   inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') lookup(inp.value); });
+  if (stage() === 'sew') drawMyWip(main);
   main.appendChild(el('div',{'class':'card'},[ el('b',{style:'font-size:17px',text:L('ऑर्डर नंबर','Order number')}),
-    el('p',{'class':'small muted',style:'margin:2px 0 8px',text:L('पर्ची का बारकोड स्कैन करें या नंबर लिखें, फिर अपने पीस जोड़ें।','Scan the slip barcode or type the number, then add your pieces.')}),
+    el('p',{'class':'small muted',style:'margin:2px 0 8px',text:L('नीचे लिस्ट से ऑर्डर चुनें, या पर्ची का बारकोड स्कैन करें / नंबर लिखें।','Pick an order from the list below, or scan the slip barcode / type the number.')}),
     el('div',{'class':'row'},[ inp, el('button',{'class':'btn gold',type:'button',text:'🔍 '+L('खोजें','Find'),onclick:function(){ lookup(inp.value); }}) ]),
     el('button',{'class':'btn line',type:'button',style:'width:100%;margin-top:8px;min-height:54px;font-size:18px',text:'📷 '+L('बारकोड स्कैन करें','Scan barcode'),onclick:scan}),
     findBusy ? el('p',{'class':'msg',text:L('ढूँढ रहे हैं…','Searching…')}) : findMsg ? el('p',{'class':'msg err',text:findMsg}) : null ]));
@@ -188,42 +201,83 @@ function drawAdd(main){
   main.appendChild(el('button',{'class':'btn line sm',type:'button',style:'margin-bottom:10px',text:'← '+L('सारे खुले ऑर्डर','All open orders'),onclick:function(){ found = null; lastCode = ''; findMsg = ''; draw(); }}));
   var c = el('div',{'class':'job new'});
   c.appendChild(el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:18px',text:found.bid}), found.due ? el('span',{'class':'due',text:L('डिलीवरी: ','Due: ')+dmy(found.due)}) : null ]));
+  if (found.open === false) c.appendChild(el('div',{'class':'note',style:'background:rgba(163,38,42,.1);color:var(--bad)',text:'⏳ '+L('यह ऑर्डर अभी दुकान ने अप्रूव नहीं किया या बंद है — अभी काम नहीं जुड़ेगा।','The shop has not approved this order yet, or it is closed — work cannot be added now.')}));
   if (found.note) c.appendChild(el('div',{'class':'note',text:'📝 '+found.note}));
+  var st = stage();
   (found.items||[]).forEach(function(it, i){
+    var q = +it.qty || 1, av = found.open === false ? 0 : availOf(found, i, it);
     var mine = work.filter(function(w){ return w.bid === found.bid && w.idx === i; }), already = mine.reduce(function(a,w){ return a+(+w.pcs||0); },0);
-    var q = +it.qty || 1, left = Math.max(0, q - doneOf(found, stage(), i));
-    var grp = it.grp || pickG[i] || (mine[0] && mine[0].grp) || '', pcs = Math.max(1, left) || 1;
+    var grp = it.grp || pickG[i] || (mine[0] && mine[0].grp) || '', pcs = Math.max(1, av) || 1;
     var g = el('div',{'class':'g'});
-    g.appendChild(el('b',{style:'font-size:17px',text:(i+1)+'. '+tName(it.k, it.type)+(it.grp?' · '+gName(it.grp):'')+' × '+(+it.qty||1)}));
-    g.appendChild(el('div',{'class':'small',style:'font-weight:700;margin-top:2px'},[ el('span',{style:'color:'+(doneOf(found,'cut',i)>=q?'var(--ok)':'var(--warn)'),text:'✂ '+L('कटे','Cut')+' '+doneOf(found,'cut',i)+'/'+q}), ' · ', el('span',{style:'color:'+(doneOf(found,'sew',i)>=q?'var(--ok)':'var(--warn)'),text:'🧵 '+L('सिले','Stitched')+' '+doneOf(found,'sew',i)+'/'+q}) ]));
-    if (already) g.appendChild(el('div',{'class':'small',style:'color:var(--ok);font-weight:700',text:'✓ '+L('आप जोड़ चुके: ','You added: ')+already+' '+L('पीस','pcs')}));
-    if (!left) g.appendChild(el('div',{'class':'small muted',text:stage()==='cut' ? L('इस कपड़े की पूरी कटिंग हो चुकी है','All pieces of this are already cut') : L('इस कपड़े की पूरी सिलाई हो चुकी है','All pieces of this are already stitched')}));
+    g.appendChild(el('b',{style:'font-size:17px',text:(i+1)+'. '+tName(it.k, it.type)+(it.grp?' · '+gName(it.grp):'')+' × '+q}));
+    g.appendChild(prog(found, i, it));
+    if (already) g.appendChild(el('div',{'class':'small',style:'color:var(--ok);font-weight:700',text:'✓ '+L('आपके पूरे किए: ','Done by you: ')+already+' '+L('पीस','pcs')}));
+    var msg = el('p',{'class':'msg'+(addMsg[i]?' ok':''),text:addMsg[i]||''});
+    if (!av){
+      var why = st === 'cut' ? (needCut(it) ? L('इसकी पूरी कटिंग हो चुकी है','All pieces are cut') : L('इसमें कटिंग नहीं चाहिए','No cutting needed'))
+        : cutOf(found, i, it) < q && cutOf(found, i, it) - doneOf(found,'sew',i) - wipOf(found,i) <= 0 ? '✂ '+L('कटिंग बाकी — कटने के बाद सिलाई शुरू होगी','Cutting pending — stitching starts after cutting')
+        : wipOf(found, i) ? '🔄 '+L('बाकी पीस पर काम चल रहा है','Remaining pieces are in work') : L('इसकी पूरी सिलाई हो चुकी है','All pieces are stitched');
+      if (found.open !== false) g.appendChild(el('div',{'class':'small muted',style:'margin-top:4px',text:why}));
+      g.appendChild(msg); c.appendChild(g); return;
+    }
     var gsel = null;
     if (!it.grp){ gsel = el('select',{style:'min-height:44px;border-radius:10px;border:1px solid var(--line);padding:4px 8px;margin-top:6px;background:var(--surface);color:var(--ink);font:inherit'},[ el('option',{value:'',text:L('उम्र / ग्रुप चुनें','Choose age / group')}) ].concat(RGRP.map(function(r){ return el('option',{value:r[0],text:(LANG==='en'?r[2]:r[1])+(myRate(it.k, r[0])?' · '+rs(myRate(it.k, r[0])):'')}); })));
       gsel.value = grp; gsel.onchange = function(){ grp = pickG[i] = gsel.value; upd(); }; g.appendChild(gsel); }
     var cnt = el('b',{'class':'num',style:'font-size:22px;min-width:40px;text-align:center',text:String(pcs)}), line = el('div',{'class':'small',style:'font-weight:600'});
     function upd(){ cnt.textContent = String(pcs); var r = myRate(it.k, grp); line.textContent = grp ? (r ? rs(r)+' × '+pcs+' = '+rs(r*pcs) : L('रेट अभी तय नहीं — दुकान तय करेगी','Rate not set yet — the shop will set it')) : ''; }
-    g.appendChild(el('div',{'class':'row',style:'margin-top:8px'},[ el('span',{text:L('मेरे पीस:','My pieces:')}),
-      el('button',{'class':'btn sm line',type:'button',text:'−',onclick:function(){ if (pcs > 1){ pcs--; upd(); } }}), cnt, el('button',{'class':'btn sm line',type:'button',text:'+',onclick:function(){ if (pcs < 500){ pcs++; upd(); } }}) ]));
+    g.appendChild(el('div',{'class':'row',style:'margin-top:8px'},[ el('span',{text:L('पीस:','Pieces:')}),
+      el('button',{'class':'btn sm line',type:'button',text:'−',onclick:function(){ if (pcs > 1){ pcs--; upd(); } }}), cnt, el('button',{'class':'btn sm line',type:'button',text:'+',onclick:function(){ if (pcs < av){ pcs++; upd(); } }}), el('span',{'class':'small muted',text:'/ '+av}) ]));
     g.appendChild(line);
-    var msg = el('p',{'class':'msg'+(addMsg[i]?' ok':''),text:addMsg[i]||''});
-    g.appendChild(el('button',{'class':'btn ok',type:'button',style:'width:100%;margin-top:8px',text:'✓ '+L('मेरे काम में जोड़ें','Add to my work'),onclick:function(e){
-      if (!grp){ msg.textContent = L('पहले उम्र / ग्रुप चुनें','Choose the age / group first'); msg.className = 'msg err'; return; }
-      var left2 = Math.max(0, q - doneOf(found, stage(), i));
-      if (pcs > left2 && !confirm(L('इस कपड़े के सिर्फ़ '+left2+' पीस बाकी हैं, आप '+pcs+' जोड़ रहे हैं। फिर भी जोड़ें?','Only '+left2+' pcs are left, you are adding '+pcs+'. Add anyway?'))) return;
-      var rate = myRate(it.k, grp), st = stage(); e.target.disabled = true; msg.textContent = '…'; msg.className = 'msg';
-      var b = db.batch(), wref = db.collection('karigars').doc(tok).collection('work').doc(), upd = {}; upd[st+'.'+i] = firebase.firestore.FieldValue.increment(pcs);
-      b.set(wref, {bid:found.bid, k:it.k||'other', type:it.type||'', grp:grp, pcs:pcs, rate:rate, amt:rate*pcs, ts:firebase.firestore.FieldValue.serverTimestamp(), day:today(), idx:i, st:st});
-      b.update(db.collection('tjobs').doc(found.bid), upd);
-      b.commit()
-        .then(function(){ chime(); addMsg[i] = '✓ '+pcs+' '+L('पीस जुड़ गए','pcs added')+(rate?' · '+rs(rate*pcs):''); draw(); },
-          function(er){ e.target.disabled = false; msg.textContent = L('नहीं जुड़ा: ','Not added: ')+(er.code||er.message); msg.className = 'msg err'; });
-    }}));
-    if (!left && !already) g.lastChild.className = 'btn line';
+    var fail = function(btn){ return function(er){ btn.disabled = false; msg.textContent = L('नहीं हुआ: ','Failed: ')+(er.code||er.message); msg.className = 'msg err'; }; };
+    if (st === 'cut'){
+      g.appendChild(el('button',{'class':'btn ok',type:'button',style:'width:100%;margin-top:8px',text:'✂ '+L('कटिंग पूरी — मेरे खाते में जोड़ें','Cutting done — add to my account'),onclick:function(e){
+        if (!grp){ msg.textContent = L('पहले उम्र / ग्रुप चुनें','Choose the age / group first'); msg.className = 'msg err'; return; }
+        var rate = myRate(it.k, grp), btn = e.target; btn.disabled = true; msg.textContent = '…'; msg.className = 'msg';
+        var b = db.batch(), upd2 = {}; upd2['cut.'+i] = firebase.firestore.FieldValue.increment(pcs);
+        b.set(db.collection('karigars').doc(tok).collection('work').doc(), {bid:found.bid, k:it.k||'other', type:it.type||'', grp:grp, pcs:pcs, rate:rate, amt:rate*pcs, ts:firebase.firestore.FieldValue.serverTimestamp(), day:today(), idx:i, st:'cut'});
+        b.update(db.collection('tjobs').doc(found.bid), upd2);
+        b.commit().then(function(){ chime(); addMsg[i] = '✓ '+pcs+' '+L('पीस कटिंग जुड़ गई','pcs cutting added')+(rate?' · '+rs(rate*pcs):''); draw(); }, fail(btn));
+      }}));
+    } else {
+      g.appendChild(el('button',{'class':'btn gold',type:'button',style:'width:100%;margin-top:8px',text:'🧵 '+L('सिलाई शुरू करें','Start stitching'),onclick:function(e){
+        if (!grp){ msg.textContent = L('पहले उम्र / ग्रुप चुनें','Choose the age / group first'); msg.className = 'msg err'; return; }
+        var btn = e.target; btn.disabled = true; msg.textContent = '…'; msg.className = 'msg';
+        var b = db.batch(), upd2 = {}; upd2['wip.'+i] = firebase.firestore.FieldValue.increment(pcs);
+        b.set(db.collection('karigars').doc(tok).collection('wip').doc(), {bid:found.bid, idx:i, k:it.k||'other', type:it.type||'', grp:grp, pcs:pcs, due:found.due||'', at:firebase.firestore.FieldValue.serverTimestamp()});
+        b.update(db.collection('tjobs').doc(found.bid), upd2);
+        b.commit().then(function(){ chime(); found = null; lastCode = ''; draw(); window.scrollTo(0,0); }, fail(btn));
+      }}));
+    }
     g.appendChild(msg); upd();
     c.appendChild(g);
   });
   main.appendChild(c);
+}
+/* tailor: work started, finish it to add it to his account */
+function drawMyWip(main){
+  if (!mywip.length) return;
+  var box = el('div',{'class':'card',style:'border:2px solid var(--blue)'},[ el('b',{style:'font-size:17px',text:'🔄 '+L('मेरा चालू काम','My work in progress')+' ('+mywip.length+')'}) ]);
+  mywip.slice().sort(function(a,b){ return String(a.due||'9999').localeCompare(String(b.due||'9999')); }).forEach(function(w){
+    var late = w.due && w.due < today(), r = myRate(w.k, w.grp), m = el('p',{'class':'msg'});
+    box.appendChild(el('div',{'class':'g'},[ el('div',{'class':'top'},[ el('span',{'class':'num',text:w.bid}), w.due ? el('span',{'class':'due'+(late?' late':''),text:dmy(w.due)}) : null ]),
+      el('div',{style:'font-weight:600;margin-top:4px',text:tName(w.k, w.type)+(w.grp?' · '+gName(w.grp):'')+' · '+w.pcs+' '+L('पीस','pcs')+(r?' · '+rs(r*w.pcs):'')}),
+      el('div',{'class':'row',style:'margin-top:8px'},[
+        el('button',{'class':'btn ok grow',type:'button',text:'✓ '+L('काम पूरा — खाते में जोड़ें','Finished — add to account'),onclick:function(e){
+          if (!confirm(L(w.bid+' का '+w.pcs+' पीस काम पूरा हो गया?','Finished '+w.pcs+' pcs of '+w.bid+'?'))) return;
+          var btn = e.target; btn.disabled = true; m.textContent = '…';
+          var rate = myRate(w.k, w.grp), b = db.batch(), u = {}; u['sew.'+w.idx] = firebase.firestore.FieldValue.increment(w.pcs); u['wip.'+w.idx] = firebase.firestore.FieldValue.increment(-w.pcs);
+          b.set(db.collection('karigars').doc(tok).collection('work').doc(), {bid:w.bid, k:w.k, type:w.type||'', grp:w.grp, pcs:w.pcs, rate:rate, amt:rate*w.pcs, ts:firebase.firestore.FieldValue.serverTimestamp(), day:today(), idx:w.idx, st:'sew'});
+          b.delete(db.collection('karigars').doc(tok).collection('wip').doc(w._id));
+          b.update(db.collection('tjobs').doc(w.bid), u);
+          b.commit().then(function(){ chime(); }, function(er){ btn.disabled = false; m.textContent = L('नहीं हुआ: ','Failed: ')+(er.code||er.message); m.className = 'msg err'; });
+        }}),
+        el('button',{'class':'btn line sm',type:'button',text:L('छोड़ें','Give back'),onclick:function(){
+          if (!confirm(L('यह काम वापस छोड़ें? कोई और कारीगर ले सकेगा।','Give this work back? Another tailor can take it.'))) return;
+          var b = db.batch(), u = {}; u['wip.'+w.idx] = firebase.firestore.FieldValue.increment(-w.pcs);
+          b.delete(db.collection('karigars').doc(tok).collection('wip').doc(w._id)); b.update(db.collection('tjobs').doc(w.bid), u); b.commit().catch(function(er){ alert(er.message); });
+        }}) ]), m ]));
+  });
+  main.appendChild(box);
 }
 function drawOpen(main){
   if (!openJobs){ main.appendChild(el('p',{'class':'muted',text:L('खुले ऑर्डर आ रहे हैं…','Loading open orders…')})); return; }
@@ -231,16 +285,16 @@ function drawOpen(main){
   var all = openJobs.slice().sort(function(a,b){ return String(a.due||'9999').localeCompare(String(b.due||'9999')) || String(a.created||'').localeCompare(String(b.created||'')); });
   var todo = all.filter(function(j){ return leftOf(j) > 0; });
   var seg = function(k, t){ return el('button',{type:'button','class':'btn sm '+(olist===k?'gold':'line'),text:t,onclick:function(){ olist = k; draw(); }}); };
-  main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin:4px 0 10px'},[ el('b',{style:'font-size:17px',text:(st==='cut'?'✂ '+L('कटिंग के लिए','For cutting'):'🧵 '+L('सिलाई के लिए','For stitching'))}),
-    el('div',{'class':'row'},[ seg('todo', L('बाकी','Pending')+' ('+todo.length+')'), seg('all', L('सब खुले','All open')+' ('+all.length+')') ]) ]));
+  main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin:4px 0 10px'},[ el('b',{style:'font-size:17px',text:(st==='cut'?'✂ '+L('कटिंग के लिए','For cutting'):'🧵 '+L('सिलाई के लिए (कटे हुए)','For stitching (already cut)'))}),
+    el('div',{'class':'row'},[ seg('todo', L('मेरे लिए','For me')+' ('+todo.length+')'), seg('all', L('सब खुले','All open')+' ('+all.length+')') ]) ]));
   var list = olist === 'todo' ? todo : all;
-  if (!list.length){ main.appendChild(el('div',{'class':'empty'},[ el('b',{text:'✅'}), st==='cut' ? L('अभी कटिंग के लिए कुछ बाकी नहीं।','Nothing left to cut right now.') : L('अभी सिलाई के लिए कुछ बाकी नहीं।','Nothing left to stitch right now.') ])); return; }
+  if (!list.length){ main.appendChild(el('div',{'class':'empty'},[ el('b',{text:'✅'}), st==='cut' ? L('अभी कटिंग के लिए कुछ नहीं।','Nothing to cut right now.') : L('अभी सिलाई के लिए कुछ नहीं — कटिंग होते ही यहाँ आएगा।','Nothing to stitch right now — it appears here once cut.') ])); return; }
   list.forEach(function(j){
     var late = j.due && j.due < td, left = leftOf(j);
     main.appendChild(el('button',{type:'button','class':'job'+(late?' late':''),style:'display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit',onclick:function(){ found = JSON.parse(JSON.stringify(j)); lastCode = j.bid; addMsg = {}; pickG = {}; findMsg = ''; draw(); window.scrollTo(0,0); }},[
-      el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:17px',text:j.bid}), el('span',{'class':'st '+(left?'':'ok'),text: left ? left+' '+L('पीस बाकी','pcs left') : '✓ '+L('पूरा','Done')}) ]),
+      el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:17px',text:j.bid}), el('span',{'class':'st '+(left?'':'ok'),text: left ? left+' '+L('पीस आपके लिए','pcs for you') : '—'}) ]),
       j.due ? el('div',{'class':'due'+(late?' late':''),style:'margin-top:4px',text:L('डिलीवरी: ','Due: ')+dmy(j.due)+(late?' ('+L('लेट','late')+')':'')}) : null,
-      el('div',{'class':'small',style:'margin-top:4px'}, (j.items||[]).map(function(it, i){ var q = +it.qty||1; return el('div',null,[ tName(it.k, it.type)+(it.grp?' · '+gName(it.grp):'')+' × '+q+'  —  ', el('span',{style:'color:'+(doneOf(j,'cut',i)>=q?'var(--ok)':'var(--warn)'),text:'✂ '+doneOf(j,'cut',i)+'/'+q}), '  ', el('span',{style:'color:'+(doneOf(j,'sew',i)>=q?'var(--ok)':'var(--warn)'),text:'🧵 '+doneOf(j,'sew',i)+'/'+q}) ]); })),
+      el('div',{style:'margin-top:4px'}, (j.items||[]).map(function(it, i){ return el('div',{style:'margin-top:4px'},[ el('div',{'class':'small',text:tName(it.k, it.type)+(it.grp?' · '+gName(it.grp):'')+' × '+(+it.qty||1)}), prog(j, i, it) ]); })),
       j.note ? el('div',{'class':'note',text:'📝 '+j.note}) : null ]));
   });
 }
@@ -295,6 +349,7 @@ db.collection('karigars').doc(tok).onSnapshot(function(s){
     db.collection('karigars').doc(tok).collection('deductions').onSnapshot(function(q){ deds = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; deds.push(x); }); draw(); }, function(){});
     db.collection('tjobs').where('open', '==', true).onSnapshot(function(q){ openJobs = []; q.forEach(function(d){ var x = d.data(); x.bid = x.bid || d.id; openJobs.push(x); });
       if (found){ var f = openJobs.filter(function(j){ return j.bid === found.bid; })[0]; if (f) found = f; } draw(); }, function(){ openJobs = []; draw(); });
+    db.collection('karigars').doc(tok).collection('wip').onSnapshot(function(q){ mywip = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; mywip.push(x); }); draw(); }, function(){});
     db.collection('karigars').doc(tok).collection('work').onSnapshot(function(q){ work = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; work.push(x); }); draw(); }, function(){});
   }
   draw();

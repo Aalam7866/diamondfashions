@@ -97,17 +97,28 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/tjobs/$(request.resource.data.bid));
         allow delete: if kActive(tok) && request.time < resource.data.ts + duration.value(1, 'd');
       }
+      // stitching started (finished = moved to work)
+      match /wip/{wid} {
+        allow read, write: if isAdmin() || dfStaff();
+        allow read, delete: if kActive(tok);
+        allow create: if kActive(tok)
+          && request.resource.data.keys().hasOnly(['bid', 'idx', 'k', 'type', 'grp', 'pcs', 'due', 'at'])
+          && request.resource.data.pcs is int && request.resource.data.pcs >= 1 && request.resource.data.pcs <= 500
+          && request.resource.data.at == request.time
+          && exists(/databases/$(database)/documents/tjobs/$(request.resource.data.bid));
+      }
     }
 
     // order number lookup for tailors (no name / phone / address in it)
     match /tjobs/{bid} {
       allow get: if true;
       allow list: if isAdmin() || dfStaff() || resource.data.open == true;
-      allow create: if request.resource.data.keys().hasOnly(['bid', 'src', 'created', 'items', 'open']) && request.resource.data.items is list;
-      allow update: if isAdmin() || dfStaff() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cut', 'sew']);
+      allow create: if request.resource.data.keys().hasOnly(['bid', 'src', 'created', 'items', 'open']) && request.resource.data.items is list && request.resource.data.get('open', false) == false;
+      allow update: if isAdmin() || dfStaff() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cut', 'sew', 'wip']);
       allow delete: if isAdmin() || dfStaff();
     }
     match /{path=**}/work/{wid} { allow read: if isAdmin() || dfStaff(); }
+    match /{path=**}/wip/{wid} { allow read: if isAdmin() || dfStaff(); }
     match /{path=**}/deductions/{did} { allow read: if isAdmin() || dfStaff(); }
     match /{path=**}/jobs/{jid} { allow read: if isAdmin() || dfStaff(); }
 
