@@ -230,6 +230,7 @@ function draw(){
   ]) ]);
   app.appendChild(head);
   var tabs = [['orders',L('ऑर्डर'),newCount()],['requests',L('रिक्वेस्ट'),reqCount()],['products',L('सामान'),0],['banners',L('विज्ञापन'),0],['reviews',L('रिव्यू'),0],['stock',L('स्टॉक'),0],['silai',L('सिलाई'),silaiNew()],['riders',L('डिलीवरी बॉय'),0],['staff',L('स्टाफ'),0],['cards',SL('डिस्काउंट कार्ड','Discount cards'),0],['settings',L('सेटिंग'),0]];
+  var ah = (cfg && cfg.admHide) || []; tabs = tabs.filter(function(tb){ return ah.indexOf(tb[0]) < 0; }); if (ah.indexOf(tab) >= 0) tab = 'orders';
   var nav = el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(tb){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===tb[0]),onclick:function(){ tab=tb[0]; draw(); window.scrollTo(0,0); }},[ tb[1], tb[2] ? el('span',{'class':'n',text:String(tb[2])}) : null ]); }));
   app.appendChild(el('div',{'class':'wrap',style:'padding:0'},[nav]));
   var main = el('main',{'class':'wrap'});
@@ -489,7 +490,7 @@ function drawProducts(main){
     products.filter(function(p){ return !qq || (p.name+' '+p.code).toLowerCase().indexOf(qq)>=0; }).forEach(function(p){
       var im = el('div',{'class':'im'}); if (p.photos && p.photos[0]) im.appendChild(el('img',{src:p.photos[0],alt:''})); else im.textContent = L('फ़ोटो नहीं');
       grid.appendChild(el('button',{'class':'pcard',type:'button',onclick:function(){ editProduct(p); }},[ im, el('div',{'class':'b'},[ el('span',{'class':'num small muted',text:p.code}), el('b',{text:p.name}),
-        el('span',{text:(p.price?rupees(p.price)+(p.unit==='m'?L(' / मीटर'):''):L('दाम नहीं'))+(p.hidden?L(' · छुपा'):'')+(p.inStock===false?L(' · स्टॉक ख़त्म'):'')}) ]) ]));
+        el('span',{text:(p.price?rupees(p.price)+(p.unit==='m'?L(' / मीटर'):''):L('दाम नहीं'))+(p.hidden?L(' · छुपा'):'')+(p.inStock===false?L(' · स्टॉक ख़त्म'):'')+(p.featured?' · ⭐':'')}) ]) ]));
     }); };
   s.oninput = fill; fill();
   var mm = el('p',{'class':'msg'});
@@ -559,6 +560,20 @@ function editProduct(p0){
       box.appendChild(el('div',{'class':'field'},[ el('label',{text:L('स्टॉक')}), stockBox ]));
     }
     box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'e-desc',text:L('जानकारी')}), el('textarea',{id:'e-desc'},[p.desc||'']) ]));
+    // ✨ AI writes the short line, the details and the long description from the name + photo
+    var aiLang = el('select',{style:'min-height:40px;border-radius:8px'},[ el('option',{value:'en',text:'English'}), el('option',{value:'hi',text:'हिंदी'}), el('option',{value:'both',text:'English + हिंदी'}) ]);
+    aiLang.value = LANG === 'en' ? 'en' : 'hi';
+    var aiOut = el('div'), aiMsg = el('span',{'class':'small'});
+    var aiB = el('button',{'class':'btn b-sm b-gold',type:'button',text:'✨ '+SL('AI से लिखें','Write with AI'),onclick:function(){
+      keep(); if (!p.name){ aiMsg.textContent = L('नाम लिखें'); return; }
+      aiB.disabled = true; aiMsg.textContent = SL('AI लिख रहा है…','AI is writing…'); aiOut.innerHTML = '';
+      aiDescribe(p, aiLang.value).then(function(r){ aiB.disabled = false; aiMsg.textContent = '';
+        aiOut.appendChild(el('div',{'class':'card',style:'background:var(--bg);margin:6px 0'},[ el('b',{text:r.short}), el('pre',{style:'white-space:pre-wrap;font:inherit;margin:6px 0',text:r.details}), el('p',{style:'margin:0 0 8px',text:r.long}),
+          el('div',{'class':'row'},[ el('button',{'class':'btn b-sm b-ok',type:'button',text:'✓ '+SL('यही लगाएँ','Use this'),onclick:function(){ keep(); p.desc = r.short; p.details = r.details; p.longDesc = r.long; render(); }}),
+            el('button',{'class':'btn b-sm b-line',type:'button',text:'↻ '+SL('दूसरा लिखें','Write another'),onclick:function(){ aiB.click(); }}) ]) ])); },
+        function(e){ aiB.disabled = false; aiMsg.textContent = e.message || e; aiMsg.style.color = 'var(--bad)'; });
+    }});
+    box.appendChild(el('div',{'class':'row',style:'margin:-4px 0 10px'},[ aiB, aiLang, aiMsg ])); box.appendChild(aiOut);
     var ex = {women:'Fabric: Cotton\nColour: Yellow\nPattern: Embroidered\nOccasion: Festive\nSet: Kurta, Pant, Dupatta\nWash care: Hand wash', men:'Fabric: Cotton\nFit: Regular\nColour: Blue\nSleeve: Full\nWash care: Machine wash',
       footwear:'Material: PU leather\nSole: Rubber\nColour: Black\nHeel: Flat', jewellery:'Material: Alloy, gold plated\nStones: Kundan\nSet includes: Necklace, 2 earrings', beauty:'Brand: \nQuantity: 30 ml\nExpiry: ', stationery:'Brand: \nPages / Pack: \nSize: ', cookware:'Material: Stainless steel\nCapacity: 5 L\nInduction: Yes\nWarranty: 1 year'}[p.cat] || 'Material: \nColour: \nBrand: ';
     box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'e-det',text:L('पूरी जानकारी (हर लाइन में  नाम: जानकारी)')}), el('textarea',{id:'e-det',placeholder:ex,style:'min-height:120px'},[p.details||'']) ]));
@@ -566,7 +581,8 @@ function editProduct(p0){
     box.appendChild(sel('e-art',L('फ़ोटो न हो तो कौन सा निशान दिखे'),p.art||'suit',ARTS.map(function(a){ return [a,a]; })));
     box.appendChild(el('div',{'class':'row',style:'margin:6px 0 12px'},[
       el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-in',checked:p.inStock!==false?'checked':null}), L(' स्टॉक में है') ]),
-      el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-hid',checked:p.hidden?'checked':null}), L(' वेबसाइट पर छुपाएँ') ]) ]));
+      el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-hid',checked:p.hidden?'checked':null}), L(' वेबसाइट पर छुपाएँ') ]),
+      el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-feat',checked:p.featured?'checked':null}), ' ⭐ '+SL('ख़ास सामान — वेबसाइट पर सबसे ऊपर दिखाएँ','Featured — show at the top of the website') ]) ]));
     var save = el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){ doSave(save); }});
     var postB = isNew || !(meta && meta.pageToken) ? null : el('button',{'class':'btn b-line',type:'button',text:'📣 '+SL('FB/Instagram पर पोस्ट करें','Post to FB / Instagram'),onclick:function(){
       if (!confirm(SL('यह सामान अभी Facebook/Instagram पर पोस्ट करें?','Post this item to Facebook/Instagram now?'))) return;
@@ -575,8 +591,9 @@ function editProduct(p0){
       postProduct(p, lft !== null && lft > 0 && lft <= ((meta && meta.low) || 3) ? 'low' : 'new').then(function(){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓'); msg.className = 'msg ok'; postB.disabled = false; },
         function(e){ msg.textContent = SL('पोस्ट नहीं हुआ: ','Could not post: ') + (e.message||e); msg.className = 'msg err'; postB.disabled = false; }); }});
     var bellB = isNew ? null : el('button',{'class':'btn b-line',type:'button',text:'🔔 '+SL('ग्राहकों को सूचना','Notify customers'),onclick:function(){ keep(); notifyDialog(p); }});
+    var bnrB = isNew || !(p.photos||[]).length ? null : el('button',{'class':'btn b-line',type:'button',text:'🖼 '+SL('इसका बैनर / विज्ञापन','Banner / ad for this'),onclick:function(){ keep(); close(); productBanner(p); }});
     var vidB = isNew || (p.photos||[]).length < 2 ? null : el('button',{'class':'btn b-line',type:'button',text:'🎬 '+SL('वीडियो बनाएँ','Make video'),onclick:function(){ keep(); videoDialog(p); }});
-    box.appendChild(el('div',{'class':'row'},[ save, postB, vidB, bellB, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
+    box.appendChild(el('div',{'class':'row'},[ save, postB, vidB, bnrB, bellB, isNew ? null : el('button',{'class':'btn b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(p.name+L(' हटाएँ?'))) db.collection('products').doc(p.id).delete().then(close); }}), el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ]));
     box.appendChild(msg);
     ['e-unit','e-sizes'].forEach(function(id){ var n = document.getElementById(id); if (n) n.addEventListener('change', function(){ keep(); render(); }); });
   }
@@ -584,7 +601,7 @@ function editProduct(p0){
   function keep(){
     if (!document.getElementById('e-name')) return;
     p.name = v('e-name'); p.cat = v('e-cat'); p.unit = v('e-unit') || p.unit; p.price = num(v('e-price')); p.mrp = num(v('e-mrp'));
-    p.desc = v('e-desc'); p.details = (document.getElementById('e-det')||{}).value || ''; p.longDesc = v('e-long'); p.art = v('e-art'); p.inStock = document.getElementById('e-in').checked; p.hidden = document.getElementById('e-hid').checked;
+    p.desc = v('e-desc'); p.details = (document.getElementById('e-det')||{}).value || ''; p.longDesc = v('e-long'); p.art = v('e-art'); p.inStock = document.getElementById('e-in').checked; p.hidden = document.getElementById('e-hid').checked; p.featured = !!(document.getElementById('e-feat')||{}).checked;
     if (document.getElementById('e-stockM')){ p.stockM = num(v('e-stockM'))||0; p.minM = num(v('e-minM'))||1; }
     if (document.getElementById('e-sizes')){ p.sizes = v('e-sizes'); var st = {}; Array.prototype.forEach.call(box.querySelectorAll('[data-size]'), function(n){ var x = num(n.value); if (x!==null) st[n.getAttribute('data-size')] = Math.round(x); }); p.stock = st; }
   }
@@ -618,6 +635,10 @@ function ytId(u){ var m = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|sho
 function drawBanners(main){
   main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin-bottom:6px'},[ el('h2',{style:'margin:0',text:L('बैनर / विज्ञापन')}), el('button',{'class':'btn b-gold',type:'button',text:L('+ नया बैनर'),onclick:function(){ editBanner(null); }}) ]));
   main.appendChild(el('p',{'class':'muted small',text:L('ये बैनर वेबसाइट पर सबसे ऊपर स्लाइड होते हैं। फ़ोटो या वीडियो (YouTube या MP4 लिंक) लगा सकते हैं। कोई बैनर न हो तो वेबसाइट अपने-आप बैनर दिखाती है।')}));
+  main.appendChild(el('div',{'class':'row',style:'margin:6px 0 12px'},[ el('button',{'class':'btn b-gold',type:'button',text:'🖼 '+SL('सामान से बैनर / विज्ञापन बनाएँ','Make a banner / ad from your items'),onclick:function(){ bannerMaker({theme:'brand', lang: LANG === 'en' ? 'en' : 'hi', title: SL('नया माल आ गया','New arrivals'), sub: SL('पूरे परिवार के कपड़े · घर पर डिलीवरी','Clothes for the whole family · Home delivery')}); }}) ]));
+  drawFestivals(main);
+  drawBundles(main);
+  main.appendChild(el('h3',{style:'margin:18px 0 6px',text:SL('आपके बैनर','Your banners')}));
   if (!banners.length) main.appendChild(el('p',{'class':'muted',text:L('अभी आपका कोई बैनर नहीं।')}));
   drawDefBanners(main);
   banners.forEach(function(b, i){
@@ -701,6 +722,347 @@ function editBanner(b0){
     box.appendChild(msg);
   }
   render();
+}
+
+/* =====================================================================
+   Phase 2: banner maker (product + Indian festivals), combo offers, AI product description
+   ===================================================================== */
+function seeded(n){ var x = n || 1; return function(){ x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; }; }
+/* ---------- background motifs (drawn on a 1600×600 canvas) ---------- */
+var MOTIF = {
+  sparkles: function(x, W, H, R, th){ x.fillStyle = th.spark || '#FFE08A'; for (var i = 0; i < 46; i++){ var cx = R()*W, cy = R()*H, r = 3 + R()*9; x.globalAlpha = .35 + R()*.5; x.beginPath(); x.moveTo(cx, cy - r*2); x.quadraticCurveTo(cx, cy, cx + r*2, cy); x.quadraticCurveTo(cx, cy, cx, cy + r*2); x.quadraticCurveTo(cx, cy, cx - r*2, cy); x.quadraticCurveTo(cx, cy, cx, cy - r*2); x.fill(); } x.globalAlpha = 1; },
+  diyas: function(x, W, H, R){ for (var i = 0; i < 6; i++){ var cx = 70 + i*120, cy = H - 46, s = 1 + (i%2)*.15;
+      var g = x.createRadialGradient(cx, cy - 58*s, 4, cx, cy - 58*s, 70*s); g.addColorStop(0, 'rgba(255,200,80,.75)'); g.addColorStop(1, 'rgba(255,160,40,0)'); x.fillStyle = g; x.fillRect(cx - 80, cy - 140, 160, 140);
+      x.fillStyle = '#FFB300'; x.beginPath(); x.moveTo(cx, cy - 86*s); x.quadraticCurveTo(cx + 16*s, cy - 52*s, cx, cy - 36*s); x.quadraticCurveTo(cx - 16*s, cy - 52*s, cx, cy - 86*s); x.fill();
+      x.fillStyle = '#FFF3C4'; x.beginPath(); x.ellipse(cx, cy - 48*s, 5*s, 10*s, 0, 0, 7); x.fill();
+      var bg = x.createLinearGradient(0, cy - 36, 0, cy + 10); bg.addColorStop(0, '#E65100'); bg.addColorStop(1, '#8D2C00'); x.fillStyle = bg;
+      x.beginPath(); x.moveTo(cx - 52*s, cy - 34*s); x.quadraticCurveTo(cx, cy + 24*s, cx + 52*s, cy - 34*s); x.closePath(); x.fill();
+      x.strokeStyle = '#FFD54F'; x.lineWidth = 3; x.beginPath(); x.moveTo(cx - 50*s, cy - 34*s); x.lineTo(cx + 50*s, cy - 34*s); x.stroke(); } },
+  fireworks: function(x, W, H, R){ var cols = ['#FFD54F','#FF80AB','#80D8FF','#B9F6CA','#FFAB40']; for (var k = 0; k < 5; k++){ var cx = W*.4 + R()*W*.55, cy = 60 + R()*H*.5, r = 50 + R()*70;
+      x.strokeStyle = cols[k % cols.length]; x.lineWidth = 2.5; x.globalAlpha = .75; for (var a = 0; a < 24; a++){ var t = a/24*Math.PI*2; x.beginPath(); x.moveTo(cx + Math.cos(t)*r*.3, cy + Math.sin(t)*r*.3); x.lineTo(cx + Math.cos(t)*r, cy + Math.sin(t)*r); x.stroke();
+        x.beginPath(); x.arc(cx + Math.cos(t)*r*1.08, cy + Math.sin(t)*r*1.08, 2.5, 0, 7); x.fillStyle = x.strokeStyle; x.fill(); } } x.globalAlpha = 1; },
+  crescent: function(x, W, H, R, th){ var cx = W*.5, cy = 120, r = 78; x.fillStyle = th.accent || '#E9C46A'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+      x.globalCompositeOperation = 'destination-out'; x.beginPath(); x.arc(cx + 30, cy - 18, r*.88, 0, 7); x.fill(); x.globalCompositeOperation = 'source-over';
+      x.fillStyle = th.accent || '#E9C46A'; [[cx + 70, cy + 10, 12], [cx + 120, cy - 40, 8], [cx - 120, cy + 60, 7]].forEach(function(s){ star(x, s[0], s[1], s[2]); }); },
+  lanterns: function(x, W, H, R, th){ [[W*.06, 150], [W*.13, 90], [W*.2, 190]].forEach(function(l){ var cx = l[0], len = l[1];
+      x.strokeStyle = th.accent || '#E9C46A'; x.lineWidth = 2; x.beginPath(); x.moveTo(cx, 0); x.lineTo(cx, len); x.stroke();
+      var g = x.createRadialGradient(cx, len + 38, 4, cx, len + 38, 60); g.addColorStop(0, 'rgba(255,214,120,.6)'); g.addColorStop(1, 'rgba(255,214,120,0)'); x.fillStyle = g; x.fillRect(cx - 60, len - 20, 120, 120);
+      x.fillStyle = th.accent || '#E9C46A'; x.beginPath(); x.moveTo(cx - 12, len); x.lineTo(cx + 12, len); x.lineTo(cx + 22, len + 14); x.lineTo(cx - 22, len + 14); x.fill();
+      x.fillStyle = 'rgba(255,236,170,.85)'; x.beginPath(); x.moveTo(cx - 22, len + 14); x.lineTo(cx + 22, len + 14); x.lineTo(cx + 16, len + 66); x.lineTo(cx - 16, len + 66); x.fill();
+      x.fillStyle = th.accent || '#E9C46A'; x.fillRect(cx - 18, len + 66, 36, 8); }); },
+  splash: function(x, W, H, R){ var cols = ['#FF4081','#FFEB3B','#00E676','#2979FF','#D500F9','#FF6D00','#00E5FF']; for (var i = 0; i < 34; i++){ x.globalAlpha = .18 + R()*.35; x.fillStyle = cols[i % cols.length];
+      var cx = R()*W, cy = R()*H, r = 30 + R()*110; x.beginPath(); for (var a = 0; a <= 12; a++){ var t = a/12*Math.PI*2, rr = r*(.75 + R()*.5); if (a === 0) x.moveTo(cx + Math.cos(t)*rr, cy + Math.sin(t)*rr); else x.lineTo(cx + Math.cos(t)*rr, cy + Math.sin(t)*rr); } x.closePath(); x.fill(); } x.globalAlpha = 1; },
+  kites: function(x, W, H, R){ var cols = ['#FF5252','#FFD740','#69F0AE','#E040FB','#40C4FF']; for (var i = 0; i < 7; i++){ var cx = 40 + R()*W*.6, cy = 50 + R()*H*.55, s = 26 + R()*26, rot = (R() - .5)*.8;
+      x.save(); x.translate(cx, cy); x.rotate(rot); x.fillStyle = cols[i % cols.length]; x.globalAlpha = .85; x.beginPath(); x.moveTo(0, -s*1.3); x.lineTo(s, 0); x.lineTo(0, s*1.3); x.lineTo(-s, 0); x.closePath(); x.fill();
+      x.strokeStyle = 'rgba(255,255,255,.7)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(0, -s*1.3); x.lineTo(0, s*1.3); x.moveTo(-s, 0); x.lineTo(s, 0); x.stroke();
+      x.beginPath(); x.moveTo(0, s*1.3); x.bezierCurveTo(14, s*1.3 + 30, -14, s*1.3 + 60, 6, s*1.3 + 90); x.stroke(); x.restore(); } x.globalAlpha = 1; },
+  tricolor: function(x, W, H){ var bands = ['#FF9933','#FFFFFF','#138808']; for (var b = 0; b < 3; b++){ x.fillStyle = bands[b]; x.globalAlpha = .9; x.beginPath(); var y0 = 18 + b*26;
+      x.moveTo(0, y0); for (var px = 0; px <= W; px += 40) x.lineTo(px, y0 + Math.sin(px/140)*10); x.lineTo(W, y0 + 26); for (var px2 = W; px2 >= 0; px2 -= 40) x.lineTo(px2, y0 + 26 + Math.sin(px2/140)*10); x.closePath(); x.fill(); }
+      x.globalAlpha = 1; for (var b2 = 0; b2 < 3; b2++){ x.fillStyle = bands[b2]; x.globalAlpha = .9; x.fillRect(0, H - 78 + b2*26, W, 26); } x.globalAlpha = 1;
+      var cx = W*.53, cy = H*.5, r = 64; x.strokeStyle = '#1A3FA0'; x.lineWidth = 5; x.globalAlpha = .55; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke(); for (var s = 0; s < 24; s++){ var t = s/24*Math.PI*2; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(t)*r, cy + Math.sin(t)*r); x.lineWidth = 2; x.stroke(); } x.globalAlpha = 1; },
+  rakhi: function(x, W, H, R, th){ var cx = W*.53, cy = H*.5; x.strokeStyle = '#FFD54F'; x.lineWidth = 6; x.beginPath(); x.moveTo(0, cy + 60); x.bezierCurveTo(W*.25, cy + 10, W*.4, cy + 40, cx, cy); x.stroke();
+      for (var ring = 0; ring < 3; ring++){ var n = 12 - ring*3, r = 92 - ring*28; x.fillStyle = ['#FFB300','#FF4081','#FFF59D'][ring]; for (var i = 0; i < n; i++){ var t = i/n*Math.PI*2; x.beginPath(); x.ellipse(cx + Math.cos(t)*r*.7, cy + Math.sin(t)*r*.7, r*.32, r*.16, t, 0, 7); x.fill(); } }
+      x.fillStyle = '#C62828'; x.beginPath(); x.arc(cx, cy, 18, 0, 7); x.fill(); x.fillStyle = '#FFD54F'; x.beginPath(); x.arc(cx, cy, 8, 0, 7); x.fill(); },
+  mandala: function(x, W, H, R, th){ var cx = W*.55, cy = H*.5; x.strokeStyle = th.accent || '#FFD54F'; x.globalAlpha = .35;
+      for (var ring = 1; ring <= 5; ring++){ var r = ring*48, n = 8 + ring*4; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke();
+        for (var i = 0; i < n; i++){ var t = i/n*Math.PI*2; x.beginPath(); x.ellipse(cx + Math.cos(t)*(r - 14), cy + Math.sin(t)*(r - 14), 14, 6, t, 0, 7); x.stroke(); } } x.globalAlpha = 1; },
+  garland: function(x, W){ for (var i = 0; i * 34 < W; i++){ var px = i*34 + 17, py = 26 + Math.sin(i/2.2)*12; x.fillStyle = i % 3 ? '#FF9800' : '#FFC107'; x.beginPath(); x.arc(px, py, 16, 0, 7); x.fill();
+        x.fillStyle = 'rgba(0,0,0,.12)'; x.beginPath(); x.arc(px + 4, py + 4, 8, 0, 7); x.fill(); if (i % 5 === 2){ x.fillStyle = '#2E7D32'; x.beginPath(); x.ellipse(px, py + 34, 7, 16, 0, 0, 7); x.fill(); x.fillStyle = '#FF9800'; for (var k = 1; k < 4; k++){ x.beginPath(); x.arc(px, py + 34 + k*22, 11, 0, 7); x.fill(); } } } },
+  coins: function(x, W, H, R){ for (var i = 0; i < 16; i++){ var cx = 30 + R()*W*.58, cy = 40 + R()*(H - 80), r = 18 + R()*20; var g = x.createRadialGradient(cx - r*.3, cy - r*.3, 2, cx, cy, r); g.addColorStop(0, '#FFF59D'); g.addColorStop(1, '#C49000');
+      x.fillStyle = g; x.globalAlpha = .8; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.strokeStyle = '#8D6E00'; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, r*.75, 0, 7); x.stroke(); x.fillStyle = '#8D6E00'; x.font = 'bold ' + Math.round(r) + 'px Arial'; x.textAlign = 'center'; x.fillText('₹', cx, cy + r*.36); x.textAlign = 'left'; } x.globalAlpha = 1; },
+  moon: function(x, W, H){ var cx = W*.52, cy = 150, r = 90; var g = x.createRadialGradient(cx, cy, r*.6, cx, cy, r*2.4); g.addColorStop(0, 'rgba(255,248,220,.55)'); g.addColorStop(1, 'rgba(255,248,220,0)'); x.fillStyle = g; x.fillRect(cx - r*2.4, cy - r*2.4, r*4.8, r*4.8);
+      x.fillStyle = '#FFF8E1'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.fillStyle = 'rgba(200,180,140,.35)'; [[-20, -18, 16], [26, 10, 12], [-6, 34, 9]].forEach(function(c){ x.beginPath(); x.arc(cx + c[0], cy + c[1], c[2], 0, 7); x.fill(); }); },
+  sunrise: function(x, W, H){ var hy = H*.72, cx = W*.5; var g = x.createRadialGradient(cx, hy, 20, cx, hy, 320); g.addColorStop(0, 'rgba(255,241,118,.9)'); g.addColorStop(1, 'rgba(255,241,118,0)'); x.fillStyle = g; x.fillRect(cx - 320, hy - 320, 640, 330);
+      x.fillStyle = '#FFEB3B'; x.beginPath(); x.arc(cx, hy, 110, Math.PI, 0); x.fill(); x.fillStyle = 'rgba(13,71,161,.55)'; x.fillRect(0, hy, W, H - hy);
+      x.strokeStyle = 'rgba(255,235,59,.6)'; x.lineWidth = 4; for (var i = 0; i < 6; i++){ x.beginPath(); x.moveTo(cx - 140 + i*14, hy + 18 + i*16); x.lineTo(cx + 140 - i*14, hy + 18 + i*16); x.stroke(); } },
+  sun: function(x, W, H){ var cx = W*.55, cy = 120; x.fillStyle = 'rgba(255,255,255,.35)'; for (var i = 0; i < 16; i++){ var t = i/16*Math.PI*2; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(t - .08)*260, cy + Math.sin(t - .08)*260); x.lineTo(cx + Math.cos(t + .08)*260, cy + Math.sin(t + .08)*260); x.fill(); }
+      x.fillStyle = '#FFF59D'; x.beginPath(); x.arc(cx, cy, 70, 0, 7); x.fill(); },
+  snow: function(x, W, H, R){ x.strokeStyle = 'rgba(255,255,255,.75)'; x.lineWidth = 2; for (var i = 0; i < 36; i++){ var cx = R()*W, cy = R()*H, r = 6 + R()*16; for (var a = 0; a < 6; a++){ var t = a/6*Math.PI*2; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(t)*r, cy + Math.sin(t)*r); x.stroke(); } } },
+  tree: function(x, W, H){ var cx = W*.55, by = H - 40; x.fillStyle = '#5D4037'; x.fillRect(cx - 14, by - 40, 28, 40); x.fillStyle = '#2E7D32'; for (var k = 0; k < 3; k++){ var w = 170 - k*40, y = by - 40 - k*80; x.beginPath(); x.moveTo(cx - w, y); x.lineTo(cx + w, y); x.lineTo(cx, y - 130); x.closePath(); x.fill(); }
+      x.fillStyle = '#FFD54F'; star(x, cx, by - 300, 22); ['#FF5252','#FFD740','#40C4FF','#FFFFFF'].forEach(function(c, i){ x.fillStyle = c; for (var j = 0; j < 4; j++){ x.beginPath(); x.arc(cx - 110 + j*70 + i*8, by - 60 - i*70 + (j%2)*20, 9, 0, 7); x.fill(); } }); },
+  flowers: function(x, W, H, R){ var cols = ['#FFFFFF','#FF80AB','#FFD54F','#FF7043','#BA68C8']; for (var i = 0; i < 22; i++){ var cx = R()*W*.62, cy = R()*H, r = 10 + R()*18; x.fillStyle = cols[i % cols.length]; x.globalAlpha = .7;
+      for (var a = 0; a < 5; a++){ var t = a/5*Math.PI*2; x.beginPath(); x.ellipse(cx + Math.cos(t)*r*.7, cy + Math.sin(t)*r*.7, r*.55, r*.32, t, 0, 7); x.fill(); } x.fillStyle = '#FFC107'; x.beginPath(); x.arc(cx, cy, r*.3, 0, 7); x.fill(); } x.globalAlpha = 1; },
+  leaves: function(x, W, H, R){ for (var i = 0; i < 26; i++){ var cx = R()*W*.62, cy = R()*H, s = 14 + R()*24, t = R()*Math.PI; x.save(); x.translate(cx, cy); x.rotate(t); x.fillStyle = ['#A5D6A7','#66BB6A','#C5E1A5'][i % 3]; x.globalAlpha = .6;
+      x.beginPath(); x.moveTo(-s, 0); x.quadraticCurveTo(0, -s*.6, s, 0); x.quadraticCurveTo(0, s*.6, -s, 0); x.fill(); x.restore(); } x.globalAlpha = 1;
+      x.strokeStyle = 'rgba(255,255,255,.6)'; x.lineWidth = 3; x.beginPath(); x.moveTo(W*.5 - 60, 0); x.lineTo(W*.5 - 60, 200); x.moveTo(W*.5 + 60, 0); x.lineTo(W*.5 + 60, 200); x.stroke(); x.fillStyle = 'rgba(255,255,255,.7)'; x.fillRect(W*.5 - 80, 200, 160, 14); },
+  feather: function(x, W, H, R){ for (var i = 0; i < 4; i++){ var cx = W*.1 + i*170, cy = H*.55 + (i%2)*40; x.save(); x.translate(cx, cy); x.rotate(-.5 + i*.25);
+      x.strokeStyle = 'rgba(200,230,201,.7)'; x.lineWidth = 2; for (var k = -14; k <= 14; k++){ x.beginPath(); x.moveTo(0, 120); x.quadraticCurveTo(k*4, 40, k*6, -60 + Math.abs(k)*3); x.stroke(); }
+      x.fillStyle = '#00897B'; x.beginPath(); x.ellipse(0, -40, 34, 46, 0, 0, 7); x.fill(); x.fillStyle = '#FFD600'; x.beginPath(); x.ellipse(0, -34, 22, 30, 0, 0, 7); x.fill(); x.fillStyle = '#1A237E'; x.beginPath(); x.ellipse(0, -30, 12, 17, 0, 0, 7); x.fill(); x.restore(); } },
+  dandiya: function(x, W, H, R){ for (var i = 0; i < 5; i++){ var cx = 60 + i*140, cy = H - 110 - (i%2)*60; x.save(); x.translate(cx, cy); x.lineWidth = 9; x.lineCap = 'round';
+      [[-.6, '#FFD54F'], [.6, '#FF4081']].forEach(function(d){ x.save(); x.rotate(d[0]); x.strokeStyle = d[1]; x.beginPath(); x.moveTo(0, -60); x.lineTo(0, 60); x.stroke(); x.strokeStyle = '#fff'; x.lineWidth = 3; for (var k = -40; k <= 40; k += 20){ x.beginPath(); x.moveTo(-5, k); x.lineTo(5, k + 6); x.stroke(); } x.lineWidth = 9; x.restore(); }); x.restore(); } },
+  brand: function(x, W, H){ x.strokeStyle = 'rgba(205,170,92,.35)'; x.lineWidth = 2; for (var r = 120; r < 900; r += 70){ x.beginPath(); x.arc(W*.62, H*1.1, r, Math.PI*1.05, Math.PI*1.95); x.stroke(); } }
+};
+function star(x, cx, cy, r){ x.beginPath(); for (var i = 0; i < 10; i++){ var t = i/10*Math.PI*2 - Math.PI/2, rr = i % 2 ? r*.45 : r; if (!i) x.moveTo(cx + Math.cos(t)*rr, cy + Math.sin(t)*rr); else x.lineTo(cx + Math.cos(t)*rr, cy + Math.sin(t)*rr); } x.closePath(); x.fill(); }
+/* the festivals (roughly in calendar order). Banner text can be changed before saving. */
+var FESTS = [
+  {k:'sankranti', m:'Jan', en:'Makar Sankranti & Lohri', hi:'मकर संक्रांति', bg:['#0E6BA8','#5FB8E8'], accent:'#FFB703', mo:['kites','sun'], t:['Makar Sankranti Sale','मकर संक्रांति सेल'], s:['New winter collection · Special prices','सर्दी का नया कलेक्शन · ख़ास दाम']},
+  {k:'republic', m:'26 Jan', en:'Republic Day', hi:'गणतंत्र दिवस', bg:['#0B1626','#16305A'], accent:'#FF9933', mo:['tricolor'], t:['Republic Day Sale','गणतंत्र दिवस सेल'], s:['Big savings for the whole family','पूरे परिवार के लिए भारी बचत']},
+  {k:'basant', m:'Feb', en:'Basant Panchami', hi:'बसंत पंचमी', bg:['#F9A825','#FFE082'], ink:'#3E2723', accent:'#C62828', mo:['flowers'], t:['Basant Panchami','बसंत पंचमी'], s:['Yellow suits, sarees & kurtis','पीले सूट, साड़ी और कुर्तियाँ']},
+  {k:'shivratri', m:'Feb–Mar', en:'Maha Shivratri', hi:'महाशिवरात्रि', bg:['#0D1B4C','#3949AB'], accent:'#B3E5FC', mo:['crescent','sparkles'], t:['Maha Shivratri','महाशिवरात्रि'], s:['Har Har Mahadev · Festive offers','हर हर महादेव · त्योहार के ऑफ़र']},
+  {k:'holi', m:'Mar', en:'Holi', hi:'होली', bg:['#FFFDF8','#F6EDE2'], ink:'#4A148C', accent:'#FF4081', mo:['splash'], t:['Holi Dhamaka Sale','होली धमाका सेल'], s:['Colourful offers on all clothes','हर कपड़े पर रंग-बिरंगे ऑफ़र']},
+  {k:'eid_fitr', m:'Mar–Apr', en:'Eid ul-Fitr', hi:'ईद', bg:['#0B3D2E','#14674B'], accent:'#E9C46A', mo:['lanterns','crescent','sparkles'], t:['Eid Mubarak','ईद मुबारक'], s:['Eid collection · Kurta, suits & more','ईद कलेक्शन · कुर्ता, सूट और भी बहुत कुछ']},
+  {k:'ramnavami', m:'Mar–Apr', en:'Ram Navami', hi:'राम नवमी', bg:['#E65100','#FF9800'], accent:'#FFF59D', mo:['garland','sun'], t:['Ram Navami','राम नवमी'], s:['Shubh avsar par khaas chhoot','शुभ अवसर पर ख़ास छूट']},
+  {k:'school', m:'Mar–Apr', en:'Back to School', hi:'स्कूल', bg:['#1565C0','#42A5F5'], accent:'#FFD54F', mo:['sparkles'], t:['Back to School','स्कूल की तैयारी'], s:['Uniform, bags & stationery','यूनिफ़ॉर्म, बैग और स्टेशनरी']},
+  {k:'baisakhi', m:'Apr', en:'Baisakhi', hi:'बैसाखी', bg:['#F57F17','#FBC02D'], ink:'#3E2723', accent:'#B71C1C', mo:['garland','flowers'], t:['Baisakhi','बैसाखी'], s:['Festive wear for everyone','सबके लिए त्योहार के कपड़े']},
+  {k:'summer', m:'May–Jun', en:'Summer Sale', hi:'गर्मी सेल', bg:['#FF8F00','#FFD54F'], ink:'#3E2723', accent:'#D84315', mo:['sun'], t:['Summer Sale','गर्मी सेल'], s:['Cool cotton collection','ठंडा कॉटन कलेक्शन']},
+  {k:'eid_adha', m:'May–Jun', en:'Eid al-Adha (Bakrid)', hi:'बकरीद', bg:['#1B4332','#2D6A4F'], accent:'#E9C46A', mo:['crescent','lanterns'], t:['Eid al-Adha Mubarak','बकरीद मुबारक'], s:['New clothes for the festival','त्योहार के लिए नए कपड़े']},
+  {k:'teej', m:'Jul–Aug', en:'Sawan / Hariyali Teej', hi:'सावन / तीज', bg:['#1B5E20','#43A047'], accent:'#FFEB3B', mo:['leaves','flowers'], t:['Sawan Special','सावन स्पेशल'], s:['Green bangles, suits & sarees','हरी चूड़ियाँ, सूट और साड़ियाँ']},
+  {k:'rakhi', m:'Aug', en:'Raksha Bandhan', hi:'रक्षाबंधन', bg:['#880E4F','#D81B60'], accent:'#FFD54F', mo:['rakhi','sparkles'], t:['Raksha Bandhan','रक्षाबंधन'], s:['Gifts for your sister & brother','भाई-बहन के लिए तोहफ़े']},
+  {k:'independence', m:'15 Aug', en:'Independence Day', hi:'स्वतंत्रता दिवस', bg:['#0B1626','#16305A'], accent:'#FF9933', mo:['tricolor'], t:['Independence Day Sale','स्वतंत्रता दिवस सेल'], s:['Azadi ki khushi, bachat ke saath','आज़ादी की ख़ुशी, बचत के साथ']},
+  {k:'janmashtami', m:'Aug–Sep', en:'Janmashtami', hi:'जन्माष्टमी', bg:['#0D47A1','#1976D2'], accent:'#FFD600', mo:['feather','sparkles'], t:['Happy Janmashtami','जन्माष्टमी की शुभकामनाएँ'], s:['Kids Krishna dress & festive wear','बच्चों की कृष्णा ड्रेस और त्योहार के कपड़े']},
+  {k:'ganesh', m:'Aug–Sep', en:'Ganesh Chaturthi', hi:'गणेश चतुर्थी', bg:['#BF360C','#F4511E'], accent:'#FFD54F', mo:['garland','mandala'], t:['Ganesh Chaturthi','गणेश चतुर्थी'], s:['Ganpati Bappa Morya · Festive offers','गणपति बप्पा मोरया · त्योहार के ऑफ़र']},
+  {k:'onam', m:'Aug–Sep', en:'Onam', hi:'ओणम', bg:['#FFFDE7','#FFF3C4'], ink:'#1B5E20', accent:'#E65100', mo:['mandala','flowers'], t:['Happy Onam','ओणम की शुभकामनाएँ'], s:['Kasavu sarees & festive wear','त्योहार के कपड़े']},
+  {k:'navratri', m:'Sep–Oct', en:'Navratri / Durga Puja', hi:'नवरात्रि / दुर्गा पूजा', bg:['#B71C1C','#E53935'], accent:'#FFD54F', mo:['dandiya','mandala'], t:['Navratri Special','नवरात्रि स्पेशल'], s:['Chaniya choli, sarees & suits','चनिया चोली, साड़ी और सूट']},
+  {k:'dussehra', m:'Oct', en:'Dussehra', hi:'दशहरा', bg:['#E65100','#B71C1C'], accent:'#FFD54F', mo:['garland','fireworks'], t:['Dussehra Sale','दशहरा सेल'], s:['Victory of good · Big offers','बुराई पर अच्छाई की जीत · बड़े ऑफ़र']},
+  {k:'karwa', m:'Oct', en:'Karva Chauth', hi:'करवा चौथ', bg:['#4A0E1E','#8E1B3A'], accent:'#FFD54F', mo:['moon','sparkles'], t:['Karva Chauth Special','करवा चौथ स्पेशल'], s:['Sarees, suits & shringar','साड़ी, सूट और श्रृंगार']},
+  {k:'dhanteras', m:'Oct–Nov', en:'Dhanteras', hi:'धनतेरस', bg:['#3E2723','#6D4C41'], accent:'#FFD54F', mo:['coins','sparkles'], t:['Dhanteras Offer','धनतेरस ऑफ़र'], s:['Shubh kharidari · Kitchen & jewellery','शुभ ख़रीदारी · बर्तन और ज्वेलरी']},
+  {k:'diwali', m:'Oct–Nov', en:'Diwali', hi:'दिवाली', bg:['#1A0B2E','#3C1361'], accent:'#FFC107', mo:['fireworks','sparkles','diyas'], t:['Diwali Dhamaka Sale','दिवाली धमाका सेल'], s:['New clothes for the whole family','पूरे परिवार के लिए नए कपड़े']},
+  {k:'bhaidooj', m:'Oct–Nov', en:'Bhai Dooj', hi:'भाई दूज', bg:['#6A1B9A','#AB47BC'], accent:'#FFD54F', mo:['flowers','diyas'], t:['Happy Bhai Dooj','भाई दूज की शुभकामनाएँ'], s:['Gifts for brothers & sisters','भाई-बहन के लिए तोहफ़े']},
+  {k:'chhath', m:'Oct–Nov', en:'Chhath Puja', hi:'छठ पूजा', bg:['#E65100','#FFB300'], accent:'#FFF59D', mo:['sunrise'], t:['Chhath Puja','छठ पूजा'], s:['Sarees & puja collection','साड़ी और पूजा कलेक्शन']},
+  {k:'gurpurab', m:'Nov', en:'Guru Nanak Jayanti', hi:'गुरु नानक जयंती', bg:['#E65100','#FB8C00'], accent:'#FFF59D', mo:['diyas','sparkles'], t:['Guru Nanak Jayanti','गुरु नानक जयंती'], s:['Gurpurab di lakh lakh vadhaiyan','गुरुपर्व की लाख-लाख बधाइयाँ']},
+  {k:'wedding', m:'Nov–Feb', en:'Shaadi Season', hi:'शादी सीज़न', bg:['#4A0E1E','#7B1E2B'], accent:'#FFD54F', mo:['mandala','garland'], t:['Shaadi Season','शादी सीज़न'], s:['Lehenga, sherwani & wedding sarees','लहंगा, शेरवानी और शादी की साड़ियाँ']},
+  {k:'christmas', m:'Dec', en:'Christmas', hi:'क्रिसमस', bg:['#0B3D2E','#8E1B1B'], accent:'#FFD54F', mo:['snow','tree'], t:['Merry Christmas','मेरी क्रिसमस'], s:['Gifts & winter wear','तोहफ़े और सर्दी के कपड़े']},
+  {k:'winter', m:'Dec–Jan', en:'Winter Sale', hi:'सर्दी सेल', bg:['#0D47A1','#4FC3F7'], accent:'#FFFFFF', mo:['snow'], t:['Winter Sale','सर्दी सेल'], s:['Sweaters, jackets & shawls','स्वेटर, जैकेट और शॉल']},
+  {k:'newyear', m:'31 Dec', en:'New Year', hi:'नया साल', bg:['#0B1626','#1A237E'], accent:'#FFD54F', mo:['fireworks','sparkles'], t:['New Year Sale','नए साल की सेल'], s:['Start the year in style','नए साल की शुरुआत नए अंदाज़ में']}
+];
+var BRAND_THEME = {k:'brand', en:'Diamond Fashions', hi:'डायमंड फैशन्स', bg:['#0B1626','#1B2C4C'], accent:'#CDAA5C', mo:['brand','sparkles']};
+function festByKey(k){ return k === 'brand' ? BRAND_THEME : FESTS.filter(function(f){ return f.k === k; })[0] || BRAND_THEME; }
+function fitFont(x, text, maxW, size, weight, fam){ var sz = size; do { x.font = weight + ' ' + sz + 'px ' + fam; if (x.measureText(text).width <= maxW) break; sz -= 4; } while (sz > 28); return sz; }
+/* draw one banner. o = {theme, title, sub, tag, btn, photos:[img elements]} ; scale lets thumbnails reuse it */
+function drawBanner(c, o){
+  var W = 1600, H = 600, x = c.getContext('2d'), th = festByKey(o.theme), R = seeded((o.theme || 'b').length * 7919 + 13), ink = th.ink || '#FFFFFF', FAM = "'Hind','Noto Sans Devanagari','Jost',Arial,sans-serif";
+  x.save(); x.scale(c.width / W, c.height / H);
+  var g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, th.bg[0]); g.addColorStop(1, th.bg[1]); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  (th.mo || []).forEach(function(m){ try { MOTIF[m](x, W, H, R, th); } catch(e){} });
+  var photos = (o.photos || []).filter(Boolean).slice(0, 3), textW = photos.length ? 820 : 1100, left = 70;
+  if (photos.length){ // product photos in tilted white frames on the right
+    var spots = photos.length === 1 ? [[1180, 300, 0, 1]] : photos.length === 2 ? [[1060, 310, -.06, .9], [1340, 290, .07, .9]] : [[990, 330, -.08, .78], [1225, 285, .02, .86], [1455, 330, .09, .78]];
+    photos.forEach(function(im, i){ var sp = spots[i], fw = 300*sp[3], fh = 400*sp[3];
+      x.save(); x.translate(sp[0], sp[1]); x.rotate(sp[2]); x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 30; x.shadowOffsetY = 10; x.fillStyle = '#fff'; x.fillRect(-fw/2 - 10, -fh/2 - 10, fw + 20, fh + 20); x.shadowColor = 'transparent';
+      var k = Math.max(fw / im.width, fh / im.height); x.beginPath(); x.rect(-fw/2, -fh/2, fw, fh); x.clip(); x.drawImage(im, -im.width*k/2, -im.height*k/2, im.width*k, im.height*k); x.restore(); });
+  }
+  // soft panel behind the text so it stays readable over motifs
+  var pg = x.createLinearGradient(0, 0, textW + 160, 0); var dark = !th.ink; pg.addColorStop(0, dark ? 'rgba(0,0,0,.38)' : 'rgba(255,255,255,.55)'); pg.addColorStop(1, dark ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)'); x.fillStyle = pg; x.fillRect(0, 0, textW + 160, H);
+  x.textBaseline = 'alphabetic';
+  x.fillStyle = ink; x.globalAlpha = .9; x.font = "600 30px 'Jost',Arial,sans-serif"; x.fillText('DIAMOND FASHIONS', left, 92); x.globalAlpha = .75; x.font = '24px ' + FAM; x.fillText('Purandarpur · diamondfashions.in', left, 128); x.globalAlpha = 1;
+  var y = 200;
+  if (o.tag){ x.font = 'bold 34px ' + FAM; var tw = x.measureText(o.tag).width + 44; x.fillStyle = th.accent; x.beginPath(); if (x.roundRect) x.roundRect(left, y - 4, tw, 56, 28); else x.rect(left, y - 4, tw, 56); x.fill(); x.fillStyle = th.ink ? '#fff' : '#1A1A1A'; x.fillText(o.tag, left + 22, y + 36); y += 80; } else y += 20;
+  var ts = fitFont(x, o.title || '', textW, 104, '800', FAM); x.fillStyle = ink; x.shadowColor = dark ? 'rgba(0,0,0,.35)' : 'transparent'; x.shadowBlur = 12; x.fillText(o.title || '', left, y + ts*.8); x.shadowColor = 'transparent'; y += ts*.8 + 24;
+  if (o.sub){ var ss = fitFont(x, o.sub, textW, 44, '500', FAM); x.fillStyle = ink; x.globalAlpha = .92; x.fillText(o.sub, left, y + ss); x.globalAlpha = 1; y += ss + 30; }
+  var btn = o.btn || 'Shop now  ›'; x.font = 'bold 32px ' + FAM; var bw = x.measureText(btn).width + 60; var by = Math.min(H - 90, y + 14);
+  x.fillStyle = th.accent; x.beginPath(); if (x.roundRect) x.roundRect(left, by, bw, 66, 33); else x.rect(left, by, bw, 66); x.fill(); x.fillStyle = th.ink ? '#fff' : '#1A1A1A'; x.fillText(btn, left + 30, by + 44);
+  x.restore();
+}
+function bannerJpeg(o){ var c = document.createElement('canvas'); c.width = 1600; c.height = 600; drawBanner(c, o); var d = c.toDataURL('image/jpeg', .86); if (d.length > 700000) d = c.toDataURL('image/jpeg', .7); return d; }
+function photosOf(list){ return Promise.all((list || []).slice(0, 3).map(loadImg)).then(function(a){ return a.filter(Boolean); }); }
+function offOf(p){ return p && p.mrp && p.price && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0; }
+/* the banner maker: theme + text + up to 3 product photos, live preview, saves as a normal banner */
+function bannerMaker(init){
+  var o = Object.assign({theme:'brand', lang:'en', title:'', sub:'', tag:'', btn:'', pids:[], link:''}, init || {});
+  var sc = el('div',{'class':'scrim',onclick:function(e){ if (e.target === sc) close(); }}), box = el('div',{'class':'modal',style:'max-width:760px'}); sc.appendChild(box); document.body.appendChild(sc); document.body.style.overflow = 'hidden';
+  function close(){ sc.remove(); document.body.style.overflow = ''; }
+  var cv = el('canvas',{width:'1600',height:'600',style:'width:100%;border-radius:10px;display:block;background:#0B1626'});
+  var msg = el('p',{'class':'msg'}), imgs = [];
+  function fest(){ return festByKey(o.theme); }
+  function setText(force){ var f = fest(), i = o.lang === 'hi' ? 1 : 0; if (f.t && (force || !o.title)) { o.title = f.t[i]; o.sub = f.s[i]; } if (force || !o.btn) o.btn = o.lang === 'hi' ? 'अभी ख़रीदें  ›' : 'Shop now  ›'; }
+  function redrawCv(){ drawBanner(cv, Object.assign({}, o, {photos:imgs})); }
+  function loadPhotos(){ var ps = o.pids.map(function(id){ return products.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean);
+    return photosOf(ps.map(function(p){ return p.photos && p.photos[0]; })).then(function(a){ imgs = a; redrawCv(); }); }
+  var inp = function(id, label, key){ var i = el('input',{id:id,value:o[key]||'',oninput:function(e){ o[key] = e.target.value; redrawCv(); }}); return el('div',{'class':'field'},[ el('label',{'for':id,text:label}), i ]); };
+  function render(){
+    box.innerHTML = '';
+    box.appendChild(el('button',{'class':'x',type:'button',text:'×','aria-label':L('बंद करें'),onclick:close}));
+    box.appendChild(el('h2',{text:'🖼 '+SL('बैनर बनाएँ','Make a banner')}));
+    box.appendChild(cv);
+    var ths = el('select',{id:'bm-th'}, [el('option',{value:'brand',text:'💎 '+SL('डायमंड फैशन्स (सादा)','Diamond Fashions (plain)')})].concat(FESTS.map(function(f){ return el('option',{value:f.k,text:'🎉 '+(LANG==='en'?f.en:f.hi)+' · '+f.m}); })));
+    ths.value = o.theme; ths.onchange = function(){ o.theme = ths.value; if (o.theme !== 'brand' && !o.keepText) setText(true); render(); };
+    var lg = el('select',{id:'bm-lg'},[ el('option',{value:'en',text:'English'}), el('option',{value:'hi',text:'हिंदी'}) ]); lg.value = o.lang; lg.onchange = function(){ o.lang = lg.value; if (o.theme !== 'brand') setText(true); else o.btn = o.lang === 'hi' ? 'अभी ख़रीदें  ›' : 'Shop now  ›'; render(); };
+    box.appendChild(el('div',{'class':'two'},[ el('div',{'class':'field'},[ el('label',{'for':'bm-th',text:SL('डिज़ाइन / त्योहार','Design / festival')}), ths ]), el('div',{'class':'field'},[ el('label',{'for':'bm-lg',text:SL('भाषा','Language')}), lg ]) ]));
+    box.appendChild(inp('bm-t', SL('हेडिंग','Heading'), 'title'));
+    box.appendChild(el('div',{'class':'two'},[ inp('bm-s', SL('लाइन','Line'), 'sub'), inp('bm-g', SL('लेबल (जैसे 50% तक छूट)','Label (e.g. Up to 50% OFF)'), 'tag') ]));
+    box.appendChild(inp('bm-b', SL('बटन','Button'), 'btn'));
+    // product photos
+    var chosen = el('div',{'class':'row'});
+    o.pids.forEach(function(id){ var p = products.filter(function(x){ return x.id === id; })[0]; if (!p) return; chosen.appendChild(el('span',{'class':'st'},[ p.code + ' ', el('button',{type:'button','class':'btn b-sm b-line',style:'min-height:26px;padding:0 8px',text:'×',onclick:function(){ o.pids = o.pids.filter(function(z){ return z !== id; }); render(); loadPhotos(); }}) ])); });
+    var add = el('select',{id:'bm-p'}, [el('option',{value:'',text:'+ '+SL('सामान की फ़ोटो जोड़ें (3 तक)','Add a product photo (up to 3)')})].concat(products.filter(function(p){ return p.photos && p.photos.length && !p.hidden; }).map(function(p){ return el('option',{value:p.id,text:p.code+' — '+p.name+(offOf(p)?' · '+offOf(p)+'% off':'')}); })));
+    add.onchange = function(){ if (add.value && o.pids.length < 3 && o.pids.indexOf(add.value) < 0){ o.pids.push(add.value); if (!o.link && o.pids.length === 1){ var p = products.filter(function(x){ return x.id === add.value; })[0]; if (p) o.link = 'p:' + String(p.code).toUpperCase(); } } render(); loadPhotos(); };
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'bm-p',text:SL('फ़ोटो','Photos')}), chosen, add ]));
+    // link
+    var lk = el('select',{id:'bm-l'}, [['',SL('पूरी दुकान','Whole shop')]].concat(Object.keys(CATS).map(function(k){ return ['cat:'+k, L('कैटेगरी: ')+CATS[k]]; }), products.filter(function(p){ return !p.hidden; }).map(function(p){ return ['p:'+String(p.code).toUpperCase(), p.code+' — '+p.name]; }), [['sec:tailor',L('सिलाई वाला हिस्सा')]]).map(function(a){ return el('option',{value:a[0],text:a[1]}); }));
+    lk.value = o.link || ''; lk.onchange = function(){ o.link = lk.value; };
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'bm-l',text:L('दबाने पर कहाँ जाए')}), lk ]));
+    var save = el('button',{'class':'btn b-gold',type:'button',text:'✓ '+SL('बैनर वेबसाइट पर लगाएँ','Put banner on the website'),onclick:function(){
+      save.disabled = true; msg.textContent = '…'; msg.className = 'msg';
+      var img = bannerJpeg(Object.assign({}, o, {photos:imgs})), id = 'banner_' + Date.now().toString(36);
+      db.collection('config').doc(id).set({type:'image', img:img, title:'', sub:'', btn:'', tag:'', link:o.link || 'sec:shop', active:true, order:-Date.now(), made:o.theme, updated:now()})
+        .then(function(){ msg.textContent = SL('बैनर लग गया ✓ वेबसाइट पर सबसे पहले दिखेगा','Banner is live ✓ It shows first on the website'); msg.className = 'msg ok'; setTimeout(close, 900); }, function(e){ save.disabled = false; msg.textContent = e.message; msg.className = 'msg err'; });
+    }});
+    var dl = el('button',{'class':'btn b-line',type:'button',text:'⬇ '+SL('फ़ोटो डाउनलोड (WhatsApp स्टेटस)','Download picture (WhatsApp status)'),onclick:function(){ var a = el('a',{href:bannerJpeg(Object.assign({}, o, {photos:imgs})),download:'banner-'+o.theme+'.jpg'}); document.body.appendChild(a); a.click(); a.remove(); }});
+    box.appendChild(el('div',{'class':'row'},[ save, dl, el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ])); box.appendChild(msg);
+    redrawCv();
+  }
+  if (o.theme !== 'brand' && !o.title) setText(true); else setText(false);
+  render(); loadPhotos();
+}
+function productBanner(p){
+  var off = offOf(p), hi = LANG !== 'en';
+  bannerMaker({theme:'brand', lang: hi ? 'hi' : 'en', keepText:true, title:p.name, sub:(p.price ? (hi ? 'सिर्फ़ ' : 'Only ') + rupees(p.price) + (p.unit === 'm' ? (hi ? ' / मीटर' : ' / metre') : '') : '') + (p.mrp && p.price && p.mrp > p.price ? (hi ? ' · MRP ' : ' · MRP ') + rupees(p.mrp) : ''),
+    tag: off ? off + '% OFF' : (hi ? 'नया माल' : 'NEW ARRIVAL'), pids:[p.id], link:'p:' + String(p.code).toUpperCase()});
+}
+/* gallery of ready festival banners (tap one to edit and use) */
+function drawFestivals(main){
+  var wrap = el('div',{'class':'card'});
+  wrap.appendChild(el('h3',{style:'margin:0 0 4px',text:'🎉 '+SL('त्योहार के तैयार बैनर','Ready festival banners')}));
+  wrap.appendChild(el('p',{'class':'muted small',text:SL('किसी भी त्योहार पर दबाएँ, लिखा हुआ बदलें, चाहें तो अपने सामान की फ़ोटो जोड़ें और “वेबसाइट पर लगाएँ” दबाएँ। WhatsApp स्टेटस के लिए फ़ोटो भी डाउनलोड कर सकते हैं।','Tap any festival, change the text, add your product photos if you like, and tap “Put on the website”. You can also download the picture for WhatsApp status.')}));
+  var grid = el('div',{style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px'});
+  FESTS.forEach(function(f){ var c = el('canvas',{width:'400',height:'150',style:'width:100%;border-radius:8px;display:block'});
+    try { drawBanner(c, {theme:f.k, title:f.t[LANG === 'en' ? 0 : 1], sub:f.s[LANG === 'en' ? 0 : 1], btn: LANG === 'en' ? 'Shop now  ›' : 'अभी ख़रीदें  ›'}); } catch(e){}
+    grid.appendChild(el('button',{type:'button',style:'all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px',onclick:function(){ bannerMaker({theme:f.k, lang: LANG === 'en' ? 'en' : 'hi'}); }},[ c, el('span',{'class':'small',html:'<b>'+(LANG==='en'?f.en:f.hi)+'</b> · '+f.m}) ])); });
+  wrap.appendChild(grid); main.appendChild(wrap);
+}
+
+/* ---------- combo / bundle offers ---------- */
+var bundles = [];
+function nextBundleCode(){ var max = 0; bundles.forEach(function(b){ var m = /^DF-BN(\d+)$/.exec(b.code || ''); if (m) max = Math.max(max, +m[1]); }); return 'DF-BN' + (max + 1); }
+function comboImage(ps, price, mrp){
+  return photosOf(ps.map(function(p){ return p.photos && p.photos[0]; }).filter(Boolean)).then(function(imgs){
+    var S = 1080, c = document.createElement('canvas'); c.width = S; c.height = S; var x = c.getContext('2d');
+    x.fillStyle = '#F4EEE2'; x.fillRect(0, 0, S, S);
+    var n = Math.max(1, imgs.length), cols = n > 2 ? 2 : n, rows = Math.ceil(Math.min(n, 4) / cols), gw = S / cols, gh = (S - 200) / rows;
+    imgs.slice(0, 4).forEach(function(im, i){ var cx = (i % cols) * gw, cy = Math.floor(i / cols) * gh, k = Math.max(gw / im.width, gh / im.height);
+      x.save(); x.beginPath(); x.rect(cx + 6, cy + 6, gw - 12, gh - 12); x.clip(); x.drawImage(im, cx + gw/2 - im.width*k/2, cy + gh/2 - im.height*k/2, im.width*k, im.height*k); x.restore(); });
+    x.fillStyle = '#0B1626'; x.fillRect(0, S - 200, S, 200); x.fillStyle = '#CDAA5C'; x.fillRect(0, S - 200, S, 8);
+    x.fillStyle = '#CDAA5C'; x.beginPath(); if (x.roundRect) x.roundRect(40, S - 260, 300, 80, 40); else x.rect(40, S - 260, 300, 80); x.fill();
+    x.fillStyle = '#0B1626'; x.font = 'bold 44px Arial'; x.fillText('🎁 COMBO', 70, S - 205);
+    x.fillStyle = '#fff'; x.font = 'bold 72px Arial'; x.fillText(rupees(price), 40, S - 90);
+    if (mrp > price){ var pw = x.measureText(rupees(price)).width; x.fillStyle = '#9AA3B2'; x.font = '44px Arial'; x.fillText(rupees(mrp), 70 + pw, S - 92); x.fillRect(70 + pw, S - 106, x.measureText(rupees(mrp)).width, 4);
+      x.fillStyle = '#4CC27A'; x.font = 'bold 44px Arial'; x.fillText(Math.round((1 - price/mrp)*100) + '% OFF', 40, S - 30); }
+    x.fillStyle = '#D3CEC2'; x.font = '30px Arial'; x.textAlign = 'right'; x.fillText('DIAMOND FASHIONS', S - 40, S - 30); x.textAlign = 'left';
+    return c.toDataURL('image/jpeg', .82);
+  });
+}
+function drawBundles(main){
+  main.appendChild(el('div',{'class':'row',style:'justify-content:space-between;margin:18px 0 4px'},[ el('h3',{style:'margin:0',text:'🎁 '+SL('कॉम्बो / बंडल ऑफ़र','Combo / bundle offers')}), el('button',{'class':'btn b-gold',type:'button',text:'+ '+SL('नया कॉम्बो','New combo'),onclick:function(){ editBundle(null); }}) ]));
+  main.appendChild(el('p',{'class':'muted small',text:SL('2 या ज़्यादा सामान चुनें और साथ का एक दाम रखें। वेबसाइट पर “कॉम्बो ऑफ़र” में दिखेगा। ऑर्डर में हर सामान अलग से आएगा और स्टॉक हर सामान से कटेगा। कोई सामान ख़त्म हो जाए तो कॉम्बो अपने-आप छुप जाता है।','Pick 2 or more items and set one price for all. It shows under “Combo offers” on the website. In the order each item comes separately and stock is reduced for each. If an item runs out the combo hides by itself.')}));
+  if (!bundles.length) main.appendChild(el('p',{'class':'muted',text:SL('अभी कोई कॉम्बो नहीं।','No combos yet.')}));
+  bundles.forEach(function(b){
+    var sum = (b.items||[]).reduce(function(a, it){ var p = products.filter(function(x){ return x.id === it.pid; })[0]; return a + ((p && p.price) || it.price || 0) * (it.qty || 1); }, 0);
+    main.appendChild(el('div',{'class':'card row',style:'align-items:flex-start'},[ b.img ? el('img',{src:b.img,alt:'',style:'width:90px;height:90px;object-fit:cover;border-radius:8px'}) : null,
+      el('div',{style:'flex:1;min-width:0'},[ el('div',{'class':'row',style:'justify-content:space-between'},[ el('b',{text:b.code+' · '+b.title}), el('span',{'class':'st '+(b.active===false?'bad':'ok'),text:b.active===false?L('बंद'):L('चालू')}) ]),
+        el('div',{'class':'small muted',text:(b.items||[]).map(function(it){ return it.code+' '+it.name+(it.size?' ('+it.size+')':'')+(it.qty>1?' × '+it.qty:''); }).join(' + ')}),
+        el('div',null,[ el('b',{text:rupees(b.price)}), sum > b.price ? el('span',{'class':'muted small',text:'  '+SL('अलग-अलग: ','Separately: ')+rupees(sum)+' · '+SL('बचत ','save ')+rupees(sum - b.price)}) : null ]),
+        el('div',{'class':'row',style:'margin-top:6px'},[ el('button',{'class':'btn b-sm b-gold',type:'button',text:L('बदलें'),onclick:function(){ editBundle(b); }}),
+          el('button',{'class':'btn b-sm b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(SL('कॉम्बो हटाएँ?','Delete combo?'))) db.collection('config').doc('bundle_' + b.id).delete(); }}) ]) ]) ]));
+  });
+}
+function editBundle(b0){
+  var isNew = !b0, b = JSON.parse(JSON.stringify(b0 || {id:Date.now().toString(36), title:'', sub:'', items:[], price:null, active:true, order:Date.now()}));
+  var sc = el('div',{'class':'scrim',onclick:function(e){ if (e.target === sc) close(); }}), box = el('div',{'class':'modal'}); sc.appendChild(box); document.body.appendChild(sc); document.body.style.overflow = 'hidden';
+  function close(){ sc.remove(); document.body.style.overflow = ''; }
+  var msg = el('p',{'class':'msg'}), q = '';
+  function P(id){ return products.filter(function(x){ return x.id === id; })[0]; }
+  function sum(){ return b.items.reduce(function(a, it){ var p = P(it.pid); return a + ((p && p.price) || 0) * (it.qty || 1); }, 0); }
+  function render(){
+    box.innerHTML = '';
+    box.appendChild(el('button',{'class':'x',type:'button',text:'×',onclick:close}));
+    box.appendChild(el('h2',{text:'🎁 '+(isNew ? SL('नया कॉम्बो','New combo') : (b.code+' · '+b.title))}));
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'bd-t',text:SL('कॉम्बो का नाम (जैसे सूट + दुपट्टा कॉम्बो)','Combo name (e.g. Suit + Dupatta combo)')}), el('input',{id:'bd-t',value:b.title,oninput:function(e){ b.title = e.target.value; }}) ]));
+    box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'bd-s',text:SL('एक लाइन (चाहें तो)','One line (optional)')}), el('input',{id:'bd-s',value:b.sub||'',oninput:function(e){ b.sub = e.target.value; }}) ]));
+    var list = el('div');
+    b.items.forEach(function(it, i){ var p = P(it.pid), sz = p ? sizesOf(p) : [];
+      var ssel = sz.length ? el('select',{onchange:function(e){ it.size = e.target.value; }}, sz.map(function(s){ return el('option',{value:s,text:s}); })) : null; if (ssel){ if (!it.size) it.size = sz[0]; ssel.value = it.size; }
+      list.appendChild(el('div',{'class':'card row',style:'padding:8px;margin-bottom:6px'},[ p && p.photos && p.photos[0] ? el('img',{src:p.photos[0],alt:'',style:'width:48px;height:48px;object-fit:cover;border-radius:6px'}) : null,
+        el('div',{style:'flex:1;min-width:0'},[ el('b',{text:(p ? p.code+' '+p.name : it.code+' '+it.name)}), el('div',{'class':'small muted',text: p ? rupees(p.price||0) : SL('यह सामान अब नहीं है','This item no longer exists')}) ]),
+        ssel, el('input',{type:'number',min:'1',value:it.qty||1,style:'width:56px;min-height:36px',oninput:function(e){ it.qty = Math.max(1, parseInt(e.target.value,10)||1); }}),
+        el('button',{'class':'btn b-sm b-bad',type:'button',text:'×',onclick:function(){ b.items.splice(i, 1); render(); }}) ]));
+    });
+    box.appendChild(el('div',{'class':'field'},[ el('label',{text:SL('कॉम्बो के सामान','Items in the combo')}), list ]));
+    var res = el('div');
+    var srch = el('input',{'class':'search',type:'search',placeholder:'+ '+SL('सामान खोजें और जोड़ें','Search and add an item'),value:q,oninput:function(e){ q = e.target.value; fillRes(); }});
+    function fillRes(){ res.innerHTML = ''; var qq = q.trim().toLowerCase(); if (!qq) return;
+      products.filter(function(p){ return !p.hidden && p.unit !== 'm' && (p.name+' '+p.code).toLowerCase().indexOf(qq) >= 0; }).slice(0, 8).forEach(function(p){
+        res.appendChild(el('button',{'class':'btn b-sm b-line',type:'button',style:'margin:2px',text:'+ '+p.code+' '+p.name+(p.price?' · '+rupees(p.price):''),onclick:function(){ b.items.push({pid:p.id, code:p.code, name:p.name, size:'', qty:1, price:p.price||0}); q = ''; render(); }})); }); }
+    box.appendChild(srch); box.appendChild(res); fillRes();
+    var s = sum();
+    box.appendChild(el('p',{'class':'small muted',text:SL('अलग-अलग ख़रीदें तो: ','Bought separately: ')+rupees(s)}));
+    box.appendChild(el('div',{'class':'two'},[ el('div',{'class':'field'},[ el('label',{'for':'bd-p',text:SL('कॉम्बो का दाम ₹','Combo price ₹')}), el('input',{id:'bd-p',inputmode:'decimal',value:b.price||'',oninput:function(e){ b.price = parseFloat(e.target.value)||null; }}) ]),
+      el('div',{'class':'field'},[ el('label',{text:SL('या छूट %','or discount %')}), el('div',{'class':'row'},[5,10,15,20].map(function(pc){ return el('button',{'class':'btn b-sm b-line',type:'button',text:pc+'%',onclick:function(){ b.price = Math.round(sum() * (1 - pc/100)); render(); }}); })) ]) ]));
+    box.appendChild(el('label',{'class':'row',style:'margin:6px 0 12px'},[ el('input',{type:'checkbox',checked:b.active!==false?'checked':null,onchange:function(e){ b.active = e.target.checked; }}), ' '+L('वेबसाइट पर दिखाएँ') ]));
+    var save = el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){
+      b.title = b.title.trim();
+      if (!b.title || b.items.length < 2 || !(b.price > 0)){ msg.textContent = SL('नाम, कम से कम 2 सामान और दाम भरें।','Fill a name, at least 2 items and a price.'); msg.className = 'msg err'; return; }
+      save.disabled = true; msg.textContent = '…'; msg.className = 'msg';
+      if (!b.code) b.code = nextBundleCode();
+      b.items.forEach(function(it){ var p = P(it.pid); if (p){ it.code = p.code; it.name = p.name; it.price = p.price || 0; } });
+      comboImage(b.items.map(function(it){ return P(it.pid); }).filter(Boolean), b.price, sum()).then(function(img){ b.img = img; b.updated = now(); return db.collection('config').doc('bundle_' + b.id).set(b); })
+        .then(function(){ msg.textContent = L('सेव हो गया ✓'); msg.className = 'msg ok'; setTimeout(close, 600); }, function(e){ save.disabled = false; msg.textContent = e.message; msg.className = 'msg err'; });
+    }});
+    box.appendChild(el('div',{'class':'row'},[ save, el('button',{'class':'btn b-line',type:'button',text:L('रद्द'),onclick:close}) ])); box.appendChild(msg);
+  }
+  render();
+}
+
+/* ---------- AI product description (Google Gemini, key saved in Settings) ---------- */
+var gemModel = '';
+function geminiPickModel(key){
+  if (gemModel) return Promise.resolve(gemModel);
+  return fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key)).then(function(r){ return r.json(); }).then(function(j){
+    if (j.error) throw new Error('Gemini: ' + (j.error.message || j.error.status));
+    var ms = (j.models || []).filter(function(m){ return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0; }).map(function(m){ return String(m.name).replace(/^models\//, ''); });
+    var ok = ms.filter(function(n){ return /^gemini-/.test(n) && !/tts|image|live|embed|audio|thinking|exp|vision|robotics|computer|native/.test(n); });
+    function ver(n){ var m = /gemini-(\d+(?:\.\d+)?)/.exec(n); return m ? parseFloat(m[1]) : 0; }
+    function score(n){ return ver(n) * 10 + (/flash/.test(n) ? 5 : 0) - (/lite/.test(n) ? 2 : 0) - (/preview/.test(n) ? 1 : 0) - (/pro/.test(n) ? 3 : 0) + (/latest/.test(n) ? .5 : 0); }
+    ok.sort(function(a, b){ return score(b) - score(a); });
+    gemModel = ok[0] || ms[0] || 'gemini-2.5-flash';
+    return gemModel;
+  });
+}
+function aiDescribe(p, lang){
+  var key = meta && meta.geminiKey;
+  if (!key) return Promise.reject(new Error(SL('पहले सेटिंग में Google Gemini की key डालें','Add a Google Gemini key in Settings first')));
+  var langTxt = lang === 'hi' ? 'Write everything in simple Hindi (Devanagari). Keep the detail labels (Fabric, Colour…) in Hindi too.' : lang === 'both' ? 'Write the short line and the long text in English followed by the same in simple Hindi (Devanagari); detail labels in English.' : 'Write in simple, friendly English.';
+  var prompt = 'You write product listings for Diamond Fashions, a family clothing and general store in Purandarpur, Uttar Pradesh, India, selling online to small-town and village customers.\n' +
+    'Product: ' + JSON.stringify({name:p.name, category:p.cat, price:p.price, mrp:p.mrp, sizes:p.sizes, sold_by:p.unit === 'm' ? 'metre' : 'piece', notes:p.details || '', current_description:p.desc || ''}) + '\n' +
+    (p.photos && p.photos[0] ? 'Look carefully at the photo for colour, pattern, work and style. ' : '') +
+    'Do not invent a brand, exact fabric or measurements you cannot see or are not told; if unsure say "as shown in photo". No prices in the text. ' + langTxt + '\n' +
+    'Return JSON only: {"short": one catchy line under 110 characters, "details": 4 to 7 lines, each "Label: value" (e.g. Fabric, Colour, Pattern, Work, Occasion, Fit, Wash care), joined with \\n, "long": 2 to 4 short sentences for the full description}.';
+  var parts = [{text:prompt}];
+  var src = p.photos && p.photos[0];
+  var photo = src ? (/^data:image\//.test(src) ? Promise.resolve(src) : loadImg(src).then(function(im){ if (!im) return ''; var c = document.createElement('canvas'), k = Math.min(1, 768 / Math.max(im.width, im.height)); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); try { return c.toDataURL('image/jpeg', .8); } catch(e){ return ''; } })) : Promise.resolve('');
+  return Promise.all([geminiPickModel(key), photo]).then(function(r){
+    var m = /^data:(image\/[a-z]+);base64,(.*)$/.exec(r[1] || ''); if (m) parts.push({inline_data:{mime_type:m[1], data:m[2]}});
+    return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + r[0] + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user', parts:parts}], generationConfig:{temperature:.7, responseMimeType:'application/json'}})}).then(function(x){ return x.json(); });
+  }).then(function(j){
+    if (j.error) throw new Error('Gemini: ' + (j.error.message || j.error.status));
+    var txt = (((j.candidates || [])[0] || {}).content || {}).parts; txt = (txt || []).map(function(x){ return x.text || ''; }).join('');
+    var o; try { o = JSON.parse(txt.replace(/^```(?:json)?|```$/g, '').trim()); } catch(e){ throw new Error(SL('AI का जवाब समझ नहीं आया, फिर कोशिश करें','Could not read the AI answer, try again')); }
+    if (Array.isArray(o.details)) o.details = o.details.join('\n');
+    return {short:String(o.short || '').trim(), details:String(o.details || '').trim(), long:String(o.long || '').trim()};
+  });
+}
+function drawGemini(main){
+  var card = el('div',{'class':'card'},[ el('h3',{style:'margin:0 0 6px',text:'✨ '+SL('AI से सामान का विवरण (Google Gemini)','AI product description (Google Gemini)')}),
+    el('p',{'class':'muted small',html:SL('1. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> खोलें (अपने Gmail से) → <b>Create API key</b>। 2. key कॉपी करके नीचे डालें → सेव। फिर हर सामान में “✨ AI से लिखें” बटन चलेगा। key सिर्फ़ आपके Admin में रहती है।','1. Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (with your Gmail) → <b>Create API key</b>. 2. Copy the key, paste it below → Save. The “✨ Write with AI” button then works in every product. The key stays only in your Admin.')}) ]);
+  var kIn = el('input',{type:'password',value:(meta && meta.geminiKey) || '',placeholder:'AIza…',autocomplete:'off',style:'width:100%'}), m = el('p',{'class':'msg'});
+  card.appendChild(el('div',{'class':'field'},[ el('label',{text:'Gemini API key'}), kIn ]));
+  card.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){ gemModel = ''; metaRef().set({geminiKey:kIn.value.trim()}, {merge:true}).then(function(){ m.textContent = L('सेव हो गया ✓'); m.className = 'msg ok'; }, function(e){ m.textContent = e.message; m.className = 'msg err'; }); }}),
+    el('button',{'class':'btn b-line',type:'button',text:'▶ '+SL('टेस्ट करें','Test'),onclick:function(){ gemModel = ''; m.textContent = '…'; m.className = 'msg'; geminiPickModel(kIn.value.trim()).then(function(n){ m.textContent = '✓ ' + SL('चल रहा है: ','Working: ') + n; m.className = 'msg ok'; }, function(e){ gemModel = ''; m.textContent = e.message; m.className = 'msg err'; }); }}) ]));
+  card.appendChild(m); main.appendChild(card);
+}
+/* website + admin show / hide switches */
+var HIDE_SITE = [['tailor','सिलाई (टेलरिंग) वाला हिस्सा','Tailoring section'],['returns','वापसी (Return)','Returns'],['track','ऑर्डर ट्रैक','Track order'],['banners','ऊपर के बैनर','Top banners'],['bundles','कॉम्बो ऑफ़र','Combo offers'],['rails','सामान की लाइनें (ऑफ़र, कैटेगरी)','Product rows (deals, categories)'],['reviews','रेटिंग और रिव्यू','Ratings & reviews'],['bell','“ऑफ़र की सूचना” बटन','“Offer alerts” button'],['social','Facebook / Instagram / YouTube बटन','Facebook / Instagram / YouTube buttons'],['follow','“हमसे जुड़ें” वाला हिस्सा','“Follow us” section'],['wa','WhatsApp बटन','WhatsApp buttons'],['appbanner','“ऐप इंस्टॉल करें” पट्टी','“Install app” strip'],['card','ग्राहक के खाते में डिस्काउंट कार्ड','Discount card in customer account']];
+var ADM_TABS_HIDEABLE = [['requests','रिक्वेस्ट','Requests'],['banners','विज्ञापन','Banners / Ads'],['reviews','रिव्यू','Reviews'],['stock','स्टॉक','Stock'],['silai','सिलाई','Tailoring'],['riders','डिलीवरी बॉय','Delivery staff'],['staff','स्टाफ','Staff'],['cards','डिस्काउंट कार्ड','Discount cards']];
+function drawHide(main){
+  var hide = Object.assign({}, (cfg && cfg.hide) || {}), ah = ((cfg && cfg.admHide) || []).slice(), m = el('span',{'class':'small'});
+  function saveSite(){ db.collection('config').doc('shop').set({hide:hide}, {merge:true}).then(function(){ m.textContent = '✓'; }, function(e){ m.textContent = e.message; }); }
+  var card = el('div',{'class':'card'},[ el('h3',{style:'margin:0 0 6px',text:'👁 '+SL('क्या दिखाएँ, क्या छुपाएँ','Show / hide features')}), el('p',{'class':'muted small',text:SL('जो चीज़ आप इस्तेमाल नहीं करते, उसका ✓ हटा दें — वह वेबसाइट या Admin से छुप जाएगी। फिर से ✓ लगाते ही वापस आ जाएगी।','Untick anything you do not use and it hides from the website or Admin. Tick it again to bring it back.')}), m ]);
+  card.appendChild(el('b',{text:SL('वेबसाइट पर','On the website')}));
+  HIDE_SITE.forEach(function(h){ card.appendChild(el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:hide[h[0]]?null:'checked',onchange:function(e){ if (e.target.checked) delete hide[h[0]]; else hide[h[0]] = true; saveSite(); }}), ' '+SL(h[1],h[2]) ])); });
+  card.appendChild(el('b',{style:'display:block;margin-top:10px',text:SL('Admin के टैब','Admin tabs')}));
+  ADM_TABS_HIDEABLE.forEach(function(h){ card.appendChild(el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:ah.indexOf(h[0]) >= 0 ? null : 'checked',onchange:function(e){ ah = ah.filter(function(k){ return k !== h[0]; }); if (!e.target.checked) ah.push(h[0]); db.collection('config').doc('shop').set({admHide:ah}, {merge:true}).then(function(){ m.textContent = '✓'; }); }}), ' '+SL(h[1],h[2]) ])); });
+  card.appendChild(el('p',{'class':'muted small',text:SL('COD, UPI और डिलीवरी ऊपर “दुकान की सेटिंग” में हैं।','COD, UPI and delivery are in “Shop settings” above.')}));
+  main.appendChild(card);
 }
 
 /* ---------- reviews ---------- */
@@ -1352,6 +1714,8 @@ function drawSettings(main){
   if (meta && meta.pageId && (!cfg.fbUrl || (!cfg.igUrl && meta.igUser))){ var su = {}; if (!cfg.fbUrl) su.fbUrl = 'https://www.facebook.com/' + meta.pageId; if (!cfg.igUrl && meta.igUser) su.igUrl = 'https://www.instagram.com/' + meta.igUser + '/';
     db.collection('config').doc('shop').set(su, {merge:true}).then(function(){ Object.assign(cfg, su); var a = document.getElementById('s-fb'), b = document.getElementById('s-ig'); if (a && su.fbUrl) a.value = su.fbUrl; if (b && su.igUrl) b.value = su.igUrl; }); }
   drawSocial(main);
+  drawGemini(main);
+  drawHide(main);
   main.appendChild(el('p',{'class':'muted small',text:L('लॉग-इन: ')+(me&&me.email)}));
 }
 
@@ -1461,15 +1825,20 @@ function socialWatch(){
     var s0 = p.social || {}, l0 = pcsLeft(p);
     if (meta.autoNew === false && !s0.newAt && (p.photos||[]).length){ base.update(db.collection('products').doc(p.id), {'social.newAt':'skipped'}); nb++; return; }
     if (meta.autoLow === false && !s0.lowAt && l0 !== null && l0 > 0 && l0 <= lim){ base.update(db.collection('products').doc(p.id), {'social.lowAt':'skipped'}); nb++; return; }
-    var sc = p.social || {}, left = pcsLeft(p), job = null, mark = {};
+    var sc = p.social || {}, left = pcsLeft(p), job = null, mark = {}, oldFb = '';
     if (meta.autoNew !== false && !sc.newAt && (p.photos||[]).length && p.inStock !== false){ job = 'new'; mark['social.newAt'] = now(); }
-    else if (meta.autoLow !== false && left !== null && left > 0 && left <= lim && !sc.lowAt){ job = 'low'; mark['social.lowAt'] = now(); }
-    else if (sc.lowAt && left !== null && left > lim){ db.collection('products').doc(p.id).update({'social.lowAt': FV.delete()}).catch(function(){}); }
+    else if (meta.autoLow !== false && left !== null && left > 0 && left <= lim && !sc.lowAt){ job = 'low'; mark['social.lowAt'] = now(); mark['social.lowLeft'] = left; }
+    /* already posted "only N left" and even fewer are left now: post the real number again, remove the old Facebook post */
+    else if (meta.autoLow !== false && meta.lowRepost !== false && left !== null && left > 0 && sc.lowAt && sc.lowAt !== 'skipped' && typeof sc.lowLeft === 'number' && left < sc.lowLeft){ job = 'low'; mark['social.lowAt'] = now(); mark['social.lowLeft'] = left; oldFb = sc.lowFb || ''; }
+    else if (left === 0 && sc.lowFb && meta.lowRepost !== false){ var dead = sc.lowFb; db.collection('products').doc(p.id).update({'social.lowFb': ''}).catch(function(){}); gfetch(dead, {access_token:meta.pageToken}, 'DELETE').catch(function(){}); }
+    else if (sc.lowAt && left !== null && left > lim){ db.collection('products').doc(p.id).update({'social.lowAt': FV.delete(), 'social.lowLeft': FV.delete(), 'social.lowFb': FV.delete()}).catch(function(){}); }
     if (!job) return;
     socialBusy[p.id] = true;
     socialQueue = socialQueue.then(function(){
       return db.collection('products').doc(p.id).update(mark).then(function(){ return (job === 'new' && meta.video !== false && (p.photos||[]).length >= 3 && (vidType() || wcOk())) ? makeAnyVideo(p, job).then(function(vd){ return postVideo(p, job, vd); }) : postProduct(p, job); })
-        .then(function(){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram'));
+        .then(function(out){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram') + (job === 'low' ? ' (' + left + SL(' बचे',' left') + ')' : ''));
+          if (job === 'low' && out && out.fb) db.collection('products').doc(p.id).update({'social.lowFb': out.fb}).catch(function(){});
+          if (oldFb) gfetch(oldFb, {access_token:meta.pageToken}, 'DELETE').catch(function(){});
           if (job === 'new' && meta.osKey && meta.osAuto !== false){ var pr = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') : '';
             osSend('✨ ' + SL('नया माल: ','New arrival: ') + p.name, (pr ? pr + ' – ' : '') + SL('अभी देखें और ऑर्डर करें। घर पर डिलीवरी, COD।','See it now and order. Home delivery, COD.'), 'https://diamondfashions.in/#p-' + p.code)
               .then(function(){ toast('🔔 ' + p.name + SL(' की सूचना ग्राहकों को गई',' notification sent to customers')); }, function(){}); } },
@@ -1490,6 +1859,7 @@ function drawSocial(main){
     var chk = function(key, label){ return el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:meta[key]!==false?'checked':null,onchange:function(e){ var u = {}; u[key] = e.target.checked; metaRef().set(u,{merge:true}); }}), ' '+label ]); };
     card.appendChild(chk('autoNew', SL('नया सामान (फ़ोटो के साथ) सेव होते ही पोस्ट करें','Post new items (with a photo) as soon as they are saved')));
     card.appendChild(chk('autoLow', SL('जब किसी सामान के कम पीस बचें तो पोस्ट करें','Post when an item is running low')));
+    card.appendChild(chk('lowRepost', SL('स्टॉक और कम हो तो असली बचे पीस के साथ नई पोस्ट (पुरानी Facebook पोस्ट हट जाएगी, ख़त्म होने पर भी हटेगी)','When stock drops further, post again with the real number left (the old Facebook post is removed, also when sold out)')));
     card.appendChild(chk('video', SL('3 या ज़्यादा फ़ोटो हों तो फ़ोटो की जगह वीडियो (Reel) बनाकर पोस्ट करें','If an item has 3 or more photos, make and post a video (Reel) instead of a photo')));
     var vs = el('select',{style:'min-height:40px;border-radius:8px;margin:2px 0 8px 26px',onchange:function(e){ metaRef().set({vstyle:e.target.value},{merge:true}); }},
       [['cam60',SL('कैमरा स्टाइल वीडियो · 1 मिनट','Camera-style video · 1 min')],['cam30',SL('कैमरा स्टाइल वीडियो · 30 सेकंड','Camera-style video · 30 sec')],['slide',SL('स्लाइड शो · 20 सेकंड','Slideshow · 20 sec')]].map(function(o){ return el('option',{value:o[0],text:o[1]}); }));
@@ -2171,10 +2541,11 @@ function listen(){
   unsubs.push(db.collection('secret').doc('krates').onSnapshot(function(s){ krates = s.exists ? s.data() : {}; if (tab === 'silai') redraw(); }, function(){}));
   unsubs.push(db.collection('staff').onSnapshot(function(s){ staffList = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name||'').localeCompare(String(b.name||'')); }); if (tab === 'staff') redraw(); }, function(){}));
   unsubs.push(db.collection('riders').onSnapshot(function(s){ riders = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name||a._id).localeCompare(String(b.name||b._id)); }); if (tab === 'riders') redraw(); }, function(){}));
-  unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ cfg = s.exists ? s.data() : {}; if (tab === 'banners') redraw(); }));
+  unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ var before = JSON.stringify((cfg && cfg.admHide) || []); cfg = s.exists ? s.data() : {}; if (tab === 'banners' || before !== JSON.stringify(cfg.admHide || [])) redraw(); }));
   unsubs.push(db.collection('cards').onSnapshot(function(s){ cards = s.docs.map(function(d){ return d.data(); }); if (tab === 'cards') redraw(); }, function(){}));
   unsubs.push(db.collection('reviews').orderBy('created','desc').limit(500).onSnapshot(function(s){ reviews = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'reviews') redraw(); }, function(){}));
-  unsubs.push(db.collection('config').onSnapshot(function(s){ banners = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); if (tab === 'banners') redraw(); }));
+  unsubs.push(db.collection('config').onSnapshot(function(s){ bundles = s.docs.filter(function(d){ return d.id.indexOf('bundle_') === 0; }).map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); });
+    banners = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); if (tab === 'banners') redraw(); }));
 }
 auth.getRedirectResult().catch(function(){});
 auth.onAuthStateChanged(function(u){
