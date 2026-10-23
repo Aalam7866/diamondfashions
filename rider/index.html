@@ -91,7 +91,7 @@ firebase.initializeApp(CFG);
 var auth = firebase.auth(), db = firebase.firestore();
 try { db.settings({experimentalAutoDetectLongPolling:true, merge:true}); } catch(e){}
 var app = document.getElementById('app');
-var riderUnsub = null, me = null, myEmail = '', rider = null, tab = 'ready', ready = [], mine = [], unsubs = [], seen = null;
+var riderUnsub = null, me = null, myEmail = '', rider = null, tab = 'ready', ready = [], mine = [], rets = [], myRets = [], unsubs = [], seen = null, seenR = null;
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 var instEvt = null, sw = null;
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ sw = r; }).catch(function(){});
@@ -100,6 +100,7 @@ window.addEventListener('appinstalled', function(){ instEvt = null; IS_APP = tru
 
 var LANG = (function(){ try { return localStorage.getItem('rider-lang') || 'hi'; } catch(e){ return 'hi'; } })();
 var EN = {"📲 ऐप इंस्टॉल करें": "📲 Install app", "iPhone पर: नीचे Share (□↑) दबाएँ → “Add to Home Screen” चुनें।": "On iPhone: tap Share (□↑) → “Add to Home Screen”.", "Chrome में ऊपर दाईं ओर ⋮ दबाएँ → “Install app” या “Add to Home screen” → “Install”। होम स्क्रीन पर DF Rider आ जाएगा।": "In Chrome tap ⋮ (top right) → “Install app” or “Add to Home screen” → “Install”. DF Rider will appear on your home screen.", "डिलीवरी बॉय का लॉग-इन। वही Gmail चुनें जो दुकान मालिक ने Admin में जोड़ा है।": "Delivery staff login. Choose the same Gmail that the shop owner added in Admin.", "<span>Google से लॉग-इन करें</span>": "<span>Log in with Google</span>", "लॉग-इन नहीं हुआ: ": "Could not log in: ", "लॉग-इन: ": "Logged in: ", "दुकान मालिक से बात करें: +91 88741 29818": "Talk to the shop owner: +91 88741 29818", "WhatsApp करें": "WhatsApp", "दूसरे Gmail से लॉग-इन": "Log in with another Gmail", "🔔 सूचना चालू": "🔔 Turn on alerts", "लॉग-आउट": "Logout", "लॉग-आउट करें?": "Log out?", "पिकअप के लिए तैयार": "Ready for pickup", "मेरी डिलीवरी": "My deliveries", "पूरी हुई": "Completed", "उठाने हैं": "To pick up", "रास्ते में": "On the way", "आज पहुँचाए · ": "Delivered today · ", "अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।": "No parcel ready yet. When a parcel is packed at the shop it will appear here (with a sound).", "अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।": "You have no deliveries right now. Pick up a parcel from “Ready for pickup”.", "अभी कोई डिलीवरी पूरी नहीं हुई।": "No deliveries completed yet.", "पैक – उठाना है": "Packed – pick up", "पहुँच गया": "Delivered", "ग्राहक": "Customer", "पता": "Address", "दूरी": "Distance", " (दुकान से)": " (from shop)", "नोट": "Note", "पहुँचाया": "Delivered at", "💵 ग्राहक से लेना है": "💵 Collect from customer", "✓ पैसे पहले ही मिल गए": "✓ Already paid", "💵 लिया": "💵 Collected", "📞 कॉल": "📞 Call", "🧭 रास्ता": "🧭 Directions", "📦 पार्सल उठाया – डिलीवरी शुरू": "📦 Picked up – start delivery", " कैश ले लिया": " cash collected", "✓ डिलीवर हो गया": "✓ Delivered", "पहले कैश लेकर ✓ लगाएँ।": "Collect the cash first and tick ✓.", "↩ वापस दुकान": "↩ Back to shop", "यह पार्सल वापस दुकान पर लौटा रहे हैं?": "Return this parcel to the shop?", "नहीं हुआ: ": "Failed: ", " (शायद किसी और ने उठा लिया)": " (maybe someone else picked it up)", "📦 नया पार्सल तैयार": "📦 New parcel ready", "ऑर्डर नहीं खुले (": "Could not load orders (", "आपका Gmail अभी डिलीवरी लिस्ट में नहीं है": "Your Gmail is not on the delivery list yet", "आपको दुकान मालिक ने ब्लॉक किया है": "You have been blocked by the shop owner"};
+Object.assign(EN, {"↩ वापसी उठानी है":"↩ Returns to pick up","अभी कोई वापसी नहीं। जब दुकान मालिक वापसी मंज़ूर करेंगे, यहाँ आ जाएगी (आवाज़ के साथ)।":"No returns right now. When the owner approves a return it appears here (with a sound).","↩ वापसी – ग्राहक से उठानी है":"↩ Return – pick up from customer","↩ वापसी – दुकान ले जाएँ":"↩ Return – take to shop","वापसी दुकान पर जमा":"Return handed in at shop","वापसी का सामान":"Item to return","ऊपर लिखा सामान":"Items above","कारण":"Reason","💵 ग्राहक से कोई पैसा नहीं लेना/देना (पैसे दुकान बैंक में भेजेगी)":"💵 No cash to take or give (the shop refunds by bank)","↩ ग्राहक से वापसी का सामान ले लिया":"↩ Collected the return from customer","सामान चेक करके ले लिया?":"Checked and collected the item?","यह सामान दुकान पर जमा करें। दुकान मालिक “सामान वापस आया” दबाएँगे।":"Hand this item in at the shop. The owner will mark it “returned”."});
 function L(h){ return LANG === 'en' && EN[h] !== undefined ? EN[h] : h; }
 function langBtn(cls){ return el('button',{'class':cls||'pill',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('rider-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}); }
 document.documentElement.lang = LANG;
@@ -182,8 +183,8 @@ function draw(){
   app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[
     el('div',{'class':'brand',html:'DIAMOND<small>RIDER · '+(rider.name||myEmail)+'</small>'}),
     el('div',{'class':'hb'},[ installBtn(), alertB, langBtn(), el('button',{'class':'pill',type:'button',text:L('लॉग-आउट'),onclick:function(){ if (confirm(L('लॉग-आउट करें?'))) auth.signOut(); }}) ]) ]) ]));
-  var going = mine.filter(function(o){ return o.status === 'shipped'; }), done = mine.filter(function(o){ return o.status === 'delivered'; });
-  var tabs = [['ready',L('पिकअप के लिए तैयार'),ready.length],['going',L('मेरी डिलीवरी'),going.length],['done',L('पूरी हुई'),0]];
+  var going = mine.filter(function(o){ return o.status === 'shipped'; }).concat(myRets.filter(function(o){ return o.status === 'return_pick'; })), done = mine.filter(function(o){ return o.status === 'delivered'; });
+  var tabs = [['ready',L('पिकअप के लिए तैयार'),ready.length],['rets',L('↩ वापसी उठानी है'),rets.length],['going',L('मेरी डिलीवरी'),going.length],['done',L('पूरी हुई'),0]];
   app.appendChild(el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(t){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); window.scrollTo(0,0); }},[ t[1], t[2] ? el('span',{'class':'n',text:String(t[2])}) : null ]); })));
   var main = el('main',{'class':'wrap'}); app.appendChild(main);
   var today = new Date().toDateString();
@@ -193,17 +194,18 @@ function draw(){
     el('div',null,[ el('b',{text:String(ready.length)}), el('span',{text:L('उठाने हैं')}) ]),
     el('div',null,[ el('b',{text:String(going.length)}), el('span',{text:L('रास्ते में')}) ]),
     el('div',null,[ el('b',{text:String(doneToday.length)}), el('span',{text:L('आज पहुँचाए · ')+rupees(cashToday)}) ]) ]));
-  var list = tab === 'ready' ? ready : tab === 'going' ? going : done.slice().sort(function(a,b){ return String(b.deliveredAt||'').localeCompare(String(a.deliveredAt||'')); }).slice(0, 40);
+  var list = tab === 'ready' ? ready : tab === 'rets' ? rets : tab === 'going' ? going : done.slice().sort(function(a,b){ return String(b.deliveredAt||'').localeCompare(String(a.deliveredAt||'')); }).slice(0, 40);
   if (!list.length){
-    main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='ready' ? '📦' : tab==='going' ? '🛵' : '✅'}),
-      tab==='ready' ? L('अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।') : tab==='going' ? L('अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।') : L('अभी कोई डिलीवरी पूरी नहीं हुई।') ]));
+    main.appendChild(el('div',{'class':'empty'},[ el('b',{text: tab==='ready' ? '📦' : tab==='rets' ? '↩' : tab==='going' ? '🛵' : '✅'}),
+      tab==='rets' ? L('अभी कोई वापसी नहीं। जब दुकान मालिक वापसी मंज़ूर करेंगे, यहाँ आ जाएगी (आवाज़ के साथ)।') : tab==='ready' ? L('अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।') : tab==='going' ? L('अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।') : L('अभी कोई डिलीवरी पूरी नहीं हुई।') ]));
   }
   list.forEach(function(o){ main.appendChild(card(o)); });
   window.scrollTo(0, y);
 }
 function card(o){
   var c = el('div',{'class':'card'+(o.status==='packed'?' hot':'')});
-  var st = {packed:[L('पैक – उठाना है'),''], shipped:[L('रास्ते में'),''], delivered:[L('पहुँच गया'),'ok']}[o.status] || [o.status,''];
+  var st = {packed:[L('पैक – उठाना है'),''], shipped:[L('रास्ते में'),''], delivered:[L('पहुँच गया'),'ok'], return_ok:[L('↩ वापसी – ग्राहक से उठानी है'),'bad'], return_pick:[L('↩ वापसी – दुकान ले जाएँ'),''], returned:[L('वापसी दुकान पर जमा'),'ok']}[o.status] || [o.status,''];
+  var isRet = /^return/.test(o.status);
   c.appendChild(el('div',{'class':'top'},[ el('span',{'class':'num',style:'font-size:17px',text:o.id}), el('span',{'class':'st '+st[1],text:st[0]}) ]));
   var addr = [o.addr, o.land, o.pin ? 'PIN '+o.pin : ''].filter(Boolean).join(', ');
   c.appendChild(el('div',{'class':'kv'},[
@@ -213,17 +215,23 @@ function card(o){
     o.note ? el('span',{text:L('नोट')}) : null, o.note ? el('span',{text:o.note}) : null,
     o.status==='delivered' && o.deliveredAt ? el('span',{text:L('पहुँचाया')}) : null, o.status==='delivered' && o.deliveredAt ? el('span',{text:when(o.deliveredAt)}) : null ]));
   c.appendChild(el('ul',{'class':'items'}, (o.items||[]).map(function(i){ return el('li',{text:i.name+(i.size?' ('+i.size+')':'')+' × '+(i.qty||1)}); })));
-  var amt = toCollect(o);
-  if (o.status !== 'delivered') c.appendChild(el('div',{'class':'cash'+(amt?'':' paid')},[ el('span',{text: amt ? L('💵 ग्राहक से लेना है') : L('✓ पैसे पहले ही मिल गए')}), el('span',{text: amt ? rupees(amt) : ''}) ]));
+  if (isRet && o.ret) c.appendChild(el('div',{'class':'kv'},[ el('span',{text:L('वापसी का सामान')}), el('b',{text:o.ret.item || L('ऊपर लिखा सामान')}), o.ret.reason ? el('span',{text:L('कारण')}) : null, o.ret.reason ? el('span',{text:o.ret.reason}) : null ]));
+  var amt = isRet ? 0 : toCollect(o);
+  if (isRet) c.appendChild(el('div',{'class':'cash paid'},[ el('span',{text:L('💵 ग्राहक से कोई पैसा नहीं लेना/देना (पैसे दुकान बैंक में भेजेगी)')}), el('span') ]));
+  else if (o.status !== 'delivered') c.appendChild(el('div',{'class':'cash'+(amt?'':' paid')},[ el('span',{text: amt ? L('💵 ग्राहक से लेना है') : L('✓ पैसे पहले ही मिल गए')}), el('span',{text: amt ? rupees(amt) : ''}) ]));
   else if (o.cashGot) c.appendChild(el('div',{'class':'cash paid'},[ el('span',{text:L('💵 लिया')}), el('span',{text:rupees(o.cashGot)}) ]));
   var tel = digits(o.phone).slice(-10);
   var acts = el('div',{'class':'row'});
   if (tel) acts.appendChild(el('a',{'class':'btn sm line',href:'tel:+91'+tel,text:L('📞 कॉल')}));
-  if (tel) acts.appendChild(el('a',{'class':'btn sm wa',href:'https://wa.me/91'+tel+'?text='+encodeURIComponent('नमस्ते '+(o.name||'')+' जी, मैं Diamond Fashions से आपका ऑर्डर '+o.id+' लेकर आ रहा हूँ।'),target:'_blank',rel:'noopener',text:'WhatsApp'}));
+  if (tel) acts.appendChild(el('a',{'class':'btn sm wa',href:'https://wa.me/91'+tel+'?text='+encodeURIComponent(isRet ? 'नमस्ते '+(o.name||'')+' जी, मैं Diamond Fashions से आपके ऑर्डर '+o.id+' का वापसी वाला सामान लेने आ रहा हूँ।' : 'नमस्ते '+(o.name||'')+' जी, मैं Diamond Fashions से आपका ऑर्डर '+o.id+' लेकर आ रहा हूँ।'),target:'_blank',rel:'noopener',text:'WhatsApp'}));
   acts.appendChild(el('a',{'class':'btn sm line',href:mapsTo(o),target:'_blank',rel:'noopener',text:L('🧭 रास्ता')}));
   c.appendChild(acts);
   var m = el('p',{'class':'msg'});
-  if (o.status === 'packed'){
+  if (o.status === 'return_ok'){
+    c.appendChild(el('div',{'class':'row',style:'margin-top:10px'},[ el('button',{'class':'btn gold grow',type:'button',text:L('↩ ग्राहक से वापसी का सामान ले लिया'),onclick:function(e){ if (confirm(L('सामान चेक करके ले लिया?'))) takeReturn(o, e.target, m); }}) ]));
+  } else if (o.status === 'return_pick'){
+    c.appendChild(el('p',{'class':'muted small',text:L('यह सामान दुकान पर जमा करें। दुकान मालिक “सामान वापस आया” दबाएँगे।')}));
+  } else if (o.status === 'packed'){
     c.appendChild(el('div',{'class':'row',style:'margin-top:10px'},[ el('button',{'class':'btn gold grow',type:'button',text:L('📦 पार्सल उठाया – डिलीवरी शुरू'),onclick:function(e){ take(o, e.target, m); }}) ]));
   } else if (o.status === 'shipped'){
     var got = el('input',{type:'checkbox'});
@@ -255,6 +263,13 @@ function deliver(o, amt, b, m){
   trackSet(batch, o, 'delivered', t);
   batch.commit().then(function(){ m.textContent = '✓'; }, function(e){ b.disabled = false; m.textContent = L('नहीं हुआ: ')+(e.code||e.message); m.className = 'msg err'; });
 }
+function takeReturn(o, b, m){
+  b.disabled = true; m.textContent = '…'; m.className = 'msg';
+  var t = now(), batch = db.batch();
+  batch.update(db.collection('orders').doc(o.id), {status:'return_pick', retRider:myEmail, retRiderName:rider.name||'', retAt:t, log:firebase.firestore.FieldValue.arrayUnion({at:t, s:'return_pick', by:myEmail})});
+  var at = {}; at.return_pick = t; batch.set(db.collection('track').doc(o.id), {s:'return_pick', pick:false, at:at}, {merge:true});
+  batch.commit().then(function(){ tab = 'going'; draw(); }, function(e){ b.disabled = false; m.textContent = L('नहीं हुआ: ')+(e.code||e.message)+L(' (शायद किसी और ने उठा लिया)'); m.className = 'msg err'; });
+}
 function giveBack(o, b, m){
   b.disabled = true;
   var t = now(), batch = db.batch();
@@ -278,6 +293,17 @@ function listen(){
   }, function(e){ drawBlocked(L('ऑर्डर नहीं खुले (')+(e.code||e.message)+')'); }));
   unsubs.push(db.collection('orders').where('rider','==',myEmail).onSnapshot(function(s){
     mine = []; s.forEach(function(d){ mine.push(d.data()); }); draw();
+  }, function(){}));
+  /* approved returns of home-delivery orders: pick the item up from the customer */
+  unsubs.push(db.collection('orders').where('status','==','return_ok').onSnapshot(function(s){
+    var list = []; s.forEach(function(d){ var o = d.data(); if (o.retPickup === true) list.push(o); });
+    var fresh = seenR ? list.filter(function(o){ return !seenR[o.id]; }) : [];
+    if (!seenR) seenR = {}; list.forEach(function(o){ seenR[o.id] = 1; });
+    fresh.forEach(function(o){ notify(L('↩ वापसी उठानी है'), (o.name||'')+' · '+[o.addr, o.pin].filter(Boolean).join(', ')); });
+    rets = list; draw();
+  }, function(){}));
+  unsubs.push(db.collection('orders').where('retRider','==',myEmail).onSnapshot(function(s){
+    myRets = []; s.forEach(function(d){ myRets.push(d.data()); }); draw();
   }, function(){}));
 }
 auth.getRedirectResult().catch(function(){});

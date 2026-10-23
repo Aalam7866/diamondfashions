@@ -4,11 +4,12 @@ They live away from diamondfashions.in so phones install them as apps separate f
 import os, shutil, sys
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 DST = sys.argv[1] if len(sys.argv) > 1 else '/home/claude/aalam7866.github.io'
-FILES = ['index.html', 'manifest.webmanifest', 'sw.js', 'icon-96.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png']
+FILES = ['index.html', 'mp4-muxer.min.js', 'manifest.webmanifest', 'sw.js', 'icon-96.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png']
 for app in ['admin', 'rider', 'karigar']:
     os.makedirs(os.path.join(DST, app), exist_ok=True)
     for f in FILES:
         src = os.path.join(ROOT, app, f)
+        if not os.path.exists(src): continue
         if f == 'index.html':
             html = open(src, encoding='utf-8').read()
             if 'rel="manifest"' not in html:

@@ -134,8 +134,8 @@ var auth = firebase.auth(), db = firebase.firestore(), FV = firebase.firestore.F
 var CATS = {women:L('Women / महिला'), men:L('Men / पुरुष'), boys:L('Boys / लड़के'), girls:L('Girls / लड़कियाँ'), kids:L('Kids & Baby / बच्चे'), footwear:L('Footwear / जूते-चप्पल'), jewellery:L('Jewellery / ज्वेलरी'), beauty:L('Beauty / ब्यूटी'), cookware:L('Kitchen / बर्तन'), stationery:L('Stationery / स्टेशनरी')};
 var PFX = {women:'W', men:'M', boys:'B', girls:'G', kids:'K', footwear:'F', cookware:'C', beauty:'Y', jewellery:'J', stationery:'S'};
 var ARTS = ['suit','saree','lehenga','blouse','leggings','kurta','jacket','shirt','tshirt','pant','kidset','frock','romper','shoe','necklace','lipstick','pot','pen'];
-var ST = {new:L('नया'), accepted:L('मंज़ूर'), packed:L('पैक'), shipped:L('भेजा'), pickup:L('दुकान पर तैयार'), delivered:L('पहुँच गया'), rejected:L('मना किया'), cancelled:L('रद्द'), return_req:L('वापसी रिक्वेस्ट'), return_ok:L('वापसी मंज़ूर'), returned:L('वापस आया'), return_no:L('वापसी मना')};
-var STEN = {new:'New', accepted:'Accepted', packed:'Packed', shipped:'Shipped', pickup:'Ready for pickup', delivered:'Delivered', rejected:'Rejected', cancelled:'Cancelled', return_req:'Return requested', return_ok:'Return approved', returned:'Returned', return_no:'Return not approved'};
+var ST = {new:L('नया'), accepted:L('मंज़ूर'), packed:L('पैक'), shipped:L('भेजा'), pickup:L('दुकान पर तैयार'), delivered:L('पहुँच गया'), rejected:L('मना किया'), cancelled:L('रद्द'), return_req:L('वापसी रिक्वेस्ट'), return_ok:L('वापसी मंज़ूर'), return_pick:SL('वापसी: राइडर ने उठाया','Return picked up by rider'), returned:L('वापस आया'), return_no:L('वापसी मना')};
+var STEN = {new:'New', accepted:'Accepted', packed:'Packed', shipped:'Shipped', pickup:'Ready for pickup', delivered:'Delivered', rejected:'Rejected', cancelled:'Cancelled', return_req:'Return requested', return_ok:'Return approved', return_pick:'Return picked up', returned:'Returned', return_no:'Return not approved'};
 
 var banners = [], reviews = [], riders = [];
 var RIDER_URL = 'https://apps.diamondfashions.in/rider/';
@@ -229,12 +229,12 @@ function draw(){
     el('div',{'class':'hbtns'},[ installBtn(), alertBtn(), langBtn(true), el('a',{'class':'pill',href:SITE+'/',target:'_blank',text:L('वेबसाइट देखें')}), el('button',{'class':'pill',type:'button',text:L('लॉग-आउट'),onclick:function(){ auth.signOut(); }}) ])
   ]) ]);
   app.appendChild(head);
-  var tabs = [['orders',L('ऑर्डर'),newCount()],['requests',L('रिक्वेस्ट'),reqCount()],['products',L('सामान'),0],['banners',L('विज्ञापन'),0],['reviews',L('रिव्यू'),0],['stock',L('स्टॉक'),0],['silai',L('सिलाई'),silaiNew()],['riders',L('डिलीवरी बॉय'),0],['staff',L('स्टाफ'),0],['settings',L('सेटिंग'),0]];
+  var tabs = [['orders',L('ऑर्डर'),newCount()],['requests',L('रिक्वेस्ट'),reqCount()],['products',L('सामान'),0],['banners',L('विज्ञापन'),0],['reviews',L('रिव्यू'),0],['stock',L('स्टॉक'),0],['silai',L('सिलाई'),silaiNew()],['riders',L('डिलीवरी बॉय'),0],['staff',L('स्टाफ'),0],['cards',SL('डिस्काउंट कार्ड','Discount cards'),0],['settings',L('सेटिंग'),0]];
   var nav = el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(tb){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===tb[0]),onclick:function(){ tab=tb[0]; draw(); window.scrollTo(0,0); }},[ tb[1], tb[2] ? el('span',{'class':'n',text:String(tb[2])}) : null ]); }));
   app.appendChild(el('div',{'class':'wrap',style:'padding:0'},[nav]));
   var main = el('main',{'class':'wrap'});
   app.appendChild(main);
-  ({orders:drawOrders, requests:drawRequests, products:drawProducts, banners:drawBanners, reviews:drawReviews, stock:drawStock, riders:drawRiders, silai:drawSilai, staff:drawStaff, settings:drawSettings})[tab](main);
+  ({orders:drawOrders, requests:drawRequests, products:drawProducts, banners:drawBanners, reviews:drawReviews, stock:drawStock, riders:drawRiders, silai:drawSilai, staff:drawStaff, cards:drawCards, settings:drawSettings})[tab](main);
   window.scrollTo(0, y);
 }
 
@@ -254,7 +254,7 @@ function drawOrders(main){
   var list = el('div',{id:'olist'}); main.appendChild(list); listOrders(list);
 }
 function listOrders(list){
-  var groups = {active:['new','accepted','packed','shipped','pickup'], new:['new'], done:['delivered','returned','return_no'], ret:['return_req','return_ok'], closed:['rejected','cancelled']};
+  var groups = {active:['new','accepted','packed','shipped','pickup'], new:['new'], done:['delivered','returned','return_no'], ret:['return_req','return_ok','return_pick'], closed:['rejected','cancelled']};
   var qq = q.trim().toLowerCase();
   var shown = orders.filter(function(o){ return (ofilter==='all' || groups[ofilter].indexOf(o.status)>=0) && (!qq || (o.id+' '+o.name+' '+o.phone).toLowerCase().indexOf(qq)>=0); });
   if (!shown.length){ list.appendChild(el('p',{'class':'muted',text: orders.length ? L('इस लिस्ट में कोई ऑर्डर नहीं।') : L('अभी कोई ऑर्डर नहीं। जब ग्राहक वेबसाइट से ऑर्डर करेगा, यहाँ अपने-आप दिखेगा।')})); return; }
@@ -281,7 +281,12 @@ function orderCard(o){
       el('a',{'class':'btn b-sm b-line',target:'_blank',rel:'noopener',href:'https://www.google.com/maps/dir/?api=1&destination='+o.loc.lat+','+o.loc.lng,text:'🧭 '+L('रास्ता')}),
       o.loc.acc ? el('span',{'class':'muted small',text:' ±'+o.loc.acc+' m'}) : null ]) : null,
     o.delivery != null ? el('span',{text:L('डिलीवरी')}) : null, o.delivery != null ? el('span',null,[ (o.delivery ? rupees(o.delivery) : L('फ़्री'))+(o.distKm ? ' · '+o.distKm+' km' : ''), o.feeUtr ? el('span',{'class':'st ok',style:'margin-left:6px',text:L('UPI से भरा · UTR ')+o.feeUtr}) : null, o.feeShot ? el('div',{style:'margin-top:6px'},[ el('span',{'class':'st ok',text:L('UPI से भरा · स्क्रीनशॉट')}), el('a',{href:'#',style:'display:block;margin-top:6px',onclick:function(e){ e.preventDefault(); var w = window.open(''); if (w){ w.document.title = o.id; w.document.body.style.margin = '0'; w.document.body.innerHTML = '<img style="max-width:100%" src="'+o.feeShot+'">'; } }},[ el('img',{src:o.feeShot,alt:L('पेमेंट स्क्रीनशॉट'),style:'width:90px;max-height:160px;object-fit:cover;border-radius:6px;border:1px solid #ccc'}) ]) ]) : null, (o.feeUtr||o.feeShot) ? el('div',{'class':'muted small',text:L('बैंक/UPI ऐप में यह UTR और ₹')+(o.feePaid||o.delivery)+L(' मिलाकर देख लें')}) : null ]) : null,
-    el('span',{text:L('पेमेंट')}), el('span',null,[ o.pay==='upi' ? 'UPI ' : 'COD ', o.pay==='upi' ? el('span',{'class':'st '+(o.paid?'ok':''),text:o.paid?L('पैसे मिले'):L('पैसे बाकी')}) : null ]),
+    el('span',{text:L('पेमेंट')}), el('span',null,[ o.pay==='upi' ? 'UPI ' : 'COD ', o.pay==='upi' ? el('span',{'class':'st '+(o.paid?'ok':''),text:o.paid?L('पैसे मिले'):L('पैसे बाकी')}) : null,
+      o.payUtr ? el('div',{style:'margin-top:4px'},[ el('span',{'class':'st',text:SL('ग्राहक ने भरा · UTR ','Customer paid · UTR ')+o.payUtr}) ]) : null,
+      o.payShot ? el('div',{style:'margin-top:6px'},[ el('span',{'class':'st',text:SL('ग्राहक ने भरा · स्क्रीनशॉट','Customer paid · screenshot')}), el('a',{href:'#',style:'display:block;margin-top:6px',onclick:function(e){ e.preventDefault(); var w = window.open(''); if (w){ w.document.title = o.id; w.document.body.style.margin = '0'; w.document.body.innerHTML = '<img style="max-width:100%" src="'+o.payShot+'">'; } }},[ el('img',{src:o.payShot,alt:SL('पेमेंट स्क्रीनशॉट','Payment screenshot'),style:'width:90px;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--line)'}) ]) ]) : null,
+      (o.pay==='upi' && (o.payUtr||o.payShot) && !o.paid) ? el('div',{'class':'small muted',style:'margin-top:4px',text:SL('बैंक/UPI ऐप में पैसे चेक करके "पेमेंट मिल गया" दबाएँ।','Check the money in your bank/UPI app, then tap "Payment received".')}) : null ]),
+    o.card ? el('span',{text:SL('डिस्काउंट कार्ड','Discount card')}) : null, o.card ? el('span',{'class':'num',text:o.card}) : null,
+    o.retRider ? el('span',{text:SL('वापसी उठाई','Return pickup')}) : null, o.retRider ? el('span',null,[ el('b',{text:o.retRiderName||o.retRider}), o.retAt ? ' · '+when(o.retAt) : '' ]) : null,
     o.note ? el('span',{text:L('नोट')}) : null, o.note ? el('span',{text:o.note}) : null
   ]));
   c.appendChild(el('ul',{'class':'items'}, (o.items||[]).map(function(i){ return el('li',null,[ el('span',{'class':'num small muted',text:(i.sku||'')+'  '}), i.name+(i.size?' ('+i.size+')':'')+' × '+i.qty, i.price ? el('b',{style:'float:right',text:rupees(i.price*i.qty)}) : null ]); })));
@@ -294,7 +299,7 @@ function orderCard(o){
   if (o.status==='packed') go(pick?'pickup':'shipped', pick?L('दुकान पर तैयार'):L('भेज दिया'));
   if (o.status==='shipped'||o.status==='pickup') go('delivered',L('पहुँच गया'),'b-ok');
   if (o.status==='return_req'){ go('return_ok',L('वापसी मंज़ूर'),'b-ok'); go('return_no',L('वापसी मना'),'b-bad'); }
-  if (o.status==='return_ok') go('returned',L('सामान वापस आया'),'b-ok');
+  if (o.status==='return_ok' || o.status==='return_pick') go('returned',L('सामान वापस आया'),'b-ok');
   if (['new','accepted','packed','shipped','pickup'].indexOf(o.status)>=0 && o.status!=='new') acts.appendChild(el('button',{'class':'btn b-sm b-bad',type:'button',text:L('रद्द करें'),onclick:function(){ if (confirm(L('ऑर्डर ')+o.id+L(' रद्द करें?'))) setStatus(o,'cancelled'); }}));
   if (o.pay==='upi') acts.appendChild(el('button',{'class':'btn b-sm b-line',type:'button',text:o.paid?L('पेमेंट: मिला ✓'):L('पेमेंट मिल गया'),onclick:function(){ db.collection('orders').doc(o.id).update({paid:!o.paid}); }}));
   if (o.status!=='new') acts.appendChild(el('a',{'class':'btn b-sm b-wa',target:'_blank',rel:'noopener',href:waTo(o.phone, custMsg(o, o.status)),text:L('ग्राहक को WhatsApp')}));
@@ -353,12 +358,15 @@ function drawRequests(main){
         el('span',{text:L('कारण')}), el('span',{text:r.reason||''}), r.details ? el('span',{text:L('जानकारी')}) : null, r.details ? el('span',{text:r.details}) : null,
         el('span',{text:L('ऑर्डर')}), el('span',{text: o ? (o.name+' · '+(ST[o.status]||o.status)+' · '+rupees(o.total)) : L('यह ऑर्डर यहाँ नहीं मिला')}) ])
     ]);
+    if (r.refund || r.refundId) c.appendChild(refundBox(r, o));
     if (r.status==='new'){
       var acts = el('div',{'class':'row'});
       var done = function(){ return db.collection('requests').doc(r._id).update({status:'done', doneAt:now()}); };
       if (o && r.kind==='cancel') acts.appendChild(el('button',{'class':'btn b-sm b-bad',type:'button',text:L('ऑर्डर रद्द करें'),onclick:function(){ setStatus(o,'cancelled'); done(); }}));
       if (o && r.kind!=='cancel'){
-        acts.appendChild(el('button',{'class':'btn b-sm b-ok',type:'button',text:L('वापसी मंज़ूर'),onclick:function(){ db.collection('orders').doc(o.id).update({ret:{kind:r.kind, reason:r.reason, item:r.item||'', at:r.created}}).then(function(){ setStatus(o,'return_ok'); done(); }); }}));
+        acts.appendChild(el('button',{'class':'btn b-sm b-ok',type:'button',text:L('वापसी मंज़ूर'),onclick:function(){ var home = o.home === true || /deliver|घर/i.test(o.how||'');
+          db.collection('orders').doc(o.id).update({ret:{kind:r.kind, reason:r.reason, item:r.item||'', at:r.created, reqId:r._id}, retPickup:home}).then(function(){ setStatus(o,'return_ok'); done(); }); }}));
+        if (o.home === true || /deliver|घर/i.test(o.how||'')) acts.appendChild(el('span',{'class':'small muted',text:SL('मंज़ूर करते ही Rider ऐप में "वापसी उठानी है" आ जाएगा।','Once approved, it shows in the Rider app as "return ready for pickup".')}));
         acts.appendChild(el('button',{'class':'btn b-sm b-bad',type:'button',text:L('वापसी मना'),onclick:function(){ setStatus(o,'return_no'); done(); }}));
       }
       acts.appendChild(el('a',{'class':'btn b-sm b-wa',target:'_blank',rel:'noopener',href:waTo(r.phone,'नमस्ते, डायमंड फैशन्स से। आपके ऑर्डर '+r.orderId+' की रिक्वेस्ट मिली है।'),text:'WhatsApp'}));
@@ -367,6 +375,69 @@ function drawRequests(main){
     }
     main.appendChild(c);
   });
+}
+
+/* refund bank details: full numbers live in "refunds" (only the owner + shop PC can read them), the request keeps a masked copy */
+var refundCache = {};
+function refundBox(r, o){
+  var box = el('div',{'class':'card',style:'background:var(--bg);margin:8px 0 0'});
+  box.appendChild(el('b',{text:'🏦 '+SL('पैसे वापसी का बैंक खाता','Refund bank account')}));
+  var kv = el('div',{'class':'kv'}); box.appendChild(kv);
+  function show(b){ kv.innerHTML = '';
+    [[SL('नाम','Name'), b.name], [SL('खाता नं.','Account no.'), b.acc || ('••••' + (b.acc4||''))], ['IFSC', b.ifsc], [SL('बैंक','Bank'), [b.bank, b.branch].filter(Boolean).join(', ')], b.upi && b.upi !== 'yes' ? ['UPI', b.upi] : null].forEach(function(x){ if (!x || !x[1]) return; kv.appendChild(el('span',{text:x[0]})); kv.appendChild(el('span',{'class':'num',text:x[1]})); });
+    if (b.acc){ var txt = [b.name, 'A/c ' + b.acc, 'IFSC ' + b.ifsc, b.bank, b.upi ? 'UPI ' + b.upi : ''].filter(Boolean).join('\n');
+      box.appendChild(el('button',{'class':'btn b-sm b-line',type:'button',text:'📋 '+SL('कॉपी करें','Copy'),onclick:function(e){ try { navigator.clipboard.writeText(txt); e.target.textContent = '✓'; } catch(x){} }})); } }
+  show(r.refund || {});
+  if (r.refundId){
+    var hit = refundCache[r.refundId];
+    (hit ? Promise.resolve(hit) : db.collection('refunds').doc(r.refundId).get().then(function(sn){ var d = sn.exists ? sn.data() : null; if (d) refundCache[r.refundId] = d; return d; })).then(function(d){ if (d) show(d); }, function(){});
+  }
+  var amt = o ? (o.total || 0) - (o.delivery || 0) : 0;
+  if (r.refundPaid) box.appendChild(el('p',{'class':'msg ok',text:'✓ '+SL('पैसे भेज दिए','Refund sent')+(r.refundUtr ? ' · UTR '+r.refundUtr : '')+(r.refundAt ? ' · '+when(r.refundAt) : '')}));
+  else box.appendChild(el('button',{'class':'btn b-sm b-ok',type:'button',text:'💸 '+SL('पैसे भेज दिए','Mark refund sent')+(amt ? ' ('+rupees(amt)+')' : ''),onclick:function(){
+    var u = prompt(SL('बैंक / UPI का UTR नंबर (चाहें तो खाली छोड़ें)','Bank / UPI UTR number (optional)'), ''); if (u === null) return;
+    db.collection('requests').doc(r._id).update({refundPaid:true, refundUtr:String(u).trim(), refundAt:now()}).catch(function(e){ alert(e.message); }); }}));
+  return box;
+}
+
+/* ---------- discount cards ---------- */
+var cards = [], cardQ = '';
+function cardSpend(cd){
+  var from = cd.issued || '', till = new Date(new Date(cd.issued || 0).getTime() + 365*864e5).toISOString(), sum = 0, n = 0;
+  orders.forEach(function(o){ if (!((cd.uid && o.uid === cd.uid) || (o.card && o.card === cd.no))) return; if ((o.created||'') < from || (o.created||'') >= till) return;
+    if (['rejected','cancelled','returned','return_ok','return_pick','new'].indexOf(o.status) >= 0) return; sum += o.total || 0; n++; });
+  return {sum:sum, n:n, till:till};
+}
+function drawCards(main){
+  main.appendChild(el('h2',{text:SL('डिस्काउंट कार्ड','Discount cards')}));
+  main.appendChild(el('p',{'class':'muted small',text:SL('हर ग्राहक को खाता बनाते ही अपना अलग कार्ड नंबर (बारकोड के साथ) मिलता है। यहाँ कार्ड मिलने की तारीख से 1 साल की ख़रीदारी दिखती है (मंज़ूर/पहुँचे ऑर्डर; रद्द और वापसी नहीं गिनी जाती)।','Every customer gets their own card number (with barcode) when they create an account. Here you see their shopping in the 1 year from the card date (accepted/delivered orders; cancelled and returned are not counted).')}));
+  var tot = cards.reduce(function(a, cd){ return a + cardSpend(cd).sum; }, 0);
+  main.appendChild(el('div',{'class':'kpis'},[ el('div',{'class':'kpi'},[ el('b',{text:String(cards.length)}), el('span',{text:SL('कार्ड','Cards')}) ]), el('div',{'class':'kpi'},[ el('b',{text:rupees(tot)}), el('span',{text:SL('कार्ड वालों की ख़रीदारी','Card holders’ shopping')}) ]) ]));
+  var list = el('div');
+  main.appendChild(el('input',{'class':'search',type:'search',placeholder:SL('कार्ड नंबर, नाम या मोबाइल से खोजें','Search card no., name or mobile'),value:cardQ,oninput:function(e){ cardQ = e.target.value; list.innerHTML = ''; fill(); }}));
+  main.appendChild(list);
+  function fill(){
+    var qq = cardQ.trim().toLowerCase().replace(/\s+/g,'');
+    var shown = cards.filter(function(cd){ return !qq || (cd.no+' '+(cd.name||'')+' '+(cd.phone||'')+' '+(cd.email||'')).toLowerCase().replace(/\s+/g,'').indexOf(qq) >= 0; })
+      .map(function(cd){ return {cd:cd, sp:cardSpend(cd)}; }).sort(function(a, b){ return b.sp.sum - a.sp.sum; });
+    if (!shown.length){ list.appendChild(el('p',{'class':'muted',text: cards.length ? SL('कोई कार्ड नहीं मिला।','No card found.') : SL('अभी कोई कार्ड नहीं। ग्राहक वेबसाइट पर खाता बनाएँगे तो यहाँ आ जाएँगे।','No cards yet. They appear when customers create an account on the website.')})); return; }
+    shown.forEach(function(x){ var cd = x.cd, sp = x.sp;
+      var pct = el('input',{type:'number',min:'0',max:'50',step:'1',value:cd.pct||'',placeholder:'0',style:'width:70px;min-height:36px;border:1px solid var(--line);border-radius:8px;padding:0 8px'});
+      var msg = el('span',{'class':'small'});
+      list.appendChild(el('div',{'class':'card'+(cd.active===false?' muted':'')},[
+        el('div',{'class':'row',style:'justify-content:space-between'},[ el('span',{'class':'num',style:'font-size:18px',text:cd.no}), el('span',{'class':'st '+(cd.active===false?'bad':'ok'),text:cd.active===false?SL('बंद','Blocked'):SL('चालू','Active')}) ]),
+        el('div',{'class':'kv'},[
+          el('span',{text:SL('ग्राहक','Customer')}), el('span',null,[ el('b',{text:cd.name||''}), cd.phone ? ' · ' : '', cd.phone ? el('a',{href:'tel:'+digits(cd.phone),text:cd.phone}) : null ]),
+          cd.email ? el('span',{text:'Email'}) : null, cd.email ? el('span',{text:cd.email}) : null,
+          el('span',{text:SL('कार्ड की तारीख','Issued')}), el('span',{text:new Date(cd.issued).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+' → '+new Date(sp.till).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}),
+          el('span',{text:SL('1 साल की ख़रीदारी','1-year shopping')}), el('span',null,[ el('b',{'class':'num',text:rupees(sp.sum)}), ' · '+sp.n+SL(' ऑर्डर',' orders') ]) ]),
+        el('div',{'class':'row'},[ el('span',{'class':'small muted',text:SL('छूट %','Discount %')}), pct,
+          el('button',{'class':'btn b-sm b-gold',type:'button',text:L('सेव करें'),onclick:function(){ db.collection('cards').doc(cd.no).set({pct:Math.max(0, Math.min(50, parseInt(pct.value,10)||0))}, {merge:true}).then(function(){ msg.textContent = '✓'; }, function(e){ msg.textContent = e.message; }); }}),
+          el('button',{'class':'btn b-sm '+(cd.active===false?'b-ok':'b-bad'),type:'button',text:cd.active===false?SL('चालू करें','Unblock'):SL('बंद करें','Block'),onclick:function(){ db.collection('cards').doc(cd.no).set({active:cd.active===false}, {merge:true}); }}),
+          cd.phone ? el('a',{'class':'btn b-sm b-wa',target:'_blank',rel:'noopener',href:waTo(cd.phone, 'नमस्ते '+(cd.name||'')+' जी, डायमंड फैशन्स से। आपका डिस्काउंट कार्ड नंबर '+cd.no+' है।'),text:'WhatsApp'}) : null, msg ]) ]));
+    });
+  }
+  fill();
 }
 
 function tailorCard(r){
@@ -1269,9 +1340,10 @@ function drawSettings(main){
     el('div',{'class':'field'},[ el('label',{text:L('वापसी कितने दिन में')}), el('input',{id:'s-days',value:cfg.returnDays||3,inputmode:'numeric'}) ]),
     el('div',{'class':'field'},[ el('label',{text:SL('Instagram लिंक','Instagram link')}), el('input',{id:'s-ig',value:cfg.igUrl||'',placeholder:'https://www.instagram.com/…'}) ]),
     el('div',{'class':'field'},[ el('label',{text:SL('Facebook पेज लिंक','Facebook Page link')}), el('input',{id:'s-fb',value:cfg.fbUrl||'',placeholder:'https://www.facebook.com/…'}) ]),
+    el('div',{'class':'field'},[ el('label',{text:SL('YouTube चैनल लिंक (वेबसाइट पर ऊपर YouTube का लोगो दिखेगा)','YouTube channel link (shows the YouTube logo at the top of the website)')}), el('input',{id:'s-yt',value:cfg.ytUrl||'',placeholder:'https://www.youtube.com/@…'}) ]),
     el('label',{'class':'row',style:'margin-bottom:12px'},[ el('input',{type:'checkbox',id:'s-cod',checked:cfg.cod!==false?'checked':null}), L(' कैश ऑन डिलीवरी (COD) चालू') ]),
     el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){
-      var upd = {upi:document.getElementById('s-upi').value.trim(), waNumber:digits(document.getElementById('s-wa').value), returnDays:parseInt(document.getElementById('s-days').value,10)||3, cod:document.getElementById('s-cod').checked, igUrl:document.getElementById('s-ig').value.trim(), fbUrl:document.getElementById('s-fb').value.trim()};
+      var upd = {upi:document.getElementById('s-upi').value.trim(), waNumber:digits(document.getElementById('s-wa').value), returnDays:parseInt(document.getElementById('s-days').value,10)||3, cod:document.getElementById('s-cod').checked, igUrl:document.getElementById('s-ig').value.trim(), fbUrl:document.getElementById('s-fb').value.trim(), ytUrl:document.getElementById('s-yt').value.trim()};
       db.collection('config').doc('shop').set(upd, {merge:true}).then(function(){ m.textContent=L('सेव हो गया ✓'); m.className='msg ok'; }, function(e){ m.textContent=L('नहीं हुआ: ')+e.message; m.className='msg err'; });
     }}), m ]);
   main.appendChild(f);
@@ -1396,7 +1468,7 @@ function socialWatch(){
     if (!job) return;
     socialBusy[p.id] = true;
     socialQueue = socialQueue.then(function(){
-      return db.collection('products').doc(p.id).update(mark).then(function(){ return (job === 'new' && meta.video !== false && (p.photos||[]).length >= 3 && vidType()) ? makeAnyVideo(p, job).then(function(vd){ return postVideo(p, job, vd); }) : postProduct(p, job); })
+      return db.collection('products').doc(p.id).update(mark).then(function(){ return (job === 'new' && meta.video !== false && (p.photos||[]).length >= 3 && (vidType() || wcOk())) ? makeAnyVideo(p, job).then(function(vd){ return postVideo(p, job, vd); }) : postProduct(p, job); })
         .then(function(){ toast('📣 ' + p.name + SL(' Facebook/Instagram पर पोस्ट हो गया', ' posted to Facebook/Instagram'));
           if (job === 'new' && meta.osKey && meta.osAuto !== false){ var pr = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') : '';
             osSend('✨ ' + SL('नया माल: ','New arrival: ') + p.name, (pr ? pr + ' – ' : '') + SL('अभी देखें और ऑर्डर करें। घर पर डिलीवरी, COD।','See it now and order. Home delivery, COD.'), 'https://diamondfashions.in/#p-' + p.code)
@@ -1523,8 +1595,9 @@ function startMusic(ac, out, style, total){
   var scale = style === 'festive' ? [0,2,4,5,7,9,10,12,14,16] : [0,2,4,7,9,12,14,16]; // khamaj-like / major pentatonic
   var prog = [[0,4,7],[7,11,14],[9,12,16],[5,9,12]]; // I V vi IV
   var key = style === 'soft' ? 196 : 220, mel = 4, n = 0, next = t0, stopAt = t0 + total, timer;
+  var offline = typeof OfflineAudioContext !== 'undefined' && ac instanceof OfflineAudioContext, horizon = offline ? 1e9 : 1.5; // offline: schedule the whole track at once
   function schedule(){
-    while (next < ac.currentTime + 1.5 && next < stopAt){
+    while (next < ac.currentTime + horizon && next < stopAt){
       if (next < ac.currentTime - .05){ n++; next += step; continue; } // fell behind: skip instead of a burst
       var s = n % 16, bar = Math.floor(n / 16), t = next, ch = prog[bar % 4];
       if (style === 'festive'){
@@ -1550,7 +1623,7 @@ function startMusic(ac, out, style, total){
       n++; next += step;
     }
   }
-  schedule(); timer = setInterval(schedule, 100);
+  schedule(); if (!offline) timer = setInterval(schedule, 100);
   return function(){ clearInterval(timer); try { master.disconnect(); } catch(e){} };
 }
 /* ---------- voice-over: product details read in a ladies' voice ---------- */
@@ -1624,11 +1697,107 @@ function avStream(c, total){
     setTimeout(function(){ try { stop(); ac.close(); } catch(e){} }, (total + 3) * 1000); } catch(e){}
   return st;
 }
+/* ---------- proper MP4 file (WebCodecs + mp4-muxer) ----------
+   The phone's MediaRecorder writes a "fragmented" MP4 whose header says the video is only a few seconds long,
+   so the gallery / WhatsApp cut it to ~3 s. Here every frame is encoded and packed into a normal MP4 with the
+   real length in its header. It is also faster than real time. Old recorder stays as a fallback. */
+var MUXER_URL = 'mp4-muxer.min.js' /* mp4-muxer 5.2.2, MIT licence, Vanilagy */, muxerP = null;
+function loadMuxer(){
+  if (window.Mp4Muxer) return Promise.resolve(window.Mp4Muxer);
+  if (!muxerP) muxerP = new Promise(function(res, rej){ var s = document.createElement('script'); s.src = MUXER_URL; s.onload = function(){ window.Mp4Muxer ? res(window.Mp4Muxer) : rej(new Error('muxer')); }; s.onerror = function(){ muxerP = null; rej(new Error('muxer')); }; document.head.appendChild(s); });
+  return muxerP;
+}
+function wcOk(){ return !!(window.VideoEncoder && window.VideoFrame && window.OfflineAudioContext); }
+function pickVideoCfg(W, H, br){
+  var list = ['avc1.640028','avc1.4d0028','avc1.42e028','avc1.42001f'].map(function(c){ return {codec:c, width:W, height:H, bitrate:br, framerate:30, avc:{format:'avc'}}; });
+  var i = 0;
+  function next(){ if (i >= list.length) return Promise.resolve(null); var c = list[i++];
+    return VideoEncoder.isConfigSupported(c).then(function(r){ return r && r.supported ? c : next(); }, next); }
+  return next();
+}
+function pickAudioCfg(){
+  if (!window.AudioEncoder || !window.AudioData) return Promise.resolve(null);
+  var list = [{codec:'mp4a.40.2', sampleRate:48000, numberOfChannels:2, bitrate:128000}, {codec:'opus', sampleRate:48000, numberOfChannels:2, bitrate:128000}], i = 0;
+  function next(){ if (i >= list.length) return Promise.resolve(null); var c = list[i++];
+    return AudioEncoder.isConfigSupported(c).then(function(r){ return r && r.supported ? c : next(); }, next); }
+  return next();
+}
+/* music + voice-over rendered offline into one AudioBuffer (same mix as avStream) */
+function renderAudio(total){
+  var SR = 48000, oc = new OfflineAudioContext(2, Math.ceil(SR * (total + .3)), SR);
+  var bus = oc.createGain(); bus.connect(oc.destination);
+  if (VMUSIC && VMUSIC !== 'none') startMusic(oc, bus, VMUSIC, total);
+  if (VVOICE && VVOICE.buf){ var vs = oc.createBufferSource(), vg = oc.createGain(), at = 1.2; vs.buffer = VVOICE.buf; vg.gain.value = 1.25;
+    vs.connect(vg); vg.connect(oc.destination); vs.start(at);
+    bus.gain.setValueAtTime(1, at - .4); bus.gain.linearRampToValueAtTime(.22, at); bus.gain.setValueAtTime(.22, at + VVOICE.buf.duration); bus.gain.linearRampToValueAtTime(1, at + VVOICE.buf.duration + .6); }
+  return oc.startRendering();
+}
+function encodeMp4(c, total, frame, onProgress, br){
+  var W = c.width, H = c.height, FPS = 30, n = Math.max(1, Math.round(total * FPS));
+  return Promise.all([loadMuxer(), pickVideoCfg(W, H, br), pickAudioCfg()]).then(function(r){
+    var M = r[0], vcfg = r[1], acfg = r[2];
+    if (!vcfg) throw new Error('no-h264');
+    return renderAudio(total).then(function(abuf){
+      var muxer = new M.Muxer({target:new M.ArrayBufferTarget(), video:{codec:'avc', width:W, height:H, frameRate:FPS},
+        audio: acfg ? {codec: acfg.codec === 'opus' ? 'opus' : 'aac', numberOfChannels:2, sampleRate:48000} : undefined, fastStart:'in-memory', firstTimestampBehavior:'offset'});
+      var err = null;
+      var ve = new VideoEncoder({output:function(ch, m){ muxer.addVideoChunk(ch, m); }, error:function(e){ err = e; }});
+      ve.configure(vcfg);
+      var ae = null;
+      if (acfg){
+        ae = new AudioEncoder({output:function(ch, m){ muxer.addAudioChunk(ch, m); }, error:function(e){ err = e; }});
+        ae.configure(acfg);
+        var SR = 48000, Lc = abuf.getChannelData(0), Rc = abuf.numberOfChannels > 1 ? abuf.getChannelData(1) : Lc, len = Math.min(abuf.length, Math.round(total * SR)), stp = 4800;
+        for (var off = 0; off < len; off += stp){ var m = Math.min(stp, len - off), d = new Float32Array(m * 2); d.set(Lc.subarray(off, off + m), 0); d.set(Rc.subarray(off, off + m), m);
+          var ad = new AudioData({format:'f32-planar', sampleRate:SR, numberOfFrames:m, numberOfChannels:2, timestamp:Math.round(off / SR * 1e6), data:d}); ae.encode(ad); ad.close(); }
+      }
+      var i = 0;
+      return new Promise(function(resolve, reject){
+        function step(){
+          if (err){ reject(err); return; }
+          var lim = Math.min(n, i + 6);
+          while (i < lim && ve.encodeQueueSize < 6){
+            frame(Math.min(total - .01, i / FPS));
+            var vf = new VideoFrame(c, {timestamp:Math.round(i * 1e6 / FPS), duration:Math.round(1e6 / FPS)});
+            ve.encode(vf, {keyFrame: i % 60 === 0}); vf.close(); i++;
+          }
+          if (onProgress) onProgress(Math.min(99, Math.round(i / n * 100)));
+          if (i < n){ setTimeout(step, 0); return; }
+          Promise.all([ve.flush(), ae ? ae.flush() : null]).then(function(){
+            if (err) throw err;
+            muxer.finalize(); try { ve.close(); if (ae) ae.close(); } catch(e){}
+            resolve({blob:new Blob([muxer.target.buffer], {type:'video/mp4'}), type:'video/mp4;codecs=' + vcfg.codec + (acfg ? ',' + acfg.codec : ''), seconds:total});
+          }).catch(reject);
+        }
+        step();
+      });
+    });
+  });
+}
+/* old way: play the canvas in real time and record it (used only when the browser has no WebCodecs) */
+function recordLive(c, total, frame, onProgress, br, type){
+  return new Promise(function(resolve, reject){
+      var stream = avStream(c, total), chunks = [], rec;
+      try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:br}); } catch(e){ reject(e); return; }
+      rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
+      frame(0); rec.start();
+      var t0 = performance.now(), timer = setInterval(function(){
+        var t = (performance.now() - t0) / 1000;
+        if (t >= total){ clearInterval(timer); frame(total - .01); setTimeout(function(){ rec.stop(); }, 150); return; }
+        frame(t); if (onProgress) onProgress(Math.min(99, Math.round(t / total * 100)));
+      }, 1000/30);
+  });
+}
+function recordCanvas(c, total, frame, onProgress, br, type){
+  if (!wcOk()) return recordLive(c, total, frame, onProgress, br, type);
+  return encodeMp4(c, total, frame, onProgress, br).catch(function(e){ try { console.warn('MP4 encoder failed, using recorder', e); } catch(x){} return recordLive(c, total, frame, onProgress, br, type); });
+}
 function canReel(t){ return /avc1/.test(t || vidType()); } // Instagram needs H.264 MP4
 /* 720x1280 vertical slideshow: intro, each photo with slow zoom + crossfade, end card. Plays in real time while it records. */
 function makeVideo(p, kind, onProgress){
   var type = vidType();
-  if (!type) return Promise.reject(new Error(SL('यह ब्राउज़र वीडियो नहीं बना सकता। Chrome में Admin खोलें।','This browser cannot make videos. Open Admin in Chrome.')));
+  if (!type && !wcOk()) return Promise.reject(new Error(SL('यह ब्राउज़र वीडियो नहीं बना सकता। Chrome में Admin खोलें।','This browser cannot make videos. Open Admin in Chrome.')));
   return Promise.all((p.photos||[]).slice(0, 10).map(loadImg)).then(function(imgs){
     imgs = imgs.filter(Boolean);
     if (!imgs.length) throw new Error(SL('फ़ोटो नहीं है','No photos'));
@@ -1694,18 +1863,7 @@ function makeVideo(p, kind, onProgress){
       x.fillStyle = '#F2EEE6'; x.font = '30px Arial, sans-serif'; x.fillText('WhatsApp ' + (cfg.display || '+91 88741 29818'), W/2, 1050);
       x.textAlign = 'left'; brand(1160, 52); x.globalAlpha = 1;
     }
-    return new Promise(function(resolve, reject){
-      var stream = avStream(c, total), chunks = [], rec;
-      try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:3500000}); } catch(e){ reject(e); return; }
-      rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
-      rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
-      frame(0); rec.start(500);
-      var t0 = performance.now(), timer = setInterval(function(){
-        var t = (performance.now() - t0) / 1000;
-        if (t >= total){ clearInterval(timer); frame(total - .01); setTimeout(function(){ rec.stop(); }, 150); return; }
-        frame(t); if (onProgress) onProgress(Math.min(99, Math.round(t / total * 100)));
-      }, 1000/30);
-    });
+    return recordCanvas(c, total, frame, onProgress, 3500000, type);
   });
 }
 function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
@@ -1776,7 +1934,7 @@ function postVideo(p, kind, vid){
 /* ---------- "camera style" video: photos filmed like a handheld product video ---------- */
 function makeCameraVideo(p, kind, len, onProgress){
   var type = vidType();
-  if (!type) return Promise.reject(new Error(SL('यह ब्राउज़र वीडियो नहीं बना सकता। Chrome में Admin खोलें।','This browser cannot make videos. Open Admin in Chrome.')));
+  if (!type && !wcOk()) return Promise.reject(new Error(SL('यह ब्राउज़र वीडियो नहीं बना सकता। Chrome में Admin खोलें।','This browser cannot make videos. Open Admin in Chrome.')));
   return Promise.all((p.photos||[]).slice(0, 12).map(loadImg)).then(function(imgs){
     imgs = imgs.filter(Boolean); if (!imgs.length) throw new Error(SL('फ़ोटो नहीं है','No photos'));
     var W = 720, H = 1280, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
@@ -1863,18 +2021,7 @@ function makeCameraVideo(p, kind, len, onProgress){
       var la = 0; [[.6, 6], [body*.5 - 2, body*.5 + 3], [body - 7, body - .4]].forEach(function(r){ if (t > r[0] && t < r[1]) la = Math.max(la, Math.min(1, (t - r[0])/.5, (r[1] - t)/.5)); });
       lower(la);
     }
-    return new Promise(function(resolve, reject){
-      var stream = avStream(c, total), chunks = [], rec;
-      try { rec = new MediaRecorder(stream, {mimeType:type, videoBitsPerSecond:4000000}); } catch(e){ reject(e); return; }
-      rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
-      rec.onstop = function(){ resolve({blob:new Blob(chunks, {type:type.split(';')[0]}), type:type, seconds:total}); };
-      frame(0); rec.start(500);
-      var t0 = performance.now(), timer = setInterval(function(){
-        var t = (performance.now() - t0) / 1000;
-        if (t >= total){ clearInterval(timer); frame(total - .01); setTimeout(function(){ rec.stop(); }, 150); return; }
-        frame(t); if (onProgress) onProgress(Math.min(99, Math.round(t / total * 100)));
-      }, 1000/30);
-    });
+    return recordCanvas(c, total, frame, onProgress, 4000000, type);
   });
 }
 function makeAnyVideo(p, kind, style, onProgress, music, voice){
@@ -2025,6 +2172,7 @@ function listen(){
   unsubs.push(db.collection('staff').onSnapshot(function(s){ staffList = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name||'').localeCompare(String(b.name||'')); }); if (tab === 'staff') redraw(); }, function(){}));
   unsubs.push(db.collection('riders').onSnapshot(function(s){ riders = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name||a._id).localeCompare(String(b.name||b._id)); }); if (tab === 'riders') redraw(); }, function(){}));
   unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ cfg = s.exists ? s.data() : {}; if (tab === 'banners') redraw(); }));
+  unsubs.push(db.collection('cards').onSnapshot(function(s){ cards = s.docs.map(function(d){ return d.data(); }); if (tab === 'cards') redraw(); }, function(){}));
   unsubs.push(db.collection('reviews').orderBy('created','desc').limit(500).onSnapshot(function(s){ reviews = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'reviews') redraw(); }, function(){}));
   unsubs.push(db.collection('config').onSnapshot(function(s){ banners = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); if (tab === 'banners') redraw(); }));
 }

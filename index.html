@@ -848,6 +848,14 @@ var S = {
   ed_max:'हर प्रोडक्ट में 8 फोटो तक जोड़ सकते हैं।', storage:'फोटो की जगह इस्तेमाल: ', storage_of:' / 15 MB', storage_full:'फोटो की जगह लगभग भर गई है। नई फोटो से पहले कुछ फोटो हटाएं।'
  }
 };
+Object.assign(S.en, {ol_retpick:'Return picked up – on the way to the shop', lg_title:'Please login to place your order', lg_sub:'Login with Google or email. Your name, mobile number and address are saved, so next time ordering is quicker.', lg_btn:'Login / Create account', lg_mob_t:'Add your mobile number', lg_mob_s:'A 10-digit mobile number is needed so the shop and the delivery boy can call you.', lg_mob_btn:'Add mobile number', lg_wait:'Login is loading, please try again in a moment…', lg_close:'Not now', lg_ret_t:'Please login to send a return', lg_ret_s:'Login first, so the shop can see your order and send the refund to your bank account.',
+  up_title:'Pay {f} now by UPI', up_sub:'Pay with Google Pay, PhonePe, Paytm or any UPI app, then write the 12-digit UPI Ref No. / UTR or add the payment screenshot. The shop checks it and confirms your order.', up_err:'Please pay first, then write the 12-digit UPI Ref No. / UTR or add the payment screenshot.', up_sent:'Payment details sent ✓ The shop will check the payment and confirm your order.', up_utr:'UTR', follow_yt:'YouTube',
+  ret_send_admin:'Send return request', ret_wa_alt:'or send on WhatsApp',
+  bk_title:'Bank details for your refund', bk_sub:'The refund for your return is sent to this bank account. It is saved in your account and only the shop owner can see it.', bk_name:'Account holder name', bk_acc:'Bank account number', bk_acc2:'Write the account number again', bk_ifsc:'IFSC code (11 letters, e.g. SBIN0001234)', bk_bank:'Bank name', bk_upi:'UPI ID (optional)', bk_save:'Save and send return', bk_err:'Please fill the name, the same account number twice and a correct 11-letter IFSC code.', bk_saved:'Bank details saved ✓', bk_look:'Finding the bank…'});
+Object.assign(S.hi, {ol_retpick:'वापसी का सामान उठा लिया – दुकान जा रहा है', lg_title:'ऑर्डर करने के लिए लॉग-इन करें', lg_sub:'Google या ईमेल से लॉग-इन करें। आपका नाम, मोबाइल और पता सेव रहेगा, अगली बार ऑर्डर जल्दी होगा।', lg_btn:'लॉग-इन / नया खाता', lg_mob_t:'अपना मोबाइल नंबर जोड़ें', lg_mob_s:'10 अंक का मोबाइल नंबर ज़रूरी है, ताकि दुकान और डिलीवरी बॉय आपको कॉल कर सकें।', lg_mob_btn:'मोबाइल नंबर जोड़ें', lg_wait:'लॉग-इन लोड हो रहा है, थोड़ी देर में फिर दबाएँ…', lg_close:'अभी नहीं', lg_ret_t:'वापसी के लिए लॉग-इन करें', lg_ret_s:'पहले लॉग-इन करें, ताकि दुकान आपका ऑर्डर देख सके और पैसे आपके बैंक खाते में भेज सके।',
+  up_title:'अभी UPI से {f} भरें', up_sub:'Google Pay, PhonePe, Paytm या किसी भी UPI ऐप से पेमेंट करें, फिर 12 अंकों का UPI Ref No. / UTR लिखें या पेमेंट का स्क्रीनशॉट लगाएँ। दुकान पेमेंट देखकर ऑर्डर पक्का करेगी।', up_err:'पहले पेमेंट करें, फिर 12 अंकों का UPI Ref No. / UTR लिखें या स्क्रीनशॉट लगाएँ।', up_sent:'पेमेंट की जानकारी भेज दी गई ✓ दुकान पेमेंट देखकर ऑर्डर पक्का करेगी।', up_utr:'UTR', follow_yt:'YouTube',
+  ret_send_admin:'वापसी की रिक्वेस्ट भेजें', ret_wa_alt:'या WhatsApp पर भेजें',
+  bk_title:'पैसे वापसी के लिए बैंक की जानकारी', bk_sub:'वापसी के पैसे इसी बैंक खाते में भेजे जाएँगे। यह आपके खाते में सेव रहेगी और सिर्फ़ दुकान मालिक देख सकते हैं।', bk_name:'खाताधारक का नाम', bk_acc:'बैंक खाता नंबर', bk_acc2:'खाता नंबर दोबारा लिखें', bk_ifsc:'IFSC कोड (11 अक्षर, जैसे SBIN0001234)', bk_bank:'बैंक का नाम', bk_upi:'UPI ID (चाहें तो)', bk_save:'सेव करें और वापसी भेजें', bk_err:'नाम, दोनों बार एक जैसा खाता नंबर और सही 11 अक्षर का IFSC कोड भरें।', bk_saved:'बैंक की जानकारी सेव हो गई ✓', bk_look:'बैंक ढूँढ रहे हैं…'});
 var lang = 'en';
 try { var sl = localStorage.getItem('df-lang'); if (sl === 'hi' || sl === 'en') lang = sl; } catch(e) {}
 function T(){ return S[lang]; }
@@ -952,6 +960,7 @@ function renderFrame(){
   '<a class="pill soc bell" id="tp-bell" href="#" title="'+t.bell_btn+'" aria-label="'+t.bell_btn+'" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span>'+t.bell_btn+'</span></a>' +
   '<a class="pill soc fb" id="tp-fb" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V8.8c0-.5.3-.8.8-.8z"/></svg><span>Facebook</span></a>' +
   '<a class="pill soc ig" id="tp-ig" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>Instagram</span></a>' +
+  '<a class="pill soc yt" id="tp-yt" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .6 12a31 31 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-4.8 31 31 0 0 0-.4-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg><span>YouTube</span></a>' +
   '<a class="pill soc wa" id="top-wa" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 1.8 1.9 3.6 3.9 4.3l1.3-1.2 1.8.9-.4 1.6c-3.4.4-7.1-3.2-6.7-6.6L10.5 8l.9 1.8z" fill="currentColor" stroke="none"/></svg><span>WhatsApp</span></a>' +
   '<button class="pill" id="owner-btn" type="button"'+(canEdit?'':' hidden')+'>'+t.adm_btn+'</button></div>' +
  '</div></header>' +
@@ -1010,8 +1019,8 @@ function renderFrame(){
    '<div class="field"><label for="r-want">'+t.ret_want+'</label><select id="r-want">'+opts(t.ret_want_opts)+'</select></div></div>' +
    '<div class="field"><label for="r-note">'+t.ret_note+'</label><textarea id="r-note"></textarea></div>' +
    '<p class="error" id="r-err" role="alert"></p>' +
-   (formUrlFor('') ? '<button type="button" class="btn btn-gold" id="r-direct">'+t.rq_send+'</button><p class="hint" id="r-msg" aria-live="polite" style="margin:0;font-weight:600"></p>' : '') +
-   '<a class="btn '+(formUrlFor('')?'btn-line':'btn-wa')+'" id="r-send" target="_blank" rel="noopener">'+t.ret_send+'</a>' +
+   ((formUrlFor('') || acctOn()) ? '<button type="button" class="btn btn-gold" id="r-direct">'+t.ret_send_admin+'</button><p class="hint" id="r-msg" aria-live="polite" style="margin:0;font-weight:600"></p>' : '') +
+   ((formUrlFor('') || acctOn()) ? '<a class="linkbtn r-wa-alt" id="r-send" target="_blank" rel="noopener">'+t.ret_wa_alt+'</a>' : '<a class="btn btn-wa" id="r-send" target="_blank" rel="noopener">'+t.ret_send+'</a>') +
   '</form></div>' + pgLink('#track', ICO_U.track, t.pg_to_track) +
  '</div></section>' +
  '<section class="block" id="track"><div class="wrap">' + pgBar(t, t.ol_title) +
@@ -1046,6 +1055,7 @@ function renderFrame(){
  '<section class="follow" id="follow"><div class="wrap"><div><h2>'+t.follow_h+'</h2><p>'+t.follow_sub+'</p></div><div class="follow-btns">' +
    '<a id="fl-ig" class="fl ig" target="_blank" rel="noopener" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>'+t.follow_ig+'</span></a>' +
    '<a id="fl-fb" class="fl fb" target="_blank" rel="noopener" href="#" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V8.8c0-.5.3-.8.8-.8z"/></svg><span>'+t.follow_fb+'</span></a>' +
+   '<a id="fl-yt" class="fl yt" target="_blank" rel="noopener" href="#" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .6 12a31 31 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-4.8 31 31 0 0 0-.4-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg><span>'+(t.follow_yt||'YouTube')+'</span></a>' +
    '<a id="fl-bell" class="fl bell" href="#" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span>'+t.bell_btn+'</span></a>' +
    '<a id="fl-wa" class="fl wa" target="_blank" rel="noopener" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 1.8 1.9 3.6 3.9 4.3l1.3-1.2 1.8.9-.4 1.6c-3.4.4-7.1-3.2-6.7-6.6L10.5 8l.9 1.8z" fill="currentColor" stroke="none"/></svg><span>'+t.follow_wa+'</span></a>' +
  '</div></div></section>' +
@@ -1103,9 +1113,14 @@ function renderFrame(){
     err.textContent='';
     var kind = /exchange|बदल/i.test(optText('r-want')||'') ? 'Exchange' : 'Return';
     updateReturnLink();
+    if (needLogin('return', function(){ var b = document.getElementById('r-direct'); if (b) b.click(); })) return;
     var rid = val('r-order').toUpperCase().replace(/\s+/g,'');
-    sendRequest(rd, msg, formUrlFor(rid, kind, {phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')}), null, document.getElementById('r-send'),
-      {orderId:rid, kind:kind.toLowerCase(), phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')});
+    var send = function(bank){
+      sendRequest(rd, msg, formUrlFor(rid, kind, {phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note')}), null, document.getElementById('r-send'),
+        {orderId:rid, kind:kind.toLowerCase(), phone:val('r-phone'), item:val('r-item'), reason:optText('r-reason'), details:val('r-note'), bank:bank || null});
+    };
+    /* a refund (money back) needs the customer's bank account: popup is compulsory, saved in the account for next time. An exchange does not. */
+    if (kind === 'Return' && acctOn() && window.DF && DF.askBank) DF.askBank(rid, send); else send(null);
   });
   document.getElementById('order-form').addEventListener('submit', function(e){ e.preventDefault(); placeOrder(); });
   document.getElementById('owner-btn').addEventListener('click', function(){
@@ -1947,9 +1962,33 @@ function newOrderId(){
   var d = new Date(), p = function(n){ return (n<10?'0':'')+n; };
   return 'DF-' + String(d.getFullYear()).slice(2) + p(d.getMonth()+1) + p(d.getDate()) + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
 }
+/* An order (and a return) needs a logged-in customer with a mobile number. If the login system cannot load at all, guest checkout keeps working. */
+function acctOn(){ return !!(SHOP.firebase && SHOP.firebase.apiKey) && !/claude/i.test(location.hostname) && !(window.DF && DF.acctFailed); }
+function needLogin(kind, then){
+  if (!acctOn()) return false;
+  var a = (window.DF && DF.acctInfo) ? DF.acctInfo() : null;
+  if (a && a.user && a.phone) return false;
+  var t = T(), old = document.getElementById('lg-scrim'); if (old) old.remove();
+  var sc = el('div',{'class':'scrim',id:'lg-scrim',onclick:function(e){ if (e.target === sc) sc.remove(); }});
+  var close = function(){ sc.remove(); };
+  var title = a && a.user ? t.lg_mob_t : (kind === 'return' ? t.lg_ret_t : t.lg_title), sub = a && a.user ? t.lg_mob_s : (kind === 'return' ? t.lg_ret_s : t.lg_sub);
+  var go = el('button',{'class':'btn btn-gold',type:'button',text: a && a.user ? t.lg_mob_btn : t.lg_btn,onclick:function(){
+    var b = (window.DF && DF.acctInfo) ? DF.acctInfo() : null;
+    if (!b || !DF.openAcct){ msg.textContent = t.lg_wait; return; }
+    close(); if (window.DF) DF.afterLogin = then || null; DF.openAcct(b.user ? 'profile' : 'login'); }});
+  var msg = el('p',{'class':'hint','aria-live':'polite',text: a ? '' : t.lg_wait});
+  sc.appendChild(el('div',{'class':'osum lg-box',role:'dialog','aria-modal':'true','aria-labelledby':'lg-h'},[
+    el('button',{'class':'os-x',type:'button','aria-label':t.lg_close,text:'×',onclick:close}),
+    el('div',{'class':'lg-ic','aria-hidden':'true',html:'<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>'}),
+    el('h2',{id:'lg-h',text:title}), el('p',{'class':'os-sub',text:sub}), msg,
+    el('div',{'class':'os-act'},[ el('button',{'class':'btn btn-line',type:'button',text:t.lg_close,onclick:close}), go ]) ]));
+  document.body.appendChild(sc); go.focus();
+  return true;
+}
 function placeOrder(){
   var t = T(), err = document.getElementById('o-err');
   if (!cart.length){ err.textContent = t.err_cart; return; }
+  if (needLogin('order', placeOrder)) return;
   if (!val('o-name') || val('o-phone').replace(/\D/g,'').length < 10){ err.textContent = t.err_contact; document.getElementById(val('o-name')?'o-phone':'o-name').focus(); return; }
   var home = document.getElementById('o-how').value === '1';
   if (home && (!val('o-addr') || !/^\d{6}$/.test(val('o-pin')))){ err.textContent = t.err_addr; document.getElementById(val('o-addr')?'o-pin':'o-addr').focus(); return; }
@@ -1982,9 +2021,12 @@ function showSummary(order, dl){
   var home = /deliver|घर/i.test(order.how||'') || (dl != null);
   var addr = [order.addr, order.pin ? 'PIN '+order.pin : '', order.land].filter(Boolean).join(', ');
   /* COD + paid home delivery: the delivery charge must be paid by UPI now */
-  var needFee = order.pay === 'cod' && order.delivery > 0 && SHOP.upi, feeBox = null, utrI = null, feeErr = null, feeShot = '';
+  /* UPI order with a known total: the customer pays now and gives the UTR or a screenshot, like the delivery charge */
+  var needPay = order.pay === 'upi' && !!SHOP.upi && order.allPriced && order.total > 0;
+  var needFee = (order.pay === 'cod' && order.delivery > 0 && SHOP.upi) || needPay, feeBox = null, utrI = null, feeErr = null, feeShot = '';
   if (needFee){
-    var f = rupees(order.delivery), furi = 'upi://pay?pa='+encodeURIComponent(SHOP.upi)+'&pn='+encodeURIComponent('Diamond Fashions')+'&am='+(+order.delivery).toFixed(2)+'&cu=INR&tn='+encodeURIComponent(order.id+' delivery');
+    var payAmt = needPay ? order.total : order.delivery;
+    var f = rupees(payAmt), furi = 'upi://pay?pa='+encodeURIComponent(SHOP.upi)+'&pn='+encodeURIComponent('Diamond Fashions')+'&am='+(+payAmt).toFixed(2)+'&cu=INR&tn='+encodeURIComponent(order.id+(needPay?'':' delivery'));
     var fqr = el('div',{'class':'qr os-qr',role:'img','aria-label':t.fp_scan});
     var shotI = el('input',{type:'file',accept:'image/*',style:'position:absolute;inset:0;opacity:0;cursor:pointer','aria-label':t.fp_shot}), shotRow = el('div',{'class':'os-shot-row'});
     var drawShot = function(){ shotRow.innerHTML = '';
@@ -1998,7 +2040,7 @@ function showSummary(order, dl){
     utrI.addEventListener('input', function(){ utrI.value = utrI.value.replace(/\D/g,'').slice(0,12); feeErr.textContent = ''; });
     feeErr = el('p',{'class':'error','role':'alert'});
     feeBox = el('div',{'class':'os-fee'},[
-      el('b',{text:t.fp_title.replace('{f}', f)}), el('p',{text:t.fp_sub}), el('p',{'class':'os-nr',text:t.fee_nr}),
+      el('b',{text:(needPay ? t.up_title : t.fp_title).replace('{f}', f)}), el('p',{text:needPay ? t.up_sub : t.fp_sub}), needPay ? null : el('p',{'class':'os-nr',text:t.fee_nr}),
       el('a',{'class':'btn btn-gold',href:furi,text:t.fp_open.replace('{f}', f)}),
       el('div',{'class':'qrwrap'},[ fqr, el('small',{text:t.fp_scan+' · '+SHOP.upi}) ]),
       el('div',{'class':'field'},[ el('label',{'for':'os-utr',text:t.fp_utr}), utrI, el('small',{'class':'hint',text:t.fp_utr_hint}) ]),
@@ -2006,7 +2048,9 @@ function showSummary(order, dl){
     setTimeout(function(){ try { if (window.QRCode) new QRCode(fqr, {text:furi, width:150, height:150, colorDark:'#0B1626', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.M}); } catch(e){} }, 0);
   }
   var ok = el('button',{'class':'btn btn-gold',type:'button',text:t.sum_ok,onclick:function(){
-    if (needFee){ if (!/^\d{12}$/.test(utrI.value) && !feeShot){ feeErr.textContent = t.fp_err; utrI.focus(); return; } order.feeUtr = /^\d{12}$/.test(utrI.value) ? utrI.value : ''; order.feeShot = feeShot; order.feePaid = order.delivery; }
+    if (needFee){ if (!/^\d{12}$/.test(utrI.value) && !feeShot){ feeErr.textContent = needPay ? t.up_err : t.fp_err; utrI.focus(); return; }
+      if (needPay){ order.payUtr = /^\d{12}$/.test(utrI.value) ? utrI.value : ''; order.payShot = feeShot; }
+      else { order.feeUtr = /^\d{12}$/.test(utrI.value) ? utrI.value : ''; order.feeShot = feeShot; order.feePaid = order.delivery; } }
     ok.disabled = true; close(); commitOrder(order); }});
   var box = el('div',{'class':'osum',role:'dialog','aria-modal':'true','aria-labelledby':'os-h'},[
     el('button',{'class':'os-x',type:'button','aria-label':t.sum_close,text:'×',onclick:close}),
@@ -2100,7 +2144,7 @@ function orderMessage(o){
   var t = T(), lines = [t.wa_order, '', t.wa_oid+': '+o.id, ''];
   o.items.forEach(function(i, n){ lines.push((n+1)+'. ['+(i.sku||'')+'] '+i.name+(i.size?' ('+t.wa_size+' '+i.size+')':'')+' × '+i.qty+(i.price?' = '+rupees(i.price*i.qty):'')); });
   if (o.total) lines.push('', t.wa_total+': '+rupees(o.total)+(o.allPriced?'':' + ?'));
-  lines.push('', t.wa_pay+': '+(o.pay==='upi'?t.wa_upi:t.wa_cod));
+  lines.push('', t.wa_pay+': '+(o.pay==='upi'?t.wa_upi:t.wa_cod)+(o.payUtr ? ' — '+t.fp_paid+' (UTR '+o.payUtr+')' : o.payShot ? ' — '+t.fp_paid+' ('+t.fp_shot_wa+')' : ''));
   lines.push('', t.wa_name+': '+o.name, t.wa_mobile+': '+o.phone, t.wa_how+': '+o.how);
   if (o.addr) lines.push(t.wa_addr+': '+o.addr);
   if (o.pin) lines.push(t.wa_pin+': '+o.pin);
@@ -2131,7 +2175,10 @@ function renderDone(){
     el('p',{'class':'hint',text:SHOP.display})
   ];
   var payBox;
-  if (o.pay === 'upi'){
+  if (o.pay === 'upi' && (o.payUtr || o.payShot)){
+    payBox = el('div',{'class':'panel paybox'},[ el('h3',{text:t.conf_pay_title}), el('div',{'class':'amt'},[ el('span',{text:t.conf_amt}), el('b',{'class':'num',text:rupees(o.total)}) ]),
+      el('p',{style:'font-weight:600;color:var(--deal)',text:t.up_sent}), o.payUtr ? el('p',{'class':'hint',text:t.up_utr+': '+o.payUtr}) : null, o.payShot ? el('img',{src:o.payShot,alt:'',style:'max-width:120px;border-radius:8px'}) : null ]);
+  } else if (o.pay === 'upi'){
     var amt = o.allPriced && o.total ? o.total : 0;
     var uri = 'upi://pay?pa='+encodeURIComponent(SHOP.upi)+'&pn='+encodeURIComponent('Diamond Fashions')+(amt?'&am='+amt.toFixed(2):'')+'&cu=INR&tn='+encodeURIComponent(o.id);
     var qr = el('div',{'class':'qr','aria-label':t.conf_scan,role:'img'});
@@ -2355,7 +2402,7 @@ function olDate(iso){ try { return new Date(iso).toLocaleDateString(lang==='hi'?
 function olStatus(o){
   var t = T(), r = TRACK[o.id], s = r ? r.s : 'waiting', at = (r && r.at) || {}, d = function(k){ return olDate(at[k] || o.created); };
   var map = {waiting:[t.ol_placed,'placed',d('new')], accepted:[t.ol_acc,'go',d('accepted')], packed:[t.ol_packed,'go',d('packed')], shipped:[t.ol_ship,'go',d('shipped')], pickup:[t.ol_pick,'go',d('pickup')], delivered:[t.ol_deliv,'ok',d('delivered')],
-    cancelled:[t.ol_can,'bad',''], rejected:[t.ol_rej,'bad',''], return_req:[t.ol_retreq,'go',''], return_ok:[t.ol_retok,'go',''], returned:[t.ol_returned,'ok',d('returned')], return_no:[t.ol_retno,'bad','']};
+    cancelled:[t.ol_can,'bad',''], rejected:[t.ol_rej,'bad',''], return_req:[t.ol_retreq,'go',''], return_ok:[t.ol_retok,'go',''], return_pick:[t.ol_retpick||'Return picked up','go',''], returned:[t.ol_returned,'ok',d('returned')], return_no:[t.ol_retno,'bad','']};
   var x = map[s] || [s,'go',''];
   return {text:x[0].replace('{d}', x[2]), cls:x[1]};
 }
@@ -2431,7 +2478,7 @@ window.DF = {
   setRatings: function(map){ DF.ratings = map || {}; if (adminMode) return; try { renderGrid(); } catch(e){} var pr = document.getElementById('pp-rating'); if (pr && openId){ pr.innerHTML = ''; var b = rateBadge(openId, true); if (b) pr.appendChild(b); } },
   setProducts: function(list){ if (!list || !list.length || adminMode) return; try { captureForms(); } catch(e){} if (cartHold.length){ cart = cart.concat(cartHold); cartHold = []; }
     products = list.filter(function(p){ return !p.hidden; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }).map(normalize); renderAll(); openFromHash(); },
-  setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place','igUrl','fbUrl','shopLat','shopLng','delKm','delFee','delStepKm','delStepFee','delMaxKm'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); try { updateFee(); } catch(e){} var hb = JSON.stringify(c.hideBnr||[]); if (hb !== JSON.stringify(SHOP.hideBnr||[])){ SHOP.hideBnr = c.hideBnr||[]; try { renderBanners(); } catch(e){} } try { renderSocial(); } catch(e){} },
+  setConfig: function(c){ if (!c) return; ['upi','cod','returnDays','waNumber','display','place','igUrl','fbUrl','ytUrl','shopLat','shopLng','delKm','delFee','delStepKm','delStepFee','delMaxKm'].forEach(function(k){ if (c[k] !== undefined && c[k] !== '') SHOP[k] = c[k]; }); try { updateFee(); } catch(e){} var hb = JSON.stringify(c.hideBnr||[]); if (hb !== JSON.stringify(SHOP.hideBnr||[])){ SHOP.hideBnr = c.hideBnr||[]; try { renderBanners(); } catch(e){} } try { renderSocial(); } catch(e){} },
   setTrack: function(map){ Object.keys(TRACK).forEach(function(k){ if (!map[k]) return; }); Object.keys(map).forEach(function(k){ TRACK[k] = map[k]; }); try { renderTrack(); } catch(e){} },
   rupees: rupees
 };
@@ -2489,7 +2536,7 @@ function trackActions(out, id, r, known){
   var canReturn = s === 'delivered' && daysGone <= SHOP.returnDays;
   if (trMode === 'cancel'){
     if (!canCancel){ box.appendChild(el('p',{'class':'error',text:D(t.can_late)})); }
-    else if (formUrlFor(id)){
+    else if (formUrlFor(id) || (window.DF && DF.saveRequest)){
       var hh = myOrders().filter(function(o){ return o.id === id; })[0] || {};
       var cw = el('select',{id:'can-why'}, t.can_opts.map(function(o){ return el('option',{text:o}); }));
       var cp = el('input',{id:'can-phone',inputmode:'tel',autocomplete:'tel',value:hh.phone||(window.DF&&DF.phoneHint)||''});
@@ -2778,6 +2825,9 @@ function renderSocial(){
   var tf = document.getElementById('tp-fb'), ti = document.getElementById('tp-ig');
   if (tf){ tf.hidden = !SHOP.fbUrl; if (SHOP.fbUrl) tf.href = SHOP.fbUrl; }
   if (ti){ ti.hidden = !SHOP.igUrl; if (SHOP.igUrl) ti.href = SHOP.igUrl; }
+  var ty = document.getElementById('tp-yt'), fy = document.getElementById('fl-yt');
+  if (ty){ ty.hidden = !SHOP.ytUrl; if (SHOP.ytUrl) ty.href = SHOP.ytUrl; }
+  if (fy){ fy.hidden = !SHOP.ytUrl; if (SHOP.ytUrl) fy.href = SHOP.ytUrl; }
   var ig = document.getElementById('fl-ig'), fb = document.getElementById('fl-fb'), wa = document.getElementById('fl-wa'); if (!ig) return;
   if (SHOP.igUrl){ ig.href = SHOP.igUrl; ig.hidden = false; } else ig.hidden = true;
   if (SHOP.fbUrl){ fb.href = SHOP.fbUrl; fb.hidden = false; } else fb.hidden = true;
@@ -2913,6 +2963,28 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
 .acct-kv span:nth-child(odd){color:var(--muted)}
 .acct-track .num{display:none}
 @media (max-width:560px){ .acct-modal{border-radius:0;height:100%;max-height:none;padding:16px max(16px, env(safe-area-inset-left,0px)) 28px max(16px, env(safe-area-inset-right,0px))} .acct-close{top:max(10px, env(safe-area-inset-top,0px))} }
+
+/* added: YouTube, login popup, discount card, return link */
+.pill.soc.yt,.fl.yt{background:#E52D27;color:#fff}
+.lg-box{max-width:420px;text-align:center}
+.lg-box .lg-ic{width:64px;height:64px;margin:4px auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gold-soft,#F3EAD6);color:var(--gold,#8C6C26)}
+.lg-box .os-act{justify-content:center}
+.r-wa-alt{display:inline-block;margin-top:8px;font-size:14px}
+.dcard{position:relative;border-radius:16px;padding:16px 16px 12px;background:linear-gradient(135deg,#0B1626 0%,#1B2C4C 60%,#0B1626 100%);color:#F2EEE6;box-shadow:0 8px 24px rgba(11,22,38,.25);overflow:hidden;max-width:380px}
+.dcard:after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;border:2px solid rgba(205,170,92,.35)}
+.dcard-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.dcard-brand{font-family:'Jost',sans-serif;letter-spacing:.2em;font-weight:600;font-size:16px;line-height:1.1}
+.dcard-brand small{display:block;font-size:9px;letter-spacing:.35em;color:#CDAA5C}
+.dcard-tag{font-size:12px;color:#CDAA5C;border:1px solid rgba(205,170,92,.6);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.dcard-name{margin-top:14px;font-size:17px;font-weight:600}
+.dcard-no{font-size:20px;letter-spacing:.12em;color:#CDAA5C;margin:2px 0 10px}
+.dcard-bcbox{background:#fff;border-radius:10px;padding:8px 10px;display:flex;justify-content:center}
+.dcard-bc{width:100%;max-width:300px;height:56px}
+.dcard-foot{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:12px;color:#D3CEC2}
+.dcard-pct{color:#7CE0A0;font-weight:700}
+.dcard.big{position:fixed;inset:auto 12px;top:50%;transform:translateY(-50%);z-index:1000;max-width:none;margin:0 auto}
+.dcard.big .dcard-bc{height:90px;max-width:none}
+.dcard-kv{margin:8px 0}
 </style>
 <script>
 /* Customer accounts: Google or email login (Firebase Auth), profile, saved addresses and order history (Firestore users/{uid}).
@@ -2932,9 +3004,10 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       name:'Full name', mobile:'Mobile number (10 digits)', line:'House no., street, village', city:'Town / city', pin:'PIN code', land:'Landmark (optional)',
       save:'Save', saved:'Saved.', err_prof:'Please fill name, 10-digit mobile, address and 6-digit PIN.',
       hello:'Hello', addrs:'My addresses', add_addr:'Add new address', def:'Default', use_def:'Make default', edit:'Edit', del:'Delete',
-      ph_add:'📷 Add your photo', ph_ch:'Change photo', ph_rm:'Remove', ph_saving:'Saving photo…', ph_ok:'Photo saved ✓', ml_title:'Home location on map', ml_hint:'Tap “Use my current location”, or move the map and tap on your house to put the pin there.', ml_gps:'📍 Use my current location', ml_search:'🔎 Search on map', ml_wait:'Finding your location…', ml_ok:'Pin set ✓', ml_rm:'Remove pin', ml_err:'Could not get your location. Turn on GPS, or tap your house on the map.', ml_den:'Location permission is off. Tap your house on the map instead.', ml_has:'📍 Location on map saved', orders:'My orders', no_orders:'No orders yet.', view:'View details', back:'← My orders', placed:'Placed on', pay_l:'Payment', deliv_l:'Delivery', addr_l:'Address', total_l:'Total', items_l:'Items', status_l:'Order status', add_cart:'Add to cart', added:'Added to cart ✓', buy_again:'Add all to cart (buy again)', go_cart:'Go to cart', my_cart:'My cart', p_upi:'UPI (online)', p_cod:'Cash on delivery', gone:'No longer available', size:'Size', qty:'Qty', st:{waiting:'Waiting for shop',accepted:'Accepted',packed:'Packed',shipped:'Shipped',pickup:'Ready for pickup',delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',return_req:'Return requested',return_ok:'Return approved',returned:'Returned',return_no:'Return not approved'}, track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
+      ph_add:'📷 Add your photo', ph_ch:'Change photo', ph_rm:'Remove', ph_saving:'Saving photo…', ph_ok:'Photo saved ✓', ml_title:'Home location on map', ml_hint:'Tap “Use my current location”, or move the map and tap on your house to put the pin there.', ml_gps:'📍 Use my current location', ml_search:'🔎 Search on map', ml_wait:'Finding your location…', ml_ok:'Pin set ✓', ml_rm:'Remove pin', ml_err:'Could not get your location. Turn on GPS, or tap your house on the map.', ml_den:'Location permission is off. Tap your house on the map instead.', ml_has:'📍 Location on map saved', orders:'My orders', no_orders:'No orders yet.', view:'View details', back:'← My orders', placed:'Placed on', pay_l:'Payment', deliv_l:'Delivery', addr_l:'Address', total_l:'Total', items_l:'Items', status_l:'Order status', add_cart:'Add to cart', added:'Added to cart ✓', buy_again:'Add all to cart (buy again)', go_cart:'Go to cart', my_cart:'My cart', p_upi:'UPI (online)', p_cod:'Cash on delivery', gone:'No longer available', size:'Size', qty:'Qty', st:{waiting:'Waiting for shop',accepted:'Accepted',packed:'Packed',shipped:'Shipped',pickup:'Ready for pickup',delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',return_req:'Return requested',return_ok:'Return approved',return_pick:'Return picked up',returned:'Returned',return_no:'Return not approved'}, track:'Track', logout:'Logout', edit_prof:'Edit name / mobile',
       pick:'Deliver to', other:'Another address (type below)', hint_login:'Login to save your address for next time.', welcome:'Logged in as ',
-      e_gen:'Something went wrong. Please try again.', e_cred:'Email or password is wrong.', e_used:'This email already has an account. Tap Login.', e_weak:'Password must be at least 6 letters.', e_mail:'Please write a correct email.', e_dom:'Login is not enabled for this website address yet.', e_net:'No internet. Please try again.' },
+      e_gen:'Something went wrong. Please try again.', e_cred:'Email or password is wrong.', e_used:'This email already has an account. Tap Login.', e_weak:'Password must be at least 6 letters.', e_mail:'Please write a correct email.', e_dom:'Login is not enabled for this website address yet.', e_net:'No internet. Please try again.',
+      card_h:'My discount card', card_sub:'Show this card (barcode) at the shop or quote the number. Card no.', card_since:'Issued on', card_spent:'Shopping since the card was issued', card_show:'Show card full screen', card_pct:'Discount', bank_h:'Refund bank account', bank_none:'No bank account saved yet. It is asked when you send a return.', bank_edit:'Change bank details' },
     hi:{ login:'लॉग-इन', account:'मेरा खाता', title:'लॉग-इन करें या खाता बनाएँ', sub:'एक बार पता सेव करें, अगली बार जल्दी ऑर्डर करें।',
       google:'Google से जारी रखें', or:'या ईमेल से', email:'ईमेल', pass:'पासवर्ड (कम से कम 6 अक्षर)', signin:'लॉग-इन', signup:'नया खाता बनाएँ', forgot:'पासवर्ड भूल गए?',
       sent_reset:'पासवर्ड बदलने का लिंक आपके ईमेल पर भेज दिया गया।', need_email:'पहले अपना ईमेल लिखें।',
@@ -2942,9 +3015,10 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       name:'पूरा नाम', mobile:'मोबाइल नंबर (10 अंक)', line:'मकान नं., गली, गांव', city:'कस्बा / शहर', pin:'पिन कोड', land:'लैंडमार्क (चाहें तो)',
       save:'सेव करें', saved:'सेव हो गया।', err_prof:'नाम, 10 अंक का मोबाइल, पता और 6 अंक का पिन भरें।',
       hello:'नमस्ते', addrs:'मेरे पते', add_addr:'नया पता जोड़ें', def:'मुख्य', use_def:'मुख्य बनाएँ', edit:'बदलें', del:'हटाएँ',
-      ph_add:'📷 अपनी फ़ोटो लगाएँ', ph_ch:'फ़ोटो बदलें', ph_rm:'हटाएँ', ph_saving:'फ़ोटो सेव हो रही है…', ph_ok:'फ़ोटो सेव हो गई ✓', ml_title:'मैप पर घर की लोकेशन', ml_hint:'“मेरी अभी की लोकेशन” दबाएँ, या मैप खिसकाकर अपने घर पर टैप करें — वहाँ पिन लग जाएगा।', ml_gps:'📍 मेरी अभी की लोकेशन', ml_search:'🔎 मैप पर खोजें', ml_wait:'लोकेशन ढूँढ रहे हैं…', ml_ok:'पिन लग गया ✓', ml_rm:'पिन हटाएँ', ml_err:'लोकेशन नहीं मिली। GPS चालू करें, या मैप पर अपने घर पर टैप करें।', ml_den:'लोकेशन की इजाज़त बंद है। मैप पर अपने घर पर टैप कर दें।', ml_has:'📍 मैप पर लोकेशन सेव है', orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', view:'पूरी जानकारी', back:'← मेरे ऑर्डर', placed:'ऑर्डर की तारीख', pay_l:'पेमेंट', deliv_l:'डिलीवरी', addr_l:'पता', total_l:'कुल', items_l:'सामान', status_l:'ऑर्डर का स्टेटस', add_cart:'कार्ट में डालें', added:'कार्ट में डाल दिया ✓', buy_again:'सब फिर से कार्ट में डालें', go_cart:'कार्ट देखें', my_cart:'मेरा कार्ट', p_upi:'UPI (ऑनलाइन)', p_cod:'कैश ऑन डिलीवरी', gone:'अब उपलब्ध नहीं', size:'साइज़', qty:'मात्रा', st:{waiting:'दुकान के जवाब का इंतज़ार',accepted:'मंज़ूर',packed:'पैक हो गया',shipped:'भेज दिया',pickup:'दुकान से ले जाएँ',delivered:'पहुँच गया',rejected:'रद्द (दुकान ने)',cancelled:'रद्द',return_req:'वापसी की रिक्वेस्ट',return_ok:'वापसी मंज़ूर',returned:'वापस हो गया',return_no:'वापसी मंज़ूर नहीं'}, track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
+      ph_add:'📷 अपनी फ़ोटो लगाएँ', ph_ch:'फ़ोटो बदलें', ph_rm:'हटाएँ', ph_saving:'फ़ोटो सेव हो रही है…', ph_ok:'फ़ोटो सेव हो गई ✓', ml_title:'मैप पर घर की लोकेशन', ml_hint:'“मेरी अभी की लोकेशन” दबाएँ, या मैप खिसकाकर अपने घर पर टैप करें — वहाँ पिन लग जाएगा।', ml_gps:'📍 मेरी अभी की लोकेशन', ml_search:'🔎 मैप पर खोजें', ml_wait:'लोकेशन ढूँढ रहे हैं…', ml_ok:'पिन लग गया ✓', ml_rm:'पिन हटाएँ', ml_err:'लोकेशन नहीं मिली। GPS चालू करें, या मैप पर अपने घर पर टैप करें।', ml_den:'लोकेशन की इजाज़त बंद है। मैप पर अपने घर पर टैप कर दें।', ml_has:'📍 मैप पर लोकेशन सेव है', orders:'मेरे ऑर्डर', no_orders:'अभी कोई ऑर्डर नहीं।', view:'पूरी जानकारी', back:'← मेरे ऑर्डर', placed:'ऑर्डर की तारीख', pay_l:'पेमेंट', deliv_l:'डिलीवरी', addr_l:'पता', total_l:'कुल', items_l:'सामान', status_l:'ऑर्डर का स्टेटस', add_cart:'कार्ट में डालें', added:'कार्ट में डाल दिया ✓', buy_again:'सब फिर से कार्ट में डालें', go_cart:'कार्ट देखें', my_cart:'मेरा कार्ट', p_upi:'UPI (ऑनलाइन)', p_cod:'कैश ऑन डिलीवरी', gone:'अब उपलब्ध नहीं', size:'साइज़', qty:'मात्रा', st:{waiting:'दुकान के जवाब का इंतज़ार',accepted:'मंज़ूर',packed:'पैक हो गया',shipped:'भेज दिया',pickup:'दुकान से ले जाएँ',delivered:'पहुँच गया',rejected:'रद्द (दुकान ने)',cancelled:'रद्द',return_req:'वापसी की रिक्वेस्ट',return_ok:'वापसी मंज़ूर',return_pick:'वापसी उठा ली',returned:'वापस हो गया',return_no:'वापसी मंज़ूर नहीं'}, track:'ट्रैक करें', logout:'लॉग-आउट', edit_prof:'नाम / मोबाइल बदलें',
       pick:'कहाँ भेजें', other:'दूसरा पता (नीचे लिखें)', hint_login:'लॉग-इन करें, अगली बार के लिए पता सेव हो जाएगा।', welcome:'लॉग-इन: ',
-      e_gen:'कुछ गड़बड़ हुई। फिर से कोशिश करें।', e_cred:'ईमेल या पासवर्ड गलत है।', e_used:'इस ईमेल का खाता पहले से है। लॉग-इन दबाएँ।', e_weak:'पासवर्ड कम से कम 6 अक्षर का हो।', e_mail:'सही ईमेल लिखें।', e_dom:'इस वेबसाइट पते पर लॉग-इन अभी चालू नहीं है।', e_net:'इंटरनेट नहीं है। फिर से कोशिश करें।' }
+      e_gen:'कुछ गड़बड़ हुई। फिर से कोशिश करें।', e_cred:'ईमेल या पासवर्ड गलत है।', e_used:'इस ईमेल का खाता पहले से है। लॉग-इन दबाएँ।', e_weak:'पासवर्ड कम से कम 6 अक्षर का हो।', e_mail:'सही ईमेल लिखें।', e_dom:'इस वेबसाइट पते पर लॉग-इन अभी चालू नहीं है।', e_net:'इंटरनेट नहीं है। फिर से कोशिश करें।',
+      card_h:'मेरा डिस्काउंट कार्ड', card_sub:'दुकान पर यह कार्ड (बारकोड) दिखाएँ या नंबर बताएँ। कार्ड नं.', card_since:'जारी होने की तारीख', card_spent:'कार्ड मिलने के बाद की खरीदारी', card_show:'कार्ड बड़ा करके दिखाएँ', card_pct:'छूट', bank_h:'पैसे वापसी का बैंक खाता', bank_none:'अभी कोई बैंक खाता सेव नहीं। वापसी भेजते समय पूछा जाएगा।', bank_edit:'बैंक की जानकारी बदलें' }
   };
   function L(){ return TX[(document.documentElement.lang||'en').slice(0,2)==='hi' ? 'hi' : 'en']; }
   function $(id){ return document.getElementById(id); }
@@ -3005,6 +3079,10 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     if (!prof) return;
     if (window.DF) DF.phoneHint = prof.phone || '';
     var rp = $('r-phone'); if (rp && !rp.value && prof.phone) rp.value = prof.phone;
+    /* tailoring booking: name + mobile from the account */
+    var tn = $('t-name'), tp = $('t-phone');
+    if (tn && (force || !tn.value) && prof.name) tn.value = prof.name;
+    if (tp && (force || !tp.value) && prof.phone) tp.value = prof.phone;
     if (force || !nameI.value) nameI.value = prof.name || '';
     if (force || !phoneI.value) phoneI.value = prof.phone || '';
     var list = prof.addresses || [];
@@ -3053,6 +3131,17 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     if (prof && !prof.phone && o.phone){ saveProfile({phone:o.phone}).catch(function(){}); }
   });
   window.addEventListener('df-render', function(){ placeButton(); fillCheckout(false); });
+  function exposeAcct(){
+    if (!window.DF) return;
+    DF.acctInfo = function(){ return {user: !!user, phone: (prof && prof.phone) || '', name: (prof && prof.name) || ''}; };
+    DF.openAcct = function(v){ openModal(v); };
+    DF.askBank = askBank;
+  }
+  /* an order / return that waited for login carries on by itself once login + mobile are done */
+  function runAfterLogin(){
+    if (!window.DF || !DF.afterLogin || !user || !(prof && prof.phone)) return;
+    var f = DF.afterLogin; DF.afterLogin = null; closeModal(); setTimeout(f, 80);
+  }
 
   /* ---------- modal ---------- */
   window.addEventListener('df-nav', function(){ closeModal(); });
@@ -3201,7 +3290,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
           if (!prof || !prof.defaultAddr || !list.some(function(x){ return x.id === prof.defaultAddr; })) p.defaultAddr = na.id;
         }
         setMsg(m2, '…');
-        saveProfile(p).then(function(){ editAddr = null; placeButton(); fillCheckout(true); openModal('account'); }, function(e){ setMsg(m2, errText(e), 'err'); });
+        saveProfile(p).then(function(){ editAddr = null; placeButton(); fillCheckout(true); syncCard(); if (window.DF && DF.afterLogin && prof && prof.phone){ runAfterLogin(); return; } openModal('account'); }, function(e){ setMsg(m2, errText(e), 'err'); });
       }}));
       if (!first) box2.appendChild(mk('button',{type:'button','class':'acct-link',text:'←',onclick:function(){ editAddr = null; openModal('account'); }}));
       box2.appendChild(m2);
@@ -3213,6 +3302,11 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     var box3 = shell(t.account);
     box3.appendChild(mk('div',{'class':'acct-hello acct-hello-ph'},[ photoEditor(t), mk('div',null,[ mk('b',{text:t.hello+', '+((prof && prof.name) || '')}), mk('div',{'class':'meta',text:[user.email, prof && prof.phone].filter(Boolean).join(' · ')}) ]) ]));
     box3.appendChild(mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.edit_prof,onclick:function(){ openModal('profile'); }}), mk('button',{type:'button',text:t.my_cart+(window.DF?' ('+DF.cartCount()+')':''),onclick:goCart}) ]));
+    box3.appendChild(cardBlock(t));
+    box3.appendChild(mk('h3',{'class':'acct-h',text:t.bank_h}));
+    var bk = prof && prof.bank;
+    box3.appendChild(mk('div',{'class':'acct-card'},[ mk('div',null,[ mk('span',{text: bk ? [bk.name, bk.bank, 'A/c ••••'+String(bk.acc||'').slice(-4), bk.ifsc].filter(Boolean).join(' · ') : t.bank_none}) ]),
+      bk ? mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.bank_edit,onclick:function(){ closeModal(); askBank('', function(){ openModal('account'); }, true); }}) ]) : null ]));
     box3.appendChild(mk('h3',{'class':'acct-h',text:t.addrs}));
     ((prof && prof.addresses) || []).forEach(function(a){
       var isDef = prof.defaultAddr === a.id;
@@ -3315,12 +3409,12 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     DF.saveOrder = function(o){
       var doc = {id:o.id, items:(o.items||[]).map(function(i){ return {sku:i.sku||'', name:i.name||'', size:i.size||'', qty:i.qty||1, price:i.price||0}; }),
         total:o.total||0, allPriced:!!o.allPriced, pay:o.pay||'cod', paid:false, name:o.name||'', phone:o.phone||'', how:o.how||'', home:/deliver|घर/i.test(o.how||''),
-        addr:o.addr||'', pin:o.pin||'', land:o.land||'', note:o.note||'', loc:o.loc ? {lat:o.loc.lat, lng:o.loc.lng, acc:o.loc.acc||0} : null, delivery:o.delivery != null ? o.delivery : null, feeUtr:o.feeUtr||'', feeShot:o.feeShot||'', feePaid:o.feePaid||0, distKm:o.distKm != null ? o.distKm : null, lang:(document.documentElement.lang||'en').slice(0,2),
+        addr:o.addr||'', pin:o.pin||'', land:o.land||'', note:o.note||'', loc:o.loc ? {lat:o.loc.lat, lng:o.loc.lng, acc:o.loc.acc||0} : null, delivery:o.delivery != null ? o.delivery : null, feeUtr:o.feeUtr||'', feeShot:o.feeShot||'', feePaid:o.feePaid||0, payUtr:o.payUtr||'', payShot:o.payShot||'', card:(prof && prof.card && prof.card.no) || '', distKm:o.distKm != null ? o.distKm : null, lang:(document.documentElement.lang||'en').slice(0,2),
         uid:user ? user.uid : '', email:user ? (user.email||'') : '', status:'new', created:new Date().toISOString(), log:[{at:new Date().toISOString(), s:'new'}]};
       return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000).catch(function(e){
         if (!doc.loc || !/permission/i.test((e && (e.code||e.message)) || '')) throw e;
         /* older security rules may not allow the new 'loc' field: keep the map link in the note instead */
-        doc.note = [doc.note, 'Map: https://maps.google.com/?q='+doc.loc.lat+','+doc.loc.lng, doc.distKm != null ? '~'+doc.distKm+' km' : '', doc.delivery != null ? 'Delivery Rs '+doc.delivery : '', doc.feeUtr ? 'Delivery paid UPI UTR '+doc.feeUtr : doc.feeShot ? 'Delivery paid UPI (screenshot: ask on WhatsApp)' : ''].filter(Boolean).join(' | '); delete doc.loc; delete doc.delivery; delete doc.distKm; delete doc.feeUtr; delete doc.feePaid; delete doc.feeShot;
+        doc.note = [doc.note, 'Map: https://maps.google.com/?q='+doc.loc.lat+','+doc.loc.lng, doc.distKm != null ? '~'+doc.distKm+' km' : '', doc.delivery != null ? 'Delivery Rs '+doc.delivery : '', doc.feeUtr ? 'Delivery paid UPI UTR '+doc.feeUtr : doc.feeShot ? 'Delivery paid UPI (screenshot: ask on WhatsApp)' : '', doc.payUtr ? 'Paid UPI UTR '+doc.payUtr : doc.payShot ? 'Paid UPI (screenshot: ask on WhatsApp)' : ''].filter(Boolean).join(' | '); delete doc.payUtr; delete doc.payShot; delete doc.card; delete doc.loc; delete doc.delivery; delete doc.distKm; delete doc.feeUtr; delete doc.feePaid; delete doc.feeShot;
         return withTimeout(fs.collection('orders').doc(o.id).set(doc), 12000);
       });
     };
@@ -3331,10 +3425,92 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
         if (bid) fs.collection('tjobs').doc(bid).set({bid:bid, src:'web', open:false, created:new Date().toISOString(), items:(r.items||[]).map(function(it){ return {k:it.k||'', type:it.type||'', grp:it.grp||'', qty:+it.qty||1}; })}).catch(function(){}); });
       return p; };
     DF.saveRequest = function(r){
-      return withTimeout(fs.collection('requests').add({orderId:r.orderId||'', kind:r.kind||'return', phone:r.phone||'', item:r.item||'', reason:r.reason||'', details:r.details||'',
-        uid:user ? user.uid : '', status:'new', created:new Date().toISOString()}), 12000);
+      var b = r.bank, at = new Date().toISOString();
+      var doc = {orderId:r.orderId||'', kind:r.kind||'return', phone:r.phone||'', item:r.item||'', reason:r.reason||'', details:r.details||'',
+        uid:user ? user.uid : '', name:(prof && prof.name) || '', email:user ? (user.email||'') : '', status:'new', created:at};
+      if (b) doc.refund = {name:b.name, bank:b.bank||'', ifsc:b.ifsc, acc4:String(b.acc).slice(-4), upi:b.upi ? 'yes' : ''};
+      var first = (b && user) ? withTimeout(fs.collection('refunds').add({uid:user.uid, orderId:doc.orderId, kind:doc.kind, name:b.name, acc:b.acc, ifsc:b.ifsc, bank:b.bank||'', branch:b.branch||'', upi:b.upi||'', phone:doc.phone, created:at}), 12000)
+        .then(function(ref){ doc.refundId = ref.id; }, function(){ /* old rules: keep the request going, the shop still sees the masked copy */ }) : Promise.resolve();
+      return first.then(function(){ return withTimeout(fs.collection('requests').add(doc), 12000); });
     };
   }
+  /* ---------- refund bank details (compulsory for a return) ---------- */
+  var BK = {en:{t:'Bank details for your refund', s:'The refund is sent to this bank account. It is saved in your account; only the shop owner can see it.', name:'Account holder name', acc:'Bank account number', acc2:'Write the account number again', ifsc:'IFSC code (11 letters, e.g. SBIN0001234)', bank:'Bank name', upi:'UPI ID (optional)', save:'Save and send return', saveOnly:'Save', err:'Please fill the name, the same account number twice and a correct 11-letter IFSC code.', look:'Finding the bank…', cancel:'Cancel'},
+            hi:{t:'पैसे वापसी के लिए बैंक की जानकारी', s:'वापसी के पैसे इसी बैंक खाते में भेजे जाएँगे। यह आपके खाते में सेव रहेगी, सिर्फ़ दुकान मालिक देख सकते हैं।', name:'खाताधारक का नाम', acc:'बैंक खाता नंबर', acc2:'खाता नंबर दोबारा लिखें', ifsc:'IFSC कोड (11 अक्षर, जैसे SBIN0001234)', bank:'बैंक का नाम', upi:'UPI ID (चाहें तो)', save:'सेव करें और वापसी भेजें', saveOnly:'सेव करें', err:'नाम, दोनों बार एक जैसा खाता नंबर और सही 11 अक्षर का IFSC कोड भरें।', look:'बैंक ढूँढ रहे हैं…', cancel:'रद्द करें'}};
+  function askBank(orderId, done, editOnly){
+    var t = BK[L() === TX.hi ? 'hi' : 'en'], b = (prof && prof.bank) || {};
+    if (!modal){ modal = mk('div',{'class':'scrim',role:'dialog','aria-modal':'true','aria-labelledby':'acct-h',onclick:function(e){ if (e.target === modal) closeModal(); }}); document.body.appendChild(modal); document.body.style.overflow = 'hidden'; }
+    view = 'bank';
+    var box = shell(t.t, t.s), m = msgEl();
+    box.appendChild(field('bk-name', t.name, {autocomplete:'name', value:b.name || (prof && prof.name) || ''}));
+    box.appendChild(field('bk-acc', t.acc, {inputmode:'numeric', autocomplete:'off', maxlength:'18', value:b.acc || ''}));
+    box.appendChild(field('bk-acc2', t.acc2, {inputmode:'numeric', autocomplete:'off', maxlength:'18', value:b.acc || ''}));
+    box.appendChild(mk('div',{'class':'two'},[ field('bk-ifsc', t.ifsc, {autocapitalize:'characters', maxlength:'11', autocomplete:'off', value:b.ifsc || ''}), field('bk-bank', t.bank, {value:b.bank || ''}) ]));
+    box.appendChild(field('bk-upi', t.upi, {autocomplete:'off', value:b.upi || ''}));
+    var branch = b.branch || '';
+    ['bk-acc','bk-acc2'].forEach(function(id){ $(id).addEventListener('input', function(e){ e.target.value = digits(e.target.value).slice(0, 18); }); });
+    $('bk-ifsc').addEventListener('input', function(e){
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0, 11);
+      if (/^[A-Z]{4}0[A-Z0-9]{6}$/.test(e.target.value)){ setMsg(m, t.look);
+        fetch('https://ifsc.razorpay.com/' + e.target.value).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+          setMsg(m, ''); if (j && j.BANK){ $('bk-bank').value = j.BANK; branch = [j.BRANCH, j.CITY].filter(Boolean).join(', '); setMsg(m, j.BANK + (branch ? ' · ' + branch : ''), 'ok'); } }, function(){ setMsg(m, ''); }); }
+    });
+    box.appendChild(mk('div',{'class':'acct-row'},[
+      mk('button',{type:'button','class':'btn btn-line',text:t.cancel,onclick:closeModal}),
+      mk('button',{type:'button','class':'btn btn-gold',text: editOnly ? t.saveOnly : t.save,onclick:function(){
+        var nb = {name:$('bk-name').value.trim(), acc:digits($('bk-acc').value), ifsc:$('bk-ifsc').value.trim().toUpperCase(), bank:$('bk-bank').value.trim(), branch:branch, upi:$('bk-upi').value.trim()};
+        if (!nb.name || nb.acc.length < 9 || nb.acc !== digits($('bk-acc2').value) || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(nb.ifsc)){ setMsg(m, t.err, 'err'); return; }
+        setMsg(m, '…');
+        saveProfile({bank:nb}).then(function(){ closeModal(); done(nb); }, function(e){ setMsg(m, errText(e), 'err'); });
+      }}) ]));
+    box.appendChild(m);
+    setTimeout(function(){ var f = $(b.acc ? 'bk-ifsc' : 'bk-name'); if (f) f.focus(); }, 0);
+  }
+
+  /* ---------- discount card: one unique number per customer, shown with a barcode ---------- */
+  var barcodeP = null;
+  function loadBarcode(){ if (window.JsBarcode) return Promise.resolve(); if (!barcodeP) barcodeP = loadScript('/jsbarcode.min.js').catch(function(){ barcodeP = null; }); return barcodeP; }
+  function cardNo(){ var n = ''; for (var i = 0; i < 8; i++) n += Math.floor(Math.random() * 10); return 'DF' + (n.charAt(0) === '0' ? '7' + n.slice(1) : n); }
+  var cardBusy = false;
+  function ensureCard(){
+    if (!user || !prof || !prof.name || !prof.phone || (prof.card && prof.card.no) || cardBusy) return Promise.resolve();
+    cardBusy = true;
+    var tries = 0;
+    function attempt(){
+      var no = cardNo(), at = new Date().toISOString();
+      /* the rules only allow creating a card number that does not exist yet, so two customers can never get the same one */
+      return fs.collection('cards').doc(no).set({no:no, uid:user.uid, name:prof.name, phone:prof.phone, email:user.email||'', issued:at, active:true})
+        .then(function(){ return saveProfile({card:{no:no, issued:at}}); })
+        .catch(function(e){ if (++tries < 5 && /permission|exists/i.test(String(e && (e.code||e.message)))) return attempt(); throw e; });
+    }
+    return attempt().then(function(){ cardBusy = false; if (modal && view === 'account') draw(); }, function(){ cardBusy = false; });
+  }
+  function syncCard(){ if (prof && prof.card && prof.card.no && fs) fs.collection('cards').doc(prof.card.no).set({name:prof.name||'', phone:prof.phone||''}, {merge:true}).catch(function(){}); ensureCard(); }
+  function cardBlock(t){
+    var wrap = mk('div',{'class':'dcard-wrap'});
+    var c = prof && prof.card;
+    wrap.appendChild(mk('h3',{'class':'acct-h',text:t.card_h}));
+    if (!c || !c.no){ wrap.appendChild(mk('p',{'class':'hint',text:'…'})); ensureCard(); return wrap; }
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('class','dcard-bc'); svg.setAttribute('role','img'); svg.setAttribute('aria-label', 'Barcode ' + c.no);
+    var spent = mk('b',{'class':'num',text:'…'}), pct = mk('span',{'class':'dcard-pct'});
+    var card = mk('div',{'class':'dcard'},[
+      mk('div',{'class':'dcard-top'},[ mk('div',{'class':'dcard-brand',html:'DIAMOND<small>FASHIONS</small>'}), mk('span',{'class':'dcard-tag',text:t.card_h}) ]),
+      mk('div',{'class':'dcard-name',text:(prof.name||'')}), mk('div',{'class':'dcard-no num',text:c.no.replace(/^(DF)(\d{4})(\d{4})$/, '$1 $2 $3')}),
+      mk('div',{'class':'dcard-bcbox'},[ svg ]),
+      mk('div',{'class':'dcard-foot'},[ mk('span',{text:t.card_since+': '+new Date(c.issued).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}), pct ]) ]);
+    card.addEventListener('click', function(){ if (card.classList.contains('big')) card.classList.remove('big'); });
+    wrap.appendChild(card);
+    wrap.appendChild(mk('div',{'class':'acct-kv dcard-kv'},[ mk('span',{text:t.card_spent}), spent ]));
+    wrap.appendChild(mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.card_show,onclick:function(e){ e.stopPropagation(); card.classList.add('big'); }}) ]));
+    loadBarcode().then(function(){ try { JsBarcode(svg, c.no, {format:'CODE128', displayValue:false, margin:0, height:56, width:2, background:'transparent', lineColor:'#0B1626'}); } catch(e){} });
+    fs.collection('cards').doc(c.no).get().then(function(sn){ var d = sn.exists ? sn.data() : null; if (d && d.pct) pct.textContent = t.card_pct + ' ' + d.pct + '%'; }).catch(function(){});
+    // shopping since the card date (own order history; cancelled / returned orders do not count)
+    userDoc().collection('orders').get().then(function(snap){ var sum = 0, from = c.issued || '', till = new Date(new Date(c.issued).getTime() + 365*864e5).toISOString();
+      snap.forEach(function(d){ var o = d.data(), st = statusOf(o.id).s; if ((o.created||'') >= from && (o.created||'') < till && ['rejected','cancelled','returned','return_ok'].indexOf(st) < 0) sum += o.total || 0; });
+      spent.textContent = rupees(sum); }, function(){ spent.textContent = '—'; });
+    return wrap;
+  }
+
   /* ---------- ratings & reviews ---------- */
   var RV = {en:{h:'Ratings & Reviews',write:'Write a review',login:'Login to write a review',none:'No reviews yet. Be the first to review this item.',your:'Your rating',txt:'Your review (optional)',ph:'What did you like or not like?',send:'Submit review',sent:'Thank you! Your review is live.',pick:'Please choose stars.',verified:'Verified buyer',ratings:' ratings',reviews:' reviews',more:'Show more',err:'Could not save. Please try again.',del:'Delete'},
             hi:{h:'रेटिंग और रिव्यू',write:'रिव्यू लिखें',login:'रिव्यू लिखने के लिए लॉग-इन करें',none:'अभी कोई रिव्यू नहीं। सबसे पहले रिव्यू लिखें।',your:'आपकी रेटिंग',txt:'आपका रिव्यू (ज़रूरी नहीं)',ph:'क्या अच्छा लगा, क्या नहीं?',send:'रिव्यू भेजें',sent:'धन्यवाद! आपका रिव्यू दिख रहा है।',pick:'स्टार चुनें।',verified:'ख़रीदार',ratings:' रेटिंग',reviews:' रिव्यू',more:'और देखें',err:'सेव नहीं हुआ। फिर कोशिश करें।',del:'हटाएँ'}};
@@ -3422,7 +3598,8 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
     auth.onAuthStateChanged(function(u){
       user = u; prof = null;
       var after = function(){
-        ready = true; placeButton(); fillCheckout(true); var rvb = document.getElementById('pp-reviews'); if (rvb) drawReviews(rvb);
+        ready = true; exposeAcct(); placeButton(); fillCheckout(true); var rvb = document.getElementById('pp-reviews'); if (rvb) drawReviews(rvb);
+        if (user && prof && prof.phone){ ensureCard(); if (window.DF && DF.afterLogin){ runAfterLogin(); return; } }
         if (user && modal && (view === 'login')) openModal();
         else if (user && !modal && !(prof && prof.name && prof.phone && (prof.addresses||[]).length) && (function(){ try { return sessionStorage.getItem('df-asked'); } catch(e){ return ''; } })() !== user.uid){
           try { sessionStorage.setItem('df-asked', user.uid); } catch(e){}
@@ -3434,7 +3611,7 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
       else if (window.DF && DF.setAcctOrders) DF.setAcctOrders([]);
     });
     placeButton();
-  }).catch(function(){ /* SDK blocked: page keeps working as guest checkout */ });
+  }).catch(function(){ /* SDK blocked: page keeps working as guest checkout */ if (window.DF) DF.acctFailed = true; });
 })();
 </script>
 </body></html>
