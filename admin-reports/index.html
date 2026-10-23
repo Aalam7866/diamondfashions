@@ -14,7 +14,11 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="/admin-shared/df.css">
-<style>:root { --app: #5c1828; }</style>
+<style>:root { --app: #5c1828; }
+button.tile{all:unset;box-sizing:border-box;display:block;cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+button.tile.hl{background:var(--app);color:var(--cream);border-color:var(--app)}
+.tile .go{font-size:12px;opacity:.7;margin-top:4px}
+button.tile:active{transform:scale(.98)}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -23,102 +27,225 @@
 (function () {
   'use strict';
   var t = DF.t, el = DF.el, root = document.getElementById('app'), timer = null;
+  var R = null, web = null, tail = null, exps = null, view = null, eMonth = '';
 
   function start() { if (!DF.session()) DF.loginScreen(root, t('DF Reports', 'DF रिपोर्ट'), start); else draw(); }
+  function isoDay(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function dayOf(s) { return s ? isoDay(new Date(s)) : ''; }
+  function tm(s) { try { return new Date(s).toLocaleTimeString(DF.getLang() === 'hi' ? 'hi-IN' : 'en-IN', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
+  function dmy(s) { return String(s || '').slice(0, 10).split('-').reverse().join('-'); }
+  /* every tile is a button: tap it to see what is behind the number */
+  function tile(k, v, hl, key) {
+    return el('button', { 'class': 'tile' + (hl ? ' hl' : ''), type: 'button', onclick: function () { view = key; showDetail(); } },
+      [el('div', { 'class': 'k', text: k }), el('div', { 'class': 'v', text: v }), el('div', { 'class': 'go', text: t('details ›', 'पूरा देखें ›') })]);
+  }
+  function table(head, rows) {
+    return el('div', { 'class': 'card' }, [el('table', {}, [el('tr', {}, head.map(function (h, i) { return el('th', { 'class': /^n:/.test(h) ? 'n' : '', text: h.replace(/^n:/, '') }); }))].concat(rows.map(function (r) {
+      return el('tr', {}, r.map(function (c, i) { return el('td', { 'class': /^n:/.test(head[i]) ? 'n' : '', text: c == null ? '' : String(c) }); }));
+    })))]);
+  }
+  function none(txt) { return el('div', { 'class': 'empty', text: txt || t('Nothing here.', 'यहाँ कुछ नहीं।') }); }
+  function fromPC(key) { return none(t('The shop PC does not send this list yet (' + key + '). When TailorShop sends it, it shows here.', 'दुकान का कंप्यूटर यह लिस्ट अभी नहीं भेजता (' + key + ')। TailorShop भेजेगा तो यहाँ दिखेगी।')); }
+  /* website data straight from the shop database (no photos) */
+  function loadWeb() {
+    if (web) return Promise.resolve(web);
+    return DF.list('orders', ['id', 'name', 'phone', 'status', 'total', 'pay', 'paid', 'created', 'deliveredAt', 'rider', 'riderName', 'cashGot', 'how', 'items']).then(function (l) { web = l; return l; });
+  }
+  function loadTailor() {
+    if (tail) return Promise.resolve(tail);
+    return DF.list('requests', ['kind', 'bookingId', 'name', 'phone', 'status', 'created', 'needBy', 'due', 'price', 'paid', 'items', 'stage']).then(function (l) { tail = l.filter(function (x) { return x.kind === 'tailoring'; }); return tail; }, function () { tail = []; return tail; });
+  }
+  function loadExp() {
+    if (exps) return Promise.resolve(exps);
+    return DF.list('expenses').then(function (l) { exps = l.sort(function (a, b) { return String(b.date + b.at).localeCompare(String(a.date + a.at)); }); return exps; }, function (e) { exps = []; throw e; });
+  }
+  var ST = { new: ['New', 'नया'], accepted: ['Accepted', 'मंज़ूर'], packed: ['Packed', 'पैक'], shipped: ['On the way', 'रास्ते में'], pickup: ['Ready at shop', 'दुकान पर तैयार'], delivered: ['Delivered', 'पहुँच गया'], rejected: ['Rejected', 'मना'], cancelled: ['Cancelled', 'रद्द'], return_req: ['Return asked', 'वापसी रिक्वेस्ट'], return_ok: ['Return approved', 'वापसी मंज़ूर'], return_pick: ['Return picked', 'वापसी उठाई'], returned: ['Returned', 'वापस'], return_no: ['Return refused', 'वापसी मना'] };
+  function stName(s) { var x = ST[s]; return x ? t(x[0], x[1]) : (s || ''); }
 
-  function tile(k, v, hl) { return el('div', { 'class': 'tile' + (hl ? ' hl' : '') }, [el('div', { 'class': 'k', text: k }), el('div', { 'class': 'v', text: v })]); }
+  function detailBox(title, kids) {
+    root.innerHTML = '';
+    root.appendChild(DF.header(t('DF Reports', 'DF रिपोर्ट'), showDetail));
+    var main = el('main');
+    root.appendChild(main);
+    main.appendChild(el('button', { text: '← ' + t('Back', 'वापस'), onclick: function () { view = null; draw(); } }));
+    main.appendChild(el('h2', { text: title }));
+    (kids || []).forEach(function (k) { if (k) main.appendChild(k); });
+    return main;
+  }
+  function showDetail() {
+    var r = R || {}, today = isoDay(), k = view;
+    if (k === 'bills') {
+      var rec = r.recent || [], by = r.byMethod || {};
+      detailBox(t('Today\'s sales', 'आज की बिक्री'), [
+        el('div', { 'class': 'tiles' }, [stat(t('Sales', 'बिक्री'), DF.money(r.salesTotal)), stat(t('Collected', 'जमा'), DF.money(r.collected)), stat(t('Bills', 'बिल'), String(r.salesCount || 0)), stat(t('Pieces sold', 'बिके पीस'), String(r.salesPcs || 0))]),
+        el('h2', { text: t('Bills', 'बिल') }),
+        rec.length ? table([t('No', 'नं'), t('Time', 'समय'), t('Customer', 'ग्राहक'), 'n:' + t('Total', 'कुल'), 'n:' + t('Due', 'बाकी')], rec.map(function (b) { return [b.no, b.time, b.name, DF.money(b.total), b.due > 0 ? DF.money(b.due) : '–']; })) : none(t('No bill yet today.', 'आज अभी कोई बिल नहीं।')),
+        Object.keys(by).length ? el('h2', { text: t('Collected by method', 'तरीके के हिसाब से जमा') }) : null,
+        Object.keys(by).length ? table([t('Method', 'तरीका'), 'n:' + t('Amount', 'रकम')], Object.keys(by).map(function (m) { return [m, DF.money(by[m])]; })) : null]);
+      return;
+    }
+    if (k === 'returns') {
+      var rl = r.returnsList || r.returns || [];
+      detailBox(t('Returns today', 'आज की वापसी') + ' · ' + DF.money(r.returnsTotal), [Array.isArray(rl) && rl.length ? table([t('Bill', 'बिल'), t('Item', 'आइटम'), 'n:' + t('Amount', 'रकम')], rl.map(function (x) { return [x.no || x.bill || '', x.name || x.item || '', DF.money(x.amount || x.total)]; })) : fromPC('returnsList')]);
+      return;
+    }
+    if (k === 'dues') {
+      var dl = r.dueList || r.dues || [];
+      detailBox(t('Dues', 'बकाया') + ' · ' + DF.money((r.dueSales || 0) + (r.dueOrders || 0)), [
+        el('div', { 'class': 'tiles' }, [stat(t('Sales dues', 'बिक्री बकाया'), DF.money(r.dueSales)), stat(t('Tailoring dues', 'सिलाई बकाया'), DF.money(r.dueOrders))]),
+        Array.isArray(dl) && dl.length ? table([t('Customer', 'ग्राहक'), t('Mobile', 'मोबाइल'), 'n:' + t('Due', 'बकाया')], dl.map(function (x) { return [x.name, x.phone || x.mobile || '', DF.money(x.due || x.amount)]; })) : fromPC('dueList')]);
+      return;
+    }
+    if (k === 'month') {
+      var md = r.monthDays || [];
+      detailBox(t('This month', 'इस महीने'), [el('div', { 'class': 'tiles' }, [stat(t('Sales', 'बिक्री'), DF.money(r.monthSales)), stat(t('Collected', 'जमा'), DF.money(r.monthCollected)), stat(t('Bills', 'बिल'), String(r.monthBills || 0)), stat(t('Pieces in stock', 'स्टॉक में पीस'), String(r.stockPcs || 0))]),
+        Array.isArray(md) && md.length ? table([t('Date', 'तारीख'), 'n:' + t('Sales', 'बिक्री'), 'n:' + t('Collected', 'जमा')], md.map(function (x) { return [dmy(x.date), DF.money(x.sales), DF.money(x.collected)]; })) : fromPC('monthDays'),
+        expSummaryFor(r)]);
+      return;
+    }
+    if (k === 'low') {
+      var low = r.lowStock || [];
+      detailBox(t('Low stock', 'कम स्टॉक') + ' (' + low.length + ')', [low.length ? table([t('Item', 'आइटम'), t('Size', 'साइज़'), 'n:' + t('Left', 'बचा')], low.map(function (i) { return [(i.webCode ? i.webCode + ' ' : '') + i.name + (i.colour ? ' · ' + i.colour : ''), i.size || '', i.stock]; })) : none(t('Nothing is low.', 'कुछ भी कम नहीं है।'))]);
+      return;
+    }
+    if (k === 'exp') { drawExpenses(); return; }
+    if (/^web/.test(k) || k === 'rider') {
+      var m = detailBox(t('Website orders', 'वेबसाइट ऑर्डर'), [none(t('Loading…', 'आ रहा है…'))]);
+      loadWeb().then(function (l) {
+        m.lastChild.remove();
+        var list = k === 'webOpen' ? l.filter(function (o) { return ['new', 'accepted', 'packed', 'shipped', 'pickup', 'return_req', 'return_ok', 'return_pick'].indexOf(o.status) >= 0; })
+          : k === 'rider' ? l.filter(function (o) { return o.status === 'delivered' && dayOf(o.deliveredAt) === today && o.rider; })
+          : l.filter(function (o) { return dayOf(o.created) === today; });
+        list.sort(function (a, b) { return String(b.created).localeCompare(String(a.created)); });
+        m.querySelector('h2').textContent = k === 'webOpen' ? t('Still open', 'अभी चालू') + ' (' + list.length + ')' : k === 'rider' ? t('Delivery boys\' cash today', 'डिलीवरी बॉय का कैश (आज)') : t('Online orders today', 'आज के ऑनलाइन ऑर्डर') + ' (' + list.length + ')';
+        if (k === 'rider') {
+          var byR = {}; list.forEach(function (o) { var n = o.riderName || o.rider; byR[n] = byR[n] || { n: 0, c: 0 }; byR[n].n++; byR[n].c += o.cashGot || 0; });
+          m.appendChild(Object.keys(byR).length ? table([t('Delivery boy', 'डिलीवरी बॉय'), 'n:' + t('Delivered', 'पहुँचाए'), 'n:' + t('Cash', 'कैश')], Object.keys(byR).map(function (n) { return [n, byR[n].n, DF.money(byR[n].c)]; })) : none());
+        }
+        m.appendChild(list.length ? table([t('Order', 'ऑर्डर'), t('Customer', 'ग्राहक'), t('Status', 'स्टेटस'), 'n:' + t('Total', 'कुल')],
+          list.map(function (o) { return [o.id + ' · ' + tm(k === 'rider' ? o.deliveredAt : o.created), (o.name || '') + (k === 'rider' ? ' · ' + (o.riderName || o.rider) : ''), stName(o.status) + (o.pay === 'upi' ? ' · UPI' + (o.paid ? ' ✓' : '') : ' · COD'), DF.money(k === 'rider' ? o.cashGot : o.total)]; })) : none());
+      }, function (e) { m.lastChild.textContent = e.message; });
+      return;
+    }
+    if (/^tl/.test(k)) {
+      var m2 = detailBox(t('Tailoring orders', 'सिलाई ऑर्डर'), [none(t('Loading…', 'आ रहा है…'))]);
+      loadTailor().then(function (l) {
+        m2.lastChild.remove();
+        var pcList = { tlNew: r.newOrdersList, tlOpen: r.openOrdersList, tlReady: r.readyList, tlToday: r.deliveryTodayList, tlLate: r.lateList }[k];
+        if (Array.isArray(pcList) && pcList.length) m2.appendChild(table([t('Order', 'ऑर्डर'), t('Customer', 'ग्राहक'), t('Delivery', 'डिलीवरी')], pcList.map(function (x) { return [x.no || x.id || '', x.name || '', dmy(x.due || x.delivery || '')]; })));
+        var web2 = k === 'tlNew' ? l.filter(function (x) { return dayOf(x.created) === today; }) : k === 'tlToday' ? l.filter(function (x) { return String(x.needBy || x.due || '').slice(0, 10) === today; })
+          : k === 'tlLate' ? l.filter(function (x) { var d = String(x.needBy || x.due || '').slice(0, 10); return d && d < today && x.status !== 'done' && x.status !== 'delivered'; }) : l.filter(function (x) { return x.status !== 'done' && x.status !== 'delivered'; });
+        m2.appendChild(el('h2', { text: t('Booked on the website / in Admin', 'वेबसाइट / Admin से बुक') + ' (' + web2.length + ')' }));
+        m2.appendChild(web2.length ? table([t('Booking', 'बुकिंग'), t('Customer', 'ग्राहक'), t('Need by', 'कब तक'), t('Status', 'स्टेटस')], web2.map(function (x) { return [x.bookingId || '', (x.name || '') + (x.phone ? ' · ' + x.phone : ''), dmy(x.needBy || x.due || ''), x.stage || x.status || '']; })) : none());
+        if (!(Array.isArray(pcList) && pcList.length)) m2.appendChild(el('p', { 'class': 'muted', text: t('Orders booked on the shop PC show here once TailorShop sends their list.', 'दुकान के कंप्यूटर पर बुक ऑर्डर तब दिखेंगे जब TailorShop उनकी लिस्ट भेजेगा।') }));
+      });
+      return;
+    }
+    view = null; draw();
+  }
+  function stat(k, v) { return el('div', { 'class': 'tile' }, [el('div', { 'class': 'k', text: k }), el('div', { 'class': 'v', text: v })]); }
+
+  /* ---------------------------------------------------------------- expenses (खर्चे) */
+  var CATS = [['rent', 'Rent', 'किराया'], ['power', 'Electricity', 'बिजली'], ['salary', 'Salary / wages', 'तनख़्वाह / मज़दूरी'], ['tea', 'Tea / snacks', 'चाय-नाश्ता'], ['travel', 'Transport / petrol', 'किराया-भाड़ा / पेट्रोल'],
+              ['buy', 'Goods purchase', 'माल ख़रीद'], ['repair', 'Repair', 'मरम्मत'], ['ads', 'Ads / printing', 'प्रचार / छपाई'], ['other', 'Other', 'अन्य']];
+  function catName(k) { var c = CATS.filter(function (x) { return x[0] === k; })[0]; return c ? t(c[1], c[2]) : (k || ''); }
+  function sum(list) { return list.reduce(function (a, x) { return a + (+x.amount || 0); }, 0); }
+  function expSummaryFor(r) {
+    var box = el('div');
+    loadExp().then(function (l) { var m = isoDay().slice(0, 7), ml = l.filter(function (x) { return String(x.date).slice(0, 7) === m; });
+      box.appendChild(el('h2', { text: t('Expenses this month', 'इस महीने के खर्चे') }));
+      box.appendChild(el('div', { 'class': 'tiles' }, [stat(t('Expenses', 'खर्चे'), DF.money(sum(ml))), stat(t('Collected − expenses', 'जमा − खर्चे'), DF.money((r.monthCollected || 0) - sum(ml)))])); }, function () { });
+    return box;
+  }
+  function drawExpenses() {
+    if (!eMonth) eMonth = isoDay().slice(0, 7);
+    var main = detailBox(t('Expenses', 'खर्चे'), []);
+    var amt = el('input', { type: 'number', inputmode: 'decimal', placeholder: '₹' }), note = el('input', { type: 'text', placeholder: t('Note (what for)', 'नोट (किस लिए)') });
+    var date = el('input', { type: 'date', value: isoDay() }), cat = el('select', {}, CATS.map(function (c) { return el('option', { value: c[0], text: t(c[1], c[2]) }); }));
+    var save = el('button', { 'class': 'primary big', text: '+ ' + t('Add expense', 'खर्चा जोड़ें') });
+    save.addEventListener('click', function () {
+      var n = parseFloat(amt.value); if (!(n > 0)) { DF.toast(t('Type the amount.', 'रकम लिखें।'), true); return; }
+      save.disabled = true;
+      DF.add('expenses', { amount: n, cat: cat.value, note: note.value.trim(), date: date.value || isoDay(), at: new Date().toISOString(), by: DF.session().email })
+        .then(function () { exps = null; DF.toast(t('Saved.', 'सेव हो गया।')); drawExpenses(); }, function (e) { save.disabled = false; DF.toast(e.message, true); });
+    });
+    main.appendChild(el('div', { 'class': 'card' }, [el('label', { text: t('Amount (₹)', 'रकम (₹)') }), amt, el('label', { text: t('What kind', 'किस तरह का') }), cat, el('label', { text: t('Date', 'तारीख') }), date, el('label', { text: t('Note', 'नोट') }), note, save]));
+    var mi = el('input', { type: 'month', value: eMonth }); mi.addEventListener('change', function () { eMonth = mi.value || isoDay().slice(0, 7); drawExpenses(); });
+    main.appendChild(el('div', { 'class': 'row' }, [el('b', { 'class': 'grow', text: t('Month', 'महीना') }), mi]));
+    var box = el('div', {}, [none(t('Loading…', 'आ रहा है…'))]); main.appendChild(box);
+    loadExp().then(function (l) {
+      box.innerHTML = '';
+      var ml = l.filter(function (x) { return String(x.date).slice(0, 7) === eMonth; }), td = l.filter(function (x) { return x.date === isoDay(); });
+      var r = R || {}, sameMonth = eMonth === isoDay().slice(0, 7);
+      box.appendChild(el('div', { 'class': 'tiles' }, [stat(t('Today', 'आज'), DF.money(sum(td))), stat(t('This month', 'इस महीने'), DF.money(sum(ml))),
+        sameMonth ? stat(t('Today: collected − expenses', 'आज: जमा − खर्चे'), DF.money((r.collected || 0) - sum(td))) : null,
+        sameMonth ? stat(t('Month: collected − expenses', 'महीना: जमा − खर्चे'), DF.money((r.monthCollected || 0) - sum(ml))) : null]));
+      var byC = {}; ml.forEach(function (x) { byC[x.cat] = (byC[x.cat] || 0) + (+x.amount || 0); });
+      if (Object.keys(byC).length) { box.appendChild(el('h2', { text: t('By kind', 'किस्म के हिसाब से') })); box.appendChild(table([t('Kind', 'किस्म'), 'n:' + t('Amount', 'रकम')], Object.keys(byC).sort(function (a, b) { return byC[b] - byC[a]; }).map(function (c) { return [catName(c), DF.money(byC[c])]; }))); }
+      box.appendChild(el('h2', { text: t('All expenses', 'सारे खर्चे') + ' (' + ml.length + ')' }));
+      if (!ml.length) { box.appendChild(none(t('No expense this month.', 'इस महीने कोई खर्चा नहीं।'))); return; }
+      ml.forEach(function (x) {
+        box.appendChild(el('div', { 'class': 'card' }, [el('div', { 'class': 'row' }, [
+          el('div', { 'class': 'grow' }, [el('b', { text: DF.money(x.amount) + ' · ' + catName(x.cat) }), el('div', { 'class': 'muted', text: dmy(x.date) + (x.note ? ' · ' + x.note : '') + (x.by ? ' · ' + x.by : '') })]),
+          el('button', { text: '🗑', title: t('Delete', 'हटाएँ'), onclick: function () { if (!confirm(t('Delete this expense?', 'यह खर्चा हटाएँ?'))) return; DF.del('expenses/' + encodeURIComponent(x._id)).then(function () { exps = null; drawExpenses(); }, function (e) { DF.toast(e.message, true); }); } })])]));
+      });
+    }, function (e) { box.innerHTML = ''; box.appendChild(none(e.message)); });
+  }
 
   function draw() {
+    if (view) { showDetail(); return; }
     root.innerHTML = '';
     root.appendChild(DF.header(t('DF Reports', 'DF रिपोर्ट'), draw));
     var main = el('main', {}, [el('div', { 'class': 'empty', text: t('Loading…', 'आ रहा है…') })]);
     root.appendChild(main);
-    DF.get('reports/today').then(function (r) {
+    web = null; tail = null; exps = null;
+    DF.get('reports/today').then(function (r) { R = r; return r; }, function (e) { if (e.status === 404) { R = {}; return R; } throw e; }).then(function (r) {
       main.innerHTML = '';
-      var today = new Date(), iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-      var row = el('div', { 'class': 'row' }, [
-        el('div', { 'class': 'grow muted', text: t('Updated', 'अपडेट') + ': ' + (r.updatedText || '–') }),
-        el('button', { text: '↻ ' + t('Refresh', 'रीफ़्रेश'), onclick: draw }),
-      ]);
-      main.appendChild(row);
+      var iso = isoDay();
+      main.appendChild(el('div', { 'class': 'row' }, [el('div', { 'class': 'grow muted', text: t('Updated', 'अपडेट') + ': ' + (r.updatedText || '–') }), el('button', { text: '↻ ' + t('Refresh', 'रीफ़्रेश'), onclick: draw })]));
       if (r.date !== iso)
         main.appendChild(el('div', { 'class': 'card', style: 'border-color:#b3261e' }, [el('b', { text: t('This is not today\'s report.', 'यह आज की रिपोर्ट नहीं है।') }),
           el('div', { 'class': 'muted', text: t('Is TailorShop open on the shop PC with internet? It sends every few minutes.', 'क्या दुकान के कंप्यूटर पर TailorShop इंटरनेट के साथ खुला है? वह हर कुछ मिनट में भेजता है।') })]));
-
+      main.appendChild(el('p', { 'class': 'muted', style: 'margin:4px 0', text: t('Tap any box to see the full details.', 'किसी भी डिब्बे को दबाएँ, पूरी जानकारी दिखेगी।') }));
       main.appendChild(el('h2', { text: t('Today', 'आज') + ' · ' + (r.date || '') }));
       main.appendChild(el('div', { 'class': 'tiles' }, [
-        tile(t('Sales', 'बिक्री'), DF.money(r.salesTotal), true),
-        tile(t('Collected', 'जमा'), DF.money(r.collected), true),
-        tile(t('Bills', 'बिल'), String(r.salesCount || 0)),
-        tile(t('Pieces sold', 'बिके पीस'), String(r.salesPcs || 0)),
-        tile(t('Returns', 'वापसी'), DF.money(r.returnsTotal)),
-        tile(t('New tailoring orders', 'नए सिलाई ऑर्डर'), String(r.newOrdersToday || 0)),
-      ]));
+        tile(t('Sales', 'बिक्री'), DF.money(r.salesTotal), true, 'bills'), tile(t('Collected', 'जमा'), DF.money(r.collected), true, 'bills'),
+        tile(t('Bills', 'बिल'), String(r.salesCount || 0), false, 'bills'), tile(t('Pieces sold', 'बिके पीस'), String(r.salesPcs || 0), false, 'bills'),
+        tile(t('Returns', 'वापसी'), DF.money(r.returnsTotal), false, 'returns'), tile(t('New tailoring orders', 'नए सिलाई ऑर्डर'), String(r.newOrdersToday || 0), false, 'tlNew')]));
+      // expenses today (from this app)
+      var expT = el('div', { 'class': 'tiles', style: 'margin-top:10px' });
+      main.appendChild(expT);
+      loadExp().then(function (l) { var td = sum(l.filter(function (x) { return x.date === iso; }));
+        expT.appendChild(tile(t('Expenses today', 'आज के खर्चे'), DF.money(td), false, 'exp')); expT.appendChild(tile(t('Collected − expenses', 'जमा − खर्चे'), DF.money((r.collected || 0) - td), true, 'exp')); },
+        function () { expT.appendChild(tile(t('Expenses', 'खर्चे'), '+', false, 'exp')); });
       main.appendChild(el('h2', { text: t('Website orders', 'वेबसाइट ऑर्डर') }));
       main.appendChild(el('div', { 'class': 'tiles' }, [
-        tile(t('Online orders today', 'आज के ऑनलाइन ऑर्डर'), String(r.onlineOrdersToday || 0), true),
-        tile(t('Online sales today', 'आज की ऑनलाइन बिक्री'), DF.money(r.onlineSalesToday), true),
-        tile(t('Delivery boys\' cash today', 'डिलीवरी बॉय का कैश (आज)'), DF.money(r.riderCashToday)),
-        tile(t('Still open', 'अभी चालू'), String(r.onlineActive || 0), (r.onlineActive || 0) > 0),
-      ]));
-      var by = r.byMethod || {};
-      if (Object.keys(by).length) {
-        main.appendChild(el('h2', { text: t('Collected by method', 'तरीके के हिसाब से जमा') }));
-        main.appendChild(el('div', { 'class': 'card' }, [el('table', {}, Object.keys(by).map(function (m) {
-          return el('tr', {}, [el('td', { text: m }), el('td', { 'class': 'n', text: DF.money(by[m]) })]);
-        }))]));
-      }
-
+        tile(t('Online orders today', 'आज के ऑनलाइन ऑर्डर'), String(r.onlineOrdersToday || 0), true, 'webToday'), tile(t('Online sales today', 'आज की ऑनलाइन बिक्री'), DF.money(r.onlineSalesToday), true, 'webToday'),
+        tile(t('Delivery boys\' cash today', 'डिलीवरी बॉय का कैश (आज)'), DF.money(r.riderCashToday), false, 'rider'), tile(t('Still open', 'अभी चालू'), String(r.onlineActive || 0), (r.onlineActive || 0) > 0, 'webOpen')]));
       main.appendChild(el('h2', { text: t('Dues', 'बकाया') }));
       main.appendChild(el('div', { 'class': 'tiles' }, [
-        tile(t('Sales dues', 'बिक्री बकाया'), DF.money(r.dueSales)),
-        tile(t('Tailoring dues', 'सिलाई बकाया'), DF.money(r.dueOrders)),
-        tile(t('Customers with dues', 'बकाया वाले ग्राहक'), String(r.dueCustomers || 0)),
-        tile(t('Total dues', 'कुल बकाया'), DF.money((r.dueSales || 0) + (r.dueOrders || 0)), true),
-      ]));
-
+        tile(t('Sales dues', 'बिक्री बकाया'), DF.money(r.dueSales), false, 'dues'), tile(t('Tailoring dues', 'सिलाई बकाया'), DF.money(r.dueOrders), false, 'dues'),
+        tile(t('Customers with dues', 'बकाया वाले ग्राहक'), String(r.dueCustomers || 0), false, 'dues'), tile(t('Total dues', 'कुल बकाया'), DF.money((r.dueSales || 0) + (r.dueOrders || 0)), true, 'dues')]));
       main.appendChild(el('h2', { text: t('Tailoring orders', 'सिलाई ऑर्डर') }));
       main.appendChild(el('div', { 'class': 'tiles' }, [
-        tile(t('Open orders', 'चालू ऑर्डर'), String(r.ordersOpen || 0)),
-        tile(t('Ready', 'तैयार'), String(r.ordersReady || 0)),
-        tile(t('Delivery today', 'आज डिलीवरी'), String(r.deliveryToday || 0)),
-        tile(t('Late', 'लेट'), String(r.late || 0), (r.late || 0) > 0),
-      ]));
-
+        tile(t('Open orders', 'चालू ऑर्डर'), String(r.ordersOpen || 0), false, 'tlOpen'), tile(t('Ready', 'तैयार'), String(r.ordersReady || 0), false, 'tlReady'),
+        tile(t('Delivery today', 'आज डिलीवरी'), String(r.deliveryToday || 0), false, 'tlToday'), tile(t('Late', 'लेट'), String(r.late || 0), (r.late || 0) > 0, 'tlLate')]));
       main.appendChild(el('h2', { text: t('This month', 'इस महीने') }));
       main.appendChild(el('div', { 'class': 'tiles' }, [
-        tile(t('Sales', 'बिक्री'), DF.money(r.monthSales)),
-        tile(t('Collected', 'जमा'), DF.money(r.monthCollected)),
-        tile(t('Bills', 'बिल'), String(r.monthBills || 0)),
-        tile(t('Pieces in stock', 'स्टॉक में पीस'), String(r.stockPcs || 0)),
-      ]));
-
-      var recent = r.recent || [];
-      main.appendChild(el('h2', { text: t('Today\'s bills', 'आज के बिल') }));
-      main.appendChild(recent.length ? el('div', { 'class': 'card' }, [el('table', {}, [el('tr', {}, [
-          el('th', { text: t('No', 'नं') }), el('th', { text: t('Time', 'समय') }), el('th', { text: t('Customer', 'ग्राहक') }),
-          el('th', { 'class': 'n', text: t('Total', 'कुल') }), el('th', { 'class': 'n', text: t('Due', 'बाकी') })])].concat(recent.map(function (b) {
-          return el('tr', {}, [el('td', { text: String(b.no) }), el('td', { text: b.time || '' }), el('td', { text: b.name || '' }),
-            el('td', { 'class': 'n', text: DF.money(b.total) }), el('td', { 'class': 'n', text: b.due > 0 ? DF.money(b.due) : '–' })]);
-        })))]) : el('div', { 'class': 'empty', text: t('No bill yet today.', 'आज अभी कोई बिल नहीं।') }));
-
+        tile(t('Sales', 'बिक्री'), DF.money(r.monthSales), false, 'month'), tile(t('Collected', 'जमा'), DF.money(r.monthCollected), false, 'month'),
+        tile(t('Bills', 'बिल'), String(r.monthBills || 0), false, 'month'), tile(t('Pieces in stock', 'स्टॉक में पीस'), String(r.stockPcs || 0), false, 'low')]));
+      main.appendChild(el('button', { 'class': 'gold big', style: 'margin-top:14px', text: '🧾 ' + t('Expenses – add / see all', 'खर्चे – जोड़ें / सब देखें'), onclick: function () { view = 'exp'; showDetail(); } }));
       var low = r.lowStock || [];
-      main.appendChild(el('h2', { text: t('Low stock', 'कम स्टॉक') + ' (' + low.length + ')' }));
-      main.appendChild(low.length ? el('div', { 'class': 'card' }, [el('table', {}, [el('tr', {}, [
-          el('th', { text: t('Item', 'आइटम') }), el('th', { text: t('Size', 'साइज़') }), el('th', { 'class': 'n', text: t('Left', 'बचा') })])].concat(low.map(function (i) {
-          return el('tr', {}, [el('td', { text: (i.webCode ? i.webCode + ' ' : '') + i.name + (i.colour ? ' · ' + i.colour : '') }), el('td', { text: i.size || '' }),
-            el('td', { 'class': 'n', html: i.stock <= 0 ? '<b style="color:#b3261e">' + i.stock + '</b>' : String(i.stock) })]);
-        })))]) : el('div', { 'class': 'empty', text: t('Nothing is low.', 'कुछ भी कम नहीं है।') }));
+      main.appendChild(el('button', { 'class': 'big', style: 'margin-top:8px', text: '⚠ ' + t('Low stock', 'कम स्टॉक') + ' (' + low.length + ')', onclick: function () { view = 'low'; showDetail(); } }));
     }, function (e) {
       main.innerHTML = '';
-      main.appendChild(el('div', { 'class': 'card' }, [el('b', { text: e.message }),
-        el('p', { 'class': 'muted', text: e.status === 404 ? t('Open TailorShop on the shop PC (with internet); it sends the report every few minutes.', 'दुकान के कंप्यूटर पर TailorShop खोलें (इंटरनेट के साथ); वह हर कुछ मिनट में रिपोर्ट भेजता है।') : '' })]));
+      main.appendChild(el('div', { 'class': 'card' }, [el('b', { text: e.message })]));
     });
     clearTimeout(timer);
-    timer = setTimeout(function () { if (document.visibilityState === 'visible') draw(); }, 120000);
+    timer = setTimeout(function () { if (document.visibilityState === 'visible' && !view) draw(); }, 120000);
   }
 
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && DF.session()) draw(); });
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && DF.session() && !view) draw(); });
   DF.registerSW();
   start();
 })();

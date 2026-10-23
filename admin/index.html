@@ -1590,7 +1590,7 @@ function drawKarigars(main){
       el('b',{style:'font-size:16px',text:L('देना है: ')+rupees(Math.max(0, earn-dsum))}) ]);
     var wlist = ws.length ? el('details',{style:'margin:4px 0'},[ el('summary',{'class':'small',text:L('इस महीने का काम')+' ('+ws.length+')'}) ].concat(ws.slice(0,80).map(function(w){ return el('div',{'class':'row small',style:'justify-content:space-between;border-bottom:1px dashed var(--line);padding:4px 0'},[ el('span',{text:String(w.day||'').split('-').reverse().join('-')+' · '+w.bid+' · '+tName(w.k)+(w.grp?' · '+gName(w.grp):'')+' · '+w.pcs+' '+L('पीस')}), el('span',null,[ el('b',{text:rupees(workAmt(w))}), ' ', el('button',{'class':'btn b-sm b-line',type:'button',text:'✕',onclick:function(){ if (confirm(L('यह एंट्री हटाएँ?'))) db.collection('karigars').doc(k._id).collection('work').doc(w._id).delete(); }}) ]) ]); }))) : null;
     body.appendChild(el('div',{'class':'card',style:on?'':'opacity:.7'},[
-      el('div',{'class':'row',style:'justify-content:space-between'},[ el('div',null,[ el('b',{text:k.name}), el('div',{'class':'small muted',text:[rkName(k.rk||'tailor'), k.phone].filter(Boolean).join(' · ')}) ]), el('span',{'class':'st '+(on?'ok':'bad'),text:on?L('चालू'):L('ब्लॉक')}) ]),
+      el('div',{'class':'row',style:'justify-content:space-between'},[ el('div',{'class':'row'},[ personPhoto('karigars', k._id, k), el('div',null,[ el('b',{text:k.name}), el('div',{'class':'small muted',text:[rkName(k.rk||'tailor'), k.phone].filter(Boolean).join(' · ')}) ]) ]), el('span',{'class':'st '+(on?'ok':'bad'),text:on?L('चालू'):L('ब्लॉक')}) ]),
       mineBox, wlist,
       dedOf(k._id).length ? el('details',{style:'margin:4px 0 8px'},[ el('summary',{'class':'small',text:L('कटौती की लिस्ट')+' ('+dedOf(k._id).length+')'}) ].concat(dedOf(k._id).slice(0,30).map(function(d){ return el('div',{'class':'row small',style:'justify-content:space-between;border-bottom:1px dashed var(--line);padding:4px 0'},[ el('span',{text:String(d.date||'').split('-').reverse().join('-')+' · '+d.reason+(d.bookingId?' · '+d.bookingId:'')}), el('span',null,[ el('b',{style:'color:var(--bad)',text:'−'+rupees(d.amount)}), ' ', el('button',{'class':'btn b-sm b-line',type:'button',text:'✕',title:L('हटाएँ'),onclick:function(){ if (confirm(L('यह कटौती हटाएँ?'))) db.collection('karigars').doc(k._id).collection('deductions').doc(d._id).delete(); }}) ]) ]); }))) : null,
       el('div',{'class':'row'},[
@@ -1604,6 +1604,64 @@ function drawKarigars(main){
   });
 }
 
+/* ---------- people photos (karigar / delivery boy / staff): shown in their own app ---------- */
+function squareShot(file){ return fileToData(file).then(function(d){ return new Promise(function(res, rej){ var im = new Image(); im.onload = function(){ var S = 320, m = Math.min(im.width, im.height), c = document.createElement('canvas'); c.width = S; c.height = S;
+  c.getContext('2d').drawImage(im, (im.width - m)/2, (im.height - m)/2, m, m, 0, 0, S, S); res(c.toDataURL('image/jpeg', .8)); }; im.onerror = rej; im.src = d; }); }); }
+function personPhoto(coll, id, person){
+  var fi = el('input',{type:'file',accept:'image/*',style:'display:none'});
+  var av = person.photo ? el('img',{src:person.photo,alt:'',style:'width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)'})
+                        : el('div',{style:'width:56px;height:56px;border-radius:50%;background:var(--gold-soft,#F3EAD6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:var(--gold)',text:String(person.name||'?').trim().charAt(0).toUpperCase()});
+  fi.onchange = function(){ if (!fi.files[0]) return; squareShot(fi.files[0]).then(function(d){ return db.collection(coll).doc(id).update({photo:d}); }).catch(function(e){ alert(e.message || e); }); };
+  return el('button',{type:'button',title:SL('फ़ोटो लगाएँ / बदलें','Add / change photo'),style:'all:unset;cursor:pointer;position:relative;flex:none',onclick:function(){ fi.click(); }},[ av, el('span',{style:'position:absolute;right:-2px;bottom:-2px;background:var(--surface);border-radius:50%;font-size:13px;padding:2px',text:'📷'}), fi ]);
+}
+/* ---------- delivery boy: work, km and cash ---------- */
+var riderCash = {}, riderDays = {}, rmonth = '';
+function dayKey(iso){ var d = new Date(iso || 0); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function oneWayKm(o){ var sl = +cfg.shopLat || 27.2019871, sg = +cfg.shopLng || 83.3498289; if (!(o.loc && o.loc.lat)) return +o.distKm || 0;
+  var R = 6371, r = Math.PI/180, dLa = (o.loc.lat-sl)*r, dLo = (o.loc.lng-sg)*r, h = Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(sl*r)*Math.cos(o.loc.lat*r)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return Math.round(2*R*Math.asin(Math.sqrt(h))*1.25*10)/10; }
+function riderWork(r){
+  if (!rmonth) rmonth = new Date().toISOString().slice(0,7);
+  var box = el('div');
+  var mine = orders.filter(function(o){ return o.rider === r._id && o.status === 'delivered'; });
+  var allCash = mine.reduce(function(a, o){ return a + (o.cashGot||0); }, 0), dep = (riderCash[r._id] || []), gave = dep.reduce(function(a, x){ return a + (+x.amount||0); }, 0), withHim = Math.max(0, allCash - gave);
+  var mi = el('input',{type:'month',value:rmonth,style:'max-width:170px'}); mi.onchange = function(){ rmonth = mi.value || new Date().toISOString().slice(0,7); redraw(); };
+  var dl = mine.filter(function(o){ return dayKey(o.deliveredAt).slice(0,7) === rmonth; }), rp = orders.filter(function(o){ return o.retRider === r._id && o.retAt && dayKey(o.retAt).slice(0,7) === rmonth; });
+  var km = dl.concat(rp).reduce(function(a, o){ return a + oneWayKm(o)*2; }, 0), gd = riderDays[r._id] || {}, gkm = Object.keys(gd).filter(function(d){ return d.slice(0,7) === rmonth; }).reduce(function(a, d){ return a + (+gd[d].km||0); }, 0);
+  box.appendChild(el('div',{'class':'kpis',style:'margin:8px 0'},[
+    el('div',{'class':'kpi'},[ el('b',{text:rupees(withHim)}), el('span',{text:SL('उसके पास कैश (जमा बाकी)','Cash with him (to give)')}) ]),
+    el('div',{'class':'kpi'},[ el('b',{text:rupees(allCash)}), el('span',{text:SL('कुल कैश लिया','Total cash taken')}) ]),
+    el('div',{'class':'kpi'},[ el('b',{text:rupees(gave)}), el('span',{text:SL('दुकान पर दिया','Given at shop')}) ]) ]));
+  box.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-sm b-ok',type:'button',text:'💵 '+SL('कैश जमा लिया','Cash received'),onclick:function(){
+      var a = prompt(SL('कितना कैश लिया? (₹)','How much cash did he give? (₹)'), withHim ? String(withHim) : ''); if (a === null) return; var n = parseFloat(a); if (!(n > 0)) return;
+      db.collection('riders').doc(r._id).collection('ridercash').add({amount:n, at:now(), by:(me && me.email) || 'owner', note:''}).catch(function(e){ alert(e.message+L(' (Firestore Rules अपडेट करें)')); }); }}),
+    el('b',{text:SL('महीना','Month')}), mi ]));
+  box.appendChild(el('div',{'class':'small',style:'margin:6px 0',text:dl.length+SL(' डिलीवरी',' deliveries')+(rp.length?' · '+rp.length+SL(' वापसी उठाई',' returns picked'):'')+' · '+SL('कैश ','cash ')+rupees(dl.reduce(function(a,o){ return a+(o.cashGot||0); },0))+' · ≈'+(Math.round(km*10)/10)+' km'+(gkm?' · GPS '+(Math.round(gkm*10)/10)+' km':'')}));
+  var rows = dl.map(function(o){ return {at:o.deliveredAt, t:'📦 '+o.id+' · '+(o.name||'')+' · '+[o.addr,o.pin].filter(Boolean).join(', '), v:(o.cashGot?rupees(o.cashGot)+' · ':'')+'≈'+Math.round(oneWayKm(o)*2*10)/10+' km'}; })
+    .concat(rp.map(function(o){ return {at:o.retAt, t:'↩ '+o.id+' · '+(o.name||''), v:'≈'+Math.round(oneWayKm(o)*2*10)/10+' km'}; }))
+    .concat(dep.filter(function(x){ return dayKey(x.at).slice(0,7) === rmonth; }).map(function(x){ return {at:x.at, t:'💵 '+SL('दुकान पर जमा','Given at shop'), v:rupees(x.amount)}; }))
+    .sort(function(a, b){ return String(b.at||'').localeCompare(String(a.at||'')); });
+  box.appendChild(rows.length ? el('details',null,[ el('summary',{'class':'small',text:SL('पूरा काम','Full work')+' ('+rows.length+')'}) ].concat(rows.map(function(x){ return el('div',{'class':'row small',style:'justify-content:space-between;border-bottom:1px dashed var(--line);padding:4px 0'},[ el('span',{text:when(x.at)+' · '+x.t}), el('b',{text:x.v}) ]); })))
+    : el('p',{'class':'muted small',text:SL('इस महीने अभी कोई काम नहीं।','No work this month yet.')}));
+  box.appendChild(el('p',{'class':'muted small',text:SL('km = दुकान से ग्राहक तक आना-जाना (अंदाज़न)। GPS = Rider ऐप खुला रहने पर असल में चला रास्ता।','km = shop to customer and back (approx.). GPS = distance actually travelled while the Rider app was open.')}));
+  return box;
+}
+/* ---------- staff: what each one did ---------- */
+var staffLog = [], smonth = '';
+function staffWork(email){
+  if (!smonth) smonth = new Date().toISOString().slice(0,7);
+  var mine = staffLog.filter(function(x){ return x.email === email && String(x.day||'').slice(0,7) === smonth; });
+  var days = {}; mine.forEach(function(x){ days[x.day] = 1; });
+  var c = function(k){ return mine.filter(function(x){ return x.kind === k; }).length; };
+  var mi = el('input',{type:'month',value:smonth,style:'max-width:170px'}); mi.onchange = function(){ smonth = mi.value || new Date().toISOString().slice(0,7); redraw(); };
+  var box = el('div',{style:'margin:8px 0'},[ el('div',{'class':'row'},[ el('b',{text:SL('महीना','Month')}), mi ]),
+    el('div',{'class':'small',style:'margin:6px 0',text:Object.keys(days).length+SL(' दिन ऐप खोला',' days opened the app')+' · '+c('photo')+SL(' फ़ोटो भेजीं',' photos sent')+' · '+c('item')+SL(' नए आइटम',' new items')+' · '+c('scan')+SL(' स्कैन',' scans')}) ]);
+  var names = {open:SL('ऐप खोला','Opened app'), photo:SL('फ़ोटो भेजी','Sent photo'), item:SL('नया आइटम','New item'), scan:SL('बारकोड स्कैन','Scanned')};
+  if (mine.length) box.appendChild(el('details',null,[ el('summary',{'class':'small',text:SL('पूरा काम','Full work')+' ('+mine.length+')'}) ].concat(mine.slice().sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); }).slice(0,150).map(function(x){
+    return el('div',{'class':'small',style:'border-bottom:1px dashed var(--line);padding:4px 0',text:when(x.at)+' · '+(names[x.kind]||x.kind)+(x.code?' · '+x.code:'')+(x.item?' · '+x.item+(x.qty?' × '+x.qty:''):'')+(x.n?' · '+x.n+SL(' फ़ोटो',' photos'):'')}); }))));
+  else box.appendChild(el('p',{'class':'muted small',text:SL('इस महीने DF Staff ऐप में अभी कोई काम नहीं।','No work in the DF Staff app this month yet.')}));
+  return box;
+}
 /* ---------- staff (DF Staff / DF Tailoring / DF Reports logins) – no rules editing needed ---------- */
 var staffList = [], STAFF_APPS = 'https://apps.diamondfashions.in/';
 function staffAuth(){ var a = firebase.apps.filter(function(x){ return x.name === 'staffmaker'; })[0] || firebase.initializeApp(CFG, 'staffmaker'); return a.auth(); }
@@ -1647,7 +1705,8 @@ function drawStaff(main){
   staffList.forEach(function(st){
     var on = st.active !== false;
     main.appendChild(el('div',{'class':'card',style:on?'':'opacity:.7'},[
-      el('div',{'class':'row',style:'justify-content:space-between'},[ el('div',null,[ el('b',{text:st.name||st._id}), el('div',{'class':'small muted',text:st._id}) ]), el('span',{'class':'st '+(on?'ok':'bad'),text:on?L('चालू'):L('ब्लॉक')}) ]),
+      el('div',{'class':'row',style:'justify-content:space-between'},[ el('div',{'class':'row'},[ personPhoto('staff', st._id, st), el('div',null,[ el('b',{text:st.name||st._id}), el('div',{'class':'small muted',text:st._id}) ]) ]), el('span',{'class':'st '+(on?'ok':'bad'),text:on?L('चालू'):L('ब्लॉक')}) ]),
+      staffWork(st._id),
       el('div',{'class':'row',style:'margin-top:8px'},[
         on ? el('button',{'class':'btn b-sm b-bad',type:'button',text:'🚫 '+L('ब्लॉक करें'),onclick:function(){ if (confirm(L('ब्लॉक करें? उसके स्टाफ ऐप तुरंत बंद हो जाएँगे।'))) db.collection('staff').doc(st._id).update({active:false}); }})
            : el('button',{'class':'btn b-sm b-ok',type:'button',text:'✓ '+L('अनब्लॉक करें'),onclick:function(){ db.collection('staff').doc(st._id).update({active:true}); }}),
@@ -1683,7 +1742,8 @@ function drawRiders(main){
     var today = new Date().toDateString(), doneT = doneL.filter(function(o){ return o.deliveredAt && new Date(o.deliveredAt).toDateString() === today; });
     var cash = doneT.reduce(function(a, o){ return a + (o.cashGot||0); }, 0);
     main.appendChild(el('div',{'class':'card',style:on?'':'opacity:.7'},[
-      el('div',{'class':'row',style:'justify-content:space-between'},[ el('div',null,[ el('b',{text:r.name||r._id}), el('div',{'class':'small muted',text:r._id+(r.phone?' · '+r.phone:'')}) ]), el('span',{'class':'st '+(on?'ok':'bad'),text:on?L('चालू'):L('ब्लॉक')}) ]),
+      el('div',{'class':'row',style:'justify-content:space-between'},[ el('div',{'class':'row'},[ personPhoto('riders', r._id, r), el('div',null,[ el('b',{text:r.name||r._id}), el('div',{'class':'small muted',text:r._id+(r.phone?' · '+r.phone:'')}) ]) ]), el('span',{'class':'st '+(on?'ok':'bad'),text:on?L('चालू'):L('ब्लॉक')}) ]),
+      riderWork(r),
       el('div',{'class':'small',style:'margin:8px 0',text:L('अभी ले गया: ')+going+' · '+L('आज पहुँचाए: ')+doneT.length+' · '+L('आज कैश: ')+rupees(cash)+' · '+L('कुल पहुँचाए: ')+doneL.length}),
       el('div',{'class':'row'},[
         on ? el('button',{'class':'btn b-sm b-bad',type:'button',text:'🚫 '+L('ब्लॉक करें'),onclick:function(){ if (confirm(L('इसे ब्लॉक करें? इसका ऐप तुरंत बंद हो जाएगा।'))) db.collection('riders').doc(r._id).update({active:false, blockedAt:now()}); }})
@@ -2542,6 +2602,9 @@ function listen(){
   unsubs.push(db.collection('staff').onSnapshot(function(s){ staffList = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name||'').localeCompare(String(b.name||'')); }); if (tab === 'staff') redraw(); }, function(){}));
   unsubs.push(db.collection('riders').onSnapshot(function(s){ riders = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name||a._id).localeCompare(String(b.name||b._id)); }); if (tab === 'riders') redraw(); }, function(){}));
   unsubs.push(db.collection('config').doc('shop').onSnapshot(function(s){ var before = JSON.stringify((cfg && cfg.admHide) || []); cfg = s.exists ? s.data() : {}; if (tab === 'banners' || before !== JSON.stringify(cfg.admHide || [])) redraw(); }));
+  unsubs.push(db.collectionGroup('ridercash').onSnapshot(function(s){ riderCash = {}; s.docs.forEach(function(d){ var k = d.ref.parent.parent.id; (riderCash[k] = riderCash[k] || []).push(d.data()); }); if (tab === 'riders') redraw(); }, function(){}));
+  unsubs.push(db.collectionGroup('riderdays').onSnapshot(function(s){ riderDays = {}; s.docs.forEach(function(d){ var k = d.ref.parent.parent.id; (riderDays[k] = riderDays[k] || {})[d.id] = d.data(); }); if (tab === 'riders') redraw(); }, function(){}));
+  unsubs.push(db.collection('stafflog').orderBy('at','desc').limit(3000).onSnapshot(function(s){ staffLog = s.docs.map(function(d){ return d.data(); }); if (tab === 'staff') redraw(); }, function(){}));
   unsubs.push(db.collection('cards').onSnapshot(function(s){ cards = s.docs.map(function(d){ return d.data(); }); if (tab === 'cards') redraw(); }, function(){}));
   unsubs.push(db.collection('reviews').orderBy('created','desc').limit(500).onSnapshot(function(s){ reviews = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'reviews') redraw(); }, function(){}));
   unsubs.push(db.collection('config').onSnapshot(function(s){ bundles = s.docs.filter(function(d){ return d.id.indexOf('bundle_') === 0; }).map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); });

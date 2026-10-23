@@ -168,11 +168,11 @@ function filterBar(main){
 function draw(){
   var y = window.scrollY; app.innerHTML = '';
   var inst = IS_APP ? null : el('button',{'class':'pill gold',type:'button',text:'📲 '+L('ऐप इंस्टॉल करें','Install app'),onclick:function(){ if (instEvt){ instEvt.prompt(); } else alert(L('Chrome में ⋮ → “Install app” या “Add to Home screen” दबाएँ।','In Chrome tap ⋮ → “Install app” or “Add to Home screen”.')); }});
-  app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[ el('div',{'class':'brand',html:'DIAMOND<small>'+L('कारीगर','TAILOR')+'</small>'}),
+  app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[ el('div',{'class':'brand'},[ 'DIAMOND', el('small',{text:(me && me.name) ? String(me.name).toUpperCase() : L('कारीगर','TAILOR')}) ]),
     el('div',{'class':'hb'},[ inst, el('button',{'class':'pill',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('k-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}) ]) ]) ]));
   app.appendChild(el('nav',{'class':'tabs'},[ ['add','➕ '+L('काम जोड़ें','Add work')],['work',L('मेरा हिसाब','My work')],['ded',L('कटौती','Deductions')] ].map(function(t){ return el('button',{type:'button','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); }},[ t[1] ]); })));
   var main = el('main',{'class':'wrap'}); app.appendChild(main);
-  main.appendChild(el('div',{'class':'hello'},[ el('div',{'class':'av',text:String(me.name||'?').trim().charAt(0).toUpperCase()}), el('div',null,[ el('b',{text:L('नमस्ते, ','Hello, ')+(me.name||'')+L(' जी','')}), el('small',{text:[me.role, L('डायमंड फैशन्स','Diamond Fashions')].filter(Boolean).join(' · ')}) ]) ]));
+  main.appendChild(el('div',{'class':'hello'},[ me.photo ? el('img',{'class':'av',src:me.photo,alt:'',style:'object-fit:cover;padding:0'}) : el('div',{'class':'av',text:String(me.name||'?').trim().charAt(0).toUpperCase()}), el('div',null,[ el('b',{text:L('नमस्ते, ','Hello, ')+(me.name||'')+L(' जी','')}), el('small',{text:[me.role, L('डायमंड फैशन्स','Diamond Fashions')].filter(Boolean).join(' · ')}) ]) ]));
   var m0 = today().slice(0,7), mw = work.filter(function(w){ return String(w.day||'').slice(0,7) === m0; }), md = deds.filter(function(d){ return String(d.date||'').slice(0,7) === m0; });
   var mEarn = mw.reduce(function(a,w){ return a+wAmt(w); },0), mDed = md.reduce(function(a,d){ return a+(+d.amount||0); },0);
   main.appendChild(el('div',{'class':'sum'},[ el('div',null,[ el('b',{text:String(mw.reduce(function(a,w){ return a+(+w.pcs||0); },0))}), el('span',{text:L('इस महीने पीस','Pcs this month')}) ]),
@@ -345,10 +345,26 @@ function scan(){
     });
   }).catch(function(e){ close(); alert(L('कैमरा नहीं खुला — इजाज़त दें या नंबर लिखें।','Camera did not open — allow it or type the number.')); });
 }
+
+/* the installed app carries the person's own name (and the phone's home-screen label) */
+function personalise(name, manifest, startUrl){
+  if (!name) return; document.title = name + ' – Diamond Fashions';
+  var mt = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if (mt) mt.setAttribute('content', String(name).split(' ')[0].slice(0, 12));
+  if (personalise.done === name) return; personalise.done = name;
+  var link = document.querySelector('link[rel="manifest"]'); if (!window.fetch || !window.Blob) return; if (!link){ link = document.createElement('link'); link.rel = 'manifest'; document.head.appendChild(link); }
+  var base = new URL(manifest, location.href).href;
+  fetch(base).then(function(r){ return r.json(); }).then(function(j){
+    var abs = function(u){ return new URL(u, base).href; };
+    j.name = name + ' · Diamond Fashions'; j.short_name = String(name).split(' ')[0].slice(0, 12);
+    j.start_url = startUrl || abs(j.start_url); j.scope = abs(j.scope || './'); if (j.id) j.id = abs(j.id);
+    (j.icons || []).forEach(function(ic){ ic.src = abs(ic.src); });
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(j)], {type:'application/manifest+json'}));
+  }).catch(function(){});
+}
 if (!tok){ screen('🔗', L('लिंक अधूरा है','Link is incomplete'), L('दुकान से भेजा गया पूरा लिंक खोलें।','Open the full link the shop sent you.')); return; }
 db.collection('karigars').doc(tok).onSnapshot(function(s){
   if (!s.exists){ screen('🚫', L('यह लिंक बंद है','This link is closed'), L('दुकान मालिक से नया लिंक माँगें।','Ask the shop owner for a new link.')); return; }
-  var first = !me; me = s.data();
+  var first = !me; me = s.data(); personalise(me.name, 'manifest.webmanifest', location.href);
   if (first){
     db.collection('karigars').doc(tok).collection('deductions').onSnapshot(function(q){ deds = []; q.forEach(function(d){ var x = d.data(); x._id = d.id; deds.push(x); }); draw(); }, function(){});
     db.collection('tjobs').where('open', '==', true).onSnapshot(function(q){ openJobs = []; q.forEach(function(d){ var x = d.data(); x.bid = x.bid || d.id; openJobs.push(x); });

@@ -129,6 +129,9 @@ var DF = (function () {
     return authed('POST', FS + '/' + coll, { fields: f }).then(docOf);
   }
 
+  /** Delete one document (e.g. a wrong expense entry). */
+  function del(path) { return authed('DELETE', FS + '/' + path); }
+
   // ---------------------------------------------------------------- photos
   /** A picture made at most 900 px and JPEG (upright as the camera took it): "data:image/jpeg;base64,…". */
   function shrink(file, max, quality) {
@@ -223,7 +226,7 @@ var DF = (function () {
 
   return {
     t: t, setLang: setLang, getLang: getLang, session: session, signIn: signIn, signOut: signOut,
-    get: get, list: list, add: add, enc: enc, dec: dec, shrink: shrink, fit: fit,
+    get: get, list: list, add: add, del: del, enc: enc, dec: dec, shrink: shrink, fit: fit,
     el: el, money: money, toast: toast, loginScreen: loginScreen, header: header, registerSW: registerSW,
   };
 })();

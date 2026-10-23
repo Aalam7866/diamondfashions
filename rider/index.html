@@ -91,7 +91,7 @@ firebase.initializeApp(CFG);
 var auth = firebase.auth(), db = firebase.firestore();
 try { db.settings({experimentalAutoDetectLongPolling:true, merge:true}); } catch(e){}
 var app = document.getElementById('app');
-var riderUnsub = null, me = null, myEmail = '', rider = null, tab = 'ready', ready = [], mine = [], rets = [], myRets = [], unsubs = [], seen = null, seenR = null;
+var riderUnsub = null, me = null, myEmail = '', rider = null, tab = 'ready', ready = [], mine = [], rets = [], myRets = [], deposits = [], gpsDays = {}, unsubs = [], seen = null, seenR = null, hmonth = '';
 var IS_APP = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 var instEvt = null, sw = null;
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', {scope:'./'}).then(function(r){ sw = r; }).catch(function(){});
@@ -100,6 +100,23 @@ window.addEventListener('appinstalled', function(){ instEvt = null; IS_APP = tru
 
 var LANG = (function(){ try { return localStorage.getItem('rider-lang') || 'hi'; } catch(e){ return 'hi'; } })();
 var EN = {"📲 ऐप इंस्टॉल करें": "📲 Install app", "iPhone पर: नीचे Share (□↑) दबाएँ → “Add to Home Screen” चुनें।": "On iPhone: tap Share (□↑) → “Add to Home Screen”.", "Chrome में ऊपर दाईं ओर ⋮ दबाएँ → “Install app” या “Add to Home screen” → “Install”। होम स्क्रीन पर DF Rider आ जाएगा।": "In Chrome tap ⋮ (top right) → “Install app” or “Add to Home screen” → “Install”. DF Rider will appear on your home screen.", "डिलीवरी बॉय का लॉग-इन। वही Gmail चुनें जो दुकान मालिक ने Admin में जोड़ा है।": "Delivery staff login. Choose the same Gmail that the shop owner added in Admin.", "<span>Google से लॉग-इन करें</span>": "<span>Log in with Google</span>", "लॉग-इन नहीं हुआ: ": "Could not log in: ", "लॉग-इन: ": "Logged in: ", "दुकान मालिक से बात करें: +91 88741 29818": "Talk to the shop owner: +91 88741 29818", "WhatsApp करें": "WhatsApp", "दूसरे Gmail से लॉग-इन": "Log in with another Gmail", "🔔 सूचना चालू": "🔔 Turn on alerts", "लॉग-आउट": "Logout", "लॉग-आउट करें?": "Log out?", "पिकअप के लिए तैयार": "Ready for pickup", "मेरी डिलीवरी": "My deliveries", "पूरी हुई": "Completed", "उठाने हैं": "To pick up", "रास्ते में": "On the way", "आज पहुँचाए · ": "Delivered today · ", "अभी कोई पार्सल तैयार नहीं। जब दुकान पर पार्सल पैक होगा, यहाँ आ जाएगा (आवाज़ के साथ)।": "No parcel ready yet. When a parcel is packed at the shop it will appear here (with a sound).", "अभी आपके पास कोई डिलीवरी नहीं। “पिकअप के लिए तैयार” से पार्सल उठाएँ।": "You have no deliveries right now. Pick up a parcel from “Ready for pickup”.", "अभी कोई डिलीवरी पूरी नहीं हुई।": "No deliveries completed yet.", "पैक – उठाना है": "Packed – pick up", "पहुँच गया": "Delivered", "ग्राहक": "Customer", "पता": "Address", "दूरी": "Distance", " (दुकान से)": " (from shop)", "नोट": "Note", "पहुँचाया": "Delivered at", "💵 ग्राहक से लेना है": "💵 Collect from customer", "✓ पैसे पहले ही मिल गए": "✓ Already paid", "💵 लिया": "💵 Collected", "📞 कॉल": "📞 Call", "🧭 रास्ता": "🧭 Directions", "📦 पार्सल उठाया – डिलीवरी शुरू": "📦 Picked up – start delivery", " कैश ले लिया": " cash collected", "✓ डिलीवर हो गया": "✓ Delivered", "पहले कैश लेकर ✓ लगाएँ।": "Collect the cash first and tick ✓.", "↩ वापस दुकान": "↩ Back to shop", "यह पार्सल वापस दुकान पर लौटा रहे हैं?": "Return this parcel to the shop?", "नहीं हुआ: ": "Failed: ", " (शायद किसी और ने उठा लिया)": " (maybe someone else picked it up)", "📦 नया पार्सल तैयार": "📦 New parcel ready", "ऑर्डर नहीं खुले (": "Could not load orders (", "आपका Gmail अभी डिलीवरी लिस्ट में नहीं है": "Your Gmail is not on the delivery list yet", "आपको दुकान मालिक ने ब्लॉक किया है": "You have been blocked by the shop owner"};
+
+/* the installed app carries the person's own name (and the phone's home-screen label) */
+function personalise(name, manifest, startUrl){
+  if (!name) return; document.title = name + ' – Diamond Fashions';
+  var mt = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if (mt) mt.setAttribute('content', String(name).split(' ')[0].slice(0, 12));
+  if (personalise.done === name) return; personalise.done = name;
+  var link = document.querySelector('link[rel="manifest"]'); if (!window.fetch || !window.Blob) return; if (!link){ link = document.createElement('link'); link.rel = 'manifest'; document.head.appendChild(link); }
+  var base = new URL(manifest, location.href).href;
+  fetch(base).then(function(r){ return r.json(); }).then(function(j){
+    var abs = function(u){ return new URL(u, base).href; };
+    j.name = name + ' · Diamond Fashions'; j.short_name = String(name).split(' ')[0].slice(0, 12);
+    j.start_url = startUrl || abs(j.start_url); j.scope = abs(j.scope || './'); if (j.id) j.id = abs(j.id);
+    (j.icons || []).forEach(function(ic){ ic.src = abs(ic.src); });
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(j)], {type:'application/manifest+json'}));
+  }).catch(function(){});
+}
+Object.assign(EN, {"💵 मेरा हिसाब":"💵 My account","महीना":"Month","डिलीवरी":"Deliveries"," वापसी":" returns","कैश लिया":"Cash taken","अंदाज़न km":"Approx. km","तारीख":"Date","कैश":"Cash","इस महीने अभी कोई काम नहीं।":"No work this month yet.","km = दुकान से ग्राहक तक आना-जाना (नक्शे से अंदाज़न)। GPS = ऐप खुला रहने पर असल में चला हुआ रास्ता।":"km = shop to customer and back (approx. from the map). GPS = distance actually travelled while the app was open.","दुकान पर जमा किया":"Given at the shop","इस महीने अभी कुछ जमा नहीं।":"Nothing given this month yet.","कुल कैश लिया ":"Total cash taken ","दुकान पर दिया ":"Given to shop ","💵 आपके पास (दुकान पर जमा करना है)":"💵 With you (to give at the shop)","✓ सारा कैश दुकान पर जमा":"✓ All cash given to the shop","राइडर":"Rider"});
 Object.assign(EN, {"↩ वापसी उठानी है":"↩ Returns to pick up","अभी कोई वापसी नहीं। जब दुकान मालिक वापसी मंज़ूर करेंगे, यहाँ आ जाएगी (आवाज़ के साथ)।":"No returns right now. When the owner approves a return it appears here (with a sound).","↩ वापसी – ग्राहक से उठानी है":"↩ Return – pick up from customer","↩ वापसी – दुकान ले जाएँ":"↩ Return – take to shop","वापसी दुकान पर जमा":"Return handed in at shop","वापसी का सामान":"Item to return","ऊपर लिखा सामान":"Items above","कारण":"Reason","💵 ग्राहक से कोई पैसा नहीं लेना/देना (पैसे दुकान बैंक में भेजेगी)":"💵 No cash to take or give (the shop refunds by bank)","↩ ग्राहक से वापसी का सामान ले लिया":"↩ Collected the return from customer","सामान चेक करके ले लिया?":"Checked and collected the item?","यह सामान दुकान पर जमा करें। दुकान मालिक “सामान वापस आया” दबाएँगे।":"Hand this item in at the shop. The owner will mark it “returned”."});
 function L(h){ return LANG === 'en' && EN[h] !== undefined ? EN[h] : h; }
 function langBtn(cls){ return el('button',{'class':cls||'pill',type:'button',text:LANG==='en'?'हिंदी':'English',onclick:function(){ try { localStorage.setItem('rider-lang', LANG==='en'?'hi':'en'); } catch(e){} location.reload(); }}); }
@@ -120,6 +137,55 @@ function toCollect(o){
 function mapsTo(o){
   if (o.loc && o.loc.lat) return 'https://www.google.com/maps/dir/?api=1&destination='+o.loc.lat+','+o.loc.lng;
   return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([o.addr, o.land, o.pin].filter(Boolean).join(', '));
+}
+function kmNum(o){ // one way, shop → customer (road ≈ straight line × 1.25)
+  if (!(o.loc && o.loc.lat)) return +o.distKm || 0;
+  var R = 6371, r = Math.PI/180, a = o.loc, dLa = (a.lat-SHOP.lat)*r, dLo = (a.lng-SHOP.lng)*r;
+  var x = Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(SHOP.lat*r)*Math.cos(a.lat*r)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return Math.round(2*R*Math.asin(Math.sqrt(x))*1.25*10)/10;
+}
+function dayOf(iso){ var d = new Date(iso || 0); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayKey(){ return dayOf(new Date().toISOString()); }
+/* GPS km: counted only while the app is open and you have a parcel / return with you */
+var gpsWatch = null, gpsLast = null, gpsKm = 0, gpsSaved = 0, gpsDay = '';
+function gpsTick(){
+  var busy = mine.some(function(o){ return o.status === 'shipped'; }) || myRets.some(function(o){ return o.status === 'return_pick'; });
+  if (!busy || document.visibilityState !== 'visible' || !navigator.geolocation){ if (gpsWatch !== null){ navigator.geolocation.clearWatch(gpsWatch); gpsWatch = null; gpsLast = null; } return; }
+  if (gpsWatch !== null) return;
+  gpsWatch = navigator.geolocation.watchPosition(function(p){
+    var c = p.coords; if (c.accuracy > 60) return;
+    var day = todayKey(); if (day !== gpsDay){ gpsDay = day; gpsKm = (gpsDays[day] && gpsDays[day].km) || 0; gpsLast = null; }
+    if (gpsLast){ var R = 6371, r = Math.PI/180, dLa = (c.latitude-gpsLast.lat)*r, dLo = (c.longitude-gpsLast.lng)*r;
+      var h = Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(gpsLast.lat*r)*Math.cos(c.latitude*r)*Math.sin(dLo/2)*Math.sin(dLo/2), d = 2*R*Math.asin(Math.sqrt(h));
+      if (d < .025) return; if (d < 2) gpsKm += d; }
+    gpsLast = {lat:c.latitude, lng:c.longitude};
+    if (gpsKm - gpsSaved >= .1){ gpsSaved = gpsKm; db.collection('riders').doc(myEmail).collection('riderdays').doc(day).set({km:Math.round(gpsKm*100)/100, updated:now()}, {merge:true}).catch(function(){}); }
+  }, function(){}, {enableHighAccuracy:true, maximumAge:10000, timeout:30000});
+}
+document.addEventListener('visibilitychange', function(){ try { gpsTick(); } catch(e){} });
+function cashSum(list){ return list.reduce(function(a, x){ return a + (+x.amount || +x.cashGot || 0); }, 0); }
+function hisab(main){
+  if (!hmonth) hmonth = todayKey().slice(0,7);
+  var mi = el('input',{type:'month',value:hmonth,style:'min-height:40px;border-radius:8px;border:1px solid var(--line);padding:0 8px'}); mi.onchange = function(){ hmonth = mi.value || todayKey().slice(0,7); draw(); };
+  main.appendChild(el('div',{'class':'row',style:'margin-bottom:10px'},[ el('b',{text:L('महीना')}), mi ]));
+  var dl = mine.filter(function(o){ return o.status === 'delivered' && dayOf(o.deliveredAt).slice(0,7) === hmonth; });
+  var rp = myRets.filter(function(o){ return o.retAt && dayOf(o.retAt).slice(0,7) === hmonth; });
+  var days = {};
+  dl.forEach(function(o){ var d = dayOf(o.deliveredAt); days[d] = days[d] || {n:0, cash:0, km:0, r:0}; days[d].n++; days[d].cash += o.cashGot || 0; days[d].km += kmNum(o) * 2; });
+  rp.forEach(function(o){ var d = dayOf(o.retAt); days[d] = days[d] || {n:0, cash:0, km:0, r:0}; days[d].r++; days[d].km += kmNum(o) * 2; });
+  Object.keys(gpsDays).forEach(function(d){ if (d.slice(0,7) === hmonth){ days[d] = days[d] || {n:0, cash:0, km:0, r:0}; } });
+  var keys = Object.keys(days).sort().reverse(), tk = 0, tg = 0;
+  keys.forEach(function(d){ tk += days[d].km; tg += (gpsDays[d] && gpsDays[d].km) || 0; });
+  var given = deposits.filter(function(x){ return dayOf(x.at).slice(0,7) === hmonth; });
+  main.appendChild(el('div',{'class':'sum'},[ el('div',null,[ el('b',{text:String(dl.length)}), el('span',{text:L('डिलीवरी')+(rp.length?' + '+rp.length+L(' वापसी'):'')}) ]),
+    el('div',null,[ el('b',{text:rupees(cashSum(dl))}), el('span',{text:L('कैश लिया')}) ]), el('div',null,[ el('b',{text:(Math.round(tk*10)/10)+' km'}), el('span',{text:L('अंदाज़न km')+(tg?' · GPS '+(Math.round(tg*10)/10):'')}) ]) ]));
+  var tb = el('table',{style:'width:100%;border-collapse:collapse;font-size:14px'});
+  tb.appendChild(el('tr',null,[L('तारीख'),L('डिलीवरी'),L('कैश'),'km','GPS'].map(function(h){ return el('th',{style:'text-align:left;border-bottom:1px solid var(--line);padding:6px 4px',text:h}); })));
+  keys.forEach(function(d){ var x = days[d], g = gpsDays[d] && gpsDays[d].km;
+    tb.appendChild(el('tr',null,[ d.split('-').reverse().join('-'), String(x.n)+(x.r?' +'+x.r+'↩':''), rupees(x.cash), String(Math.round(x.km*10)/10), g ? String(Math.round(g*10)/10) : '–' ].map(function(v){ return el('td',{style:'border-bottom:1px dashed var(--line);padding:6px 4px',text:v}); }))); });
+  main.appendChild(el('div',{'class':'card'},[ keys.length ? tb : el('p',{'class':'muted',text:L('इस महीने अभी कोई काम नहीं।')}),
+    el('p',{'class':'muted small',text:L('km = दुकान से ग्राहक तक आना-जाना (नक्शे से अंदाज़न)। GPS = ऐप खुला रहने पर असल में चला हुआ रास्ता।')}) ]));
+  main.appendChild(el('div',{'class':'card'},[ el('b',{text:L('दुकान पर जमा किया')}), given.length ? el('ul',{'class':'items'}, given.map(function(x){ return el('li',{text:when(x.at)+' · '+rupees(x.amount)+(x.note?' · '+x.note:'')}); })) : el('p',{'class':'muted small',text:L('इस महीने अभी कुछ जमा नहीं।')}) ]));
 }
 function km(o){
   if (!(o.loc && o.loc.lat)) return o.distKm ? o.distKm+' km' : '';
@@ -180,13 +246,21 @@ function draw(){
   if (!rider) return;
   var y = window.scrollY; app.innerHTML = '';
   var alertB = ('Notification' in window && Notification.permission === 'default') ? el('button',{'class':'pill',type:'button',text:L('🔔 सूचना चालू'),onclick:function(){ Notification.requestPermission().then(function(){ chime(); draw(); }); }}) : null;
+  personalise(rider.name, 'manifest.webmanifest');
   app.appendChild(el('header',null,[ el('div',{'class':'wrap'},[
-    el('div',{'class':'brand',html:'DIAMOND<small>RIDER · '+(rider.name||myEmail)+'</small>'}),
+    el('div',{'class':'row'},[ rider.photo ? el('img',{src:rider.photo,alt:'',style:'width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--sign-gold)'}) : null,
+      el('div',{'class':'brand'},[ String(rider.name || L('राइडर')).toUpperCase(), el('small',{text:'DIAMOND FASHIONS · '+L('डिलीवरी')}) ]) ]),
     el('div',{'class':'hb'},[ installBtn(), alertB, langBtn(), el('button',{'class':'pill',type:'button',text:L('लॉग-आउट'),onclick:function(){ if (confirm(L('लॉग-आउट करें?'))) auth.signOut(); }}) ]) ]) ]));
   var going = mine.filter(function(o){ return o.status === 'shipped'; }).concat(myRets.filter(function(o){ return o.status === 'return_pick'; })), done = mine.filter(function(o){ return o.status === 'delivered'; });
-  var tabs = [['ready',L('पिकअप के लिए तैयार'),ready.length],['rets',L('↩ वापसी उठानी है'),rets.length],['going',L('मेरी डिलीवरी'),going.length],['done',L('पूरी हुई'),0]];
+  var tabs = [['ready',L('पिकअप के लिए तैयार'),ready.length],['rets',L('↩ वापसी उठानी है'),rets.length],['going',L('मेरी डिलीवरी'),going.length],['done',L('पूरी हुई'),0],['hisab',L('💵 मेरा हिसाब'),0]];
   app.appendChild(el('nav',{'class':'tabs',role:'tablist'}, tabs.map(function(t){ return el('button',{type:'button',role:'tab','aria-selected':String(tab===t[0]),onclick:function(){ tab = t[0]; draw(); window.scrollTo(0,0); }},[ t[1], t[2] ? el('span',{'class':'n',text:String(t[2])}) : null ]); })));
   var main = el('main',{'class':'wrap'}); app.appendChild(main);
+  // cash: collected from customers vs given at the shop
+  var allCash = cashSum(mine.filter(function(o){ return o.status === 'delivered'; })), gave = cashSum(deposits), withMe = Math.max(0, allCash - gave);
+  main.appendChild(el('div',{'class':'card',style:'padding:10px 12px'},[ el('div',{'class':'row',style:'justify-content:space-between'},[
+    el('span',null,[ el('span',{'class':'muted small',text:L('कुल कैश लिया ')}), el('b',{text:rupees(allCash)}) ]), el('span',null,[ el('span',{'class':'muted small',text:L('दुकान पर दिया ')}), el('b',{text:rupees(gave)}) ]) ]),
+    el('div',{'class':'cash'+(withMe?'':' paid'),style:'margin:8px 0 0'},[ el('span',{text: withMe ? L('💵 आपके पास (दुकान पर जमा करना है)') : L('✓ सारा कैश दुकान पर जमा')}), el('span',{text: withMe ? rupees(withMe) : ''}) ]) ]));
+  if (tab === 'hisab'){ hisab(main); window.scrollTo(0, y); try { gpsTick(); } catch(e){} return; }
   var today = new Date().toDateString();
   var doneToday = done.filter(function(o){ return o.deliveredAt && new Date(o.deliveredAt).toDateString() === today; });
   var cashToday = doneToday.reduce(function(s, o){ return s + (o.cashGot || 0); }, 0);
@@ -201,6 +275,7 @@ function draw(){
   }
   list.forEach(function(o){ main.appendChild(card(o)); });
   window.scrollTo(0, y);
+  try { gpsTick(); } catch(e){}
 }
 function card(o){
   var c = el('div',{'class':'card'+(o.status==='packed'?' hot':'')});
@@ -302,6 +377,8 @@ function listen(){
     fresh.forEach(function(o){ notify(L('↩ वापसी उठानी है'), (o.name||'')+' · '+[o.addr, o.pin].filter(Boolean).join(', ')); });
     rets = list; draw();
   }, function(){}));
+  unsubs.push(db.collection('riders').doc(myEmail).collection('ridercash').onSnapshot(function(s){ deposits = []; s.forEach(function(d){ deposits.push(d.data()); }); deposits.sort(function(a,b){ return String(b.at||'').localeCompare(String(a.at||'')); }); draw(); }, function(){}));
+  unsubs.push(db.collection('riders').doc(myEmail).collection('riderdays').onSnapshot(function(s){ gpsDays = {}; s.forEach(function(d){ gpsDays[d.id] = d.data(); }); }, function(){}));
   unsubs.push(db.collection('orders').where('retRider','==',myEmail).onSnapshot(function(s){
     myRets = []; s.forEach(function(d){ myRets.push(d.data()); }); draw();
   }, function(){}));

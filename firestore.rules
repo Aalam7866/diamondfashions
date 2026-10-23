@@ -152,6 +152,25 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone']);
     }
 
+    // Shop expenses (DF Reports app)
+    match /expenses/{eid} { allow read, write: if dfStaff(); }
+    // What each staff member did in the DF Staff app (owner sees it in Admin → Staff)
+    match /stafflog/{lid} {
+      allow create: if dfStaff() && request.resource.data.email == myEmail();
+      allow read, delete: if isAdmin();
+    }
+    // Delivery boy: cash given at the shop (owner writes) and GPS km per day (rider writes)
+    match /riders/{rid}/ridercash/{cid} {
+      allow read, write: if isAdmin();
+      allow read: if isRider() && rid == myEmail();
+    }
+    match /riders/{rid}/riderdays/{day} {
+      allow read: if isAdmin() || (isRider() && rid == myEmail());
+      allow write: if isRider() && rid == myEmail() && request.resource.data.keys().hasOnly(['km', 'updated']);
+    }
+    match /{path=**}/ridercash/{cid} { allow read: if isAdmin(); }
+    match /{path=**}/riderdays/{day} { allow read: if isAdmin(); }
+
     match /riders/{rid} {
       allow read, write: if isAdmin();
       allow read: if dfStaff();

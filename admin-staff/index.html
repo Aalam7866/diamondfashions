@@ -14,7 +14,13 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="/admin-shared/df.css">
-<style>:root { --app: #0b1727; }</style>
+<style>:root { --app: #0b1727; }
+.scan{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.scan-box{position:relative;width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
+.scan-box video{width:100%;border-radius:12px;background:#000;max-height:55vh;object-fit:cover}
+.scan-line{position:absolute;left:10%;right:10%;top:25%;height:2px;background:#e33;box-shadow:0 0 8px #e33}
+.scan-box .msg{color:#fff;min-height:20px}
+.scan-box input{flex:1}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -26,13 +32,30 @@
   var CATS = [['women', 'Women', 'महिला'], ['men', 'Men', 'पुरुष'], ['boys', 'Boys', 'लड़के'], ['girls', 'Girls', 'लड़कियाँ'], ['kids', 'Kids & Baby', 'बच्चे'],
               ['footwear', 'Footwear', 'जूते-चप्पल'], ['jewellery', 'Jewellery', 'ज्वेलरी'], ['beauty', 'Beauty', 'ब्यूटी'], ['cookware', 'Kitchen', 'बर्तन'], ['stationery', 'Stationery', 'स्टेशनरी']];
   function catName(k) { var c = CATS.filter(function (x) { return x[0] === k; })[0]; return c ? t(c[1], c[2]) : (k || ''); }
-  var products = null, tab = 'products', filter = '', cat = '';
-
-  function start() { if (!DF.session()) DF.loginScreen(root, t('DF Staff – shop', 'DF स्टाफ – दुकान'), start); else draw(); }
-
+  var products = null, tab = 'products', filter = '', cat = '', me = null;
+  /* who is signed in: name + photo set by the owner in Admin → Staff */
+  function loadMe() {
+    var s = DF.session(); if (!s) return Promise.resolve();
+    return DF.get('staff/' + encodeURIComponent(String(s.email).toLowerCase())).then(function (d) { me = d; }, function () { me = { name: '' }; })
+      .then(function () { if (me && me.name) personalise(me.name, 'manifest.webmanifest'); });
+  }
+  /* small work log: the owner sees it in Admin → Staff (one "open" per day, scans, photos and new items) */
+  function log(kind, extra) {
+    var s = DF.session(); if (!s) return;
+    var day = new Date().toISOString().slice(0, 10), key = 'df_log_' + kind + '_' + day;
+    if (kind === 'open') { try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) { } }
+    DF.add('stafflog', Object.assign({ kind: kind, email: String(s.email).toLowerCase(), name: (me && me.name) || '', at: new Date().toISOString(), day: day }, extra || {})).catch(function () { });
+  }
+  function start() { if (!DF.session()) DF.loginScreen(root, t('DF Staff – shop', 'DF स्टाफ – दुकान'), start); else loadMe().then(function () { log('open'); draw(); }); }
+  function title() { return (me && me.name) ? me.name : t('DF Staff', 'DF स्टाफ'); }
+  function head(onLang) {
+    var h = DF.header(title(), onLang);
+    if (me && me.photo) { var im = h.querySelector('img'); if (im) { im.src = me.photo; im.style.borderRadius = '50%'; im.style.objectFit = 'cover'; } }
+    return h;
+  }
   function draw() {
     root.innerHTML = '';
-    root.appendChild(DF.header(t('DF Staff', 'DF स्टाफ'), draw));
+    root.appendChild(head(draw));
     var tabs = el('div', { 'class': 'tabs' }, [
       el('button', { 'class': tab === 'products' ? 'on' : '', text: t('Products', 'प्रोडक्ट'), onclick: function () { tab = 'products'; draw(); } }),
       el('button', { 'class': tab === 'new' ? 'on' : '', text: t('+ New item', '+ नया आइटम'), onclick: function () { tab = 'new'; draw(); } }),
@@ -50,7 +73,8 @@
       .concat(CATS.map(function (c) { return el('button', { 'class': cat === c[0] ? 'on' : '', text: t(c[1], c[2]), onclick: function () { cat = c[0]; draw(); } }); })));
     var listBox = el('div');
     var reload = el('button', { text: '↻', title: t('Load again', 'फिर से लाएँ'), onclick: function () { products = null; draw(); } });
-    main.appendChild(el('div', { 'class': 'row' }, [search, reload]));
+    var scanB = el('button', { 'class': 'gold', text: '📷 ' + t('Scan', 'स्कैन'), title: t('Scan the barcode on the tag', 'टैग का बारकोड स्कैन करें'), onclick: scan });
+    main.appendChild(el('div', { 'class': 'row' }, [search, scanB, reload]));
     main.appendChild(chips);
     main.appendChild(listBox);
     search.addEventListener('input', function () { filter = search.value; show(); });
@@ -76,15 +100,47 @@
     }
     if (products) { show(); return; }
     listBox.appendChild(el('div', { 'class': 'empty', text: t('Loading products…', 'प्रोडक्ट आ रहे हैं…') }));
-    DF.list('products', ['id', 'code', 'name', 'cat', 'price', 'mrp', 'sizes', 'stock', 'inStock', 'hidden', 'desc']).then(function (list) {
+    DF.list('products', ['id', 'code', 'name', 'cat', 'price', 'mrp', 'sizes', 'stock', 'inStock', 'hidden', 'desc', 'details']).then(function (list) {
       products = list.sort(function (a, b) { return (a.code || '').localeCompare(b.code || ''); });
       show();
     }, function (e) { listBox.innerHTML = ''; listBox.appendChild(el('div', { 'class': 'empty', text: e.message })); });
   }
 
+  /* barcode / QR on the price tag → the product's full details */
+  function findCode(raw) {
+    var v = String(raw || '').trim().toUpperCase(), bare = function (c) { return String(c || '').toUpperCase().replace(/^DF-?/, '').replace(/[^A-Z0-9]/g, ''); };
+    var m = /#P-([A-Z0-9-]+)/.exec(v); if (m) v = m[1];
+    var list = products || [];
+    return list.filter(function (p) { return String(p.code || '').toUpperCase() === v; })[0]
+      || list.filter(function (p) { return v.indexOf(String(p.code || '').toUpperCase() + '-') === 0; }).sort(function (a, b) { return String(b.code).length - String(a.code).length; })[0]
+      || list.filter(function (p) { return bare(p.code) && bare(p.code) === bare(v); })[0]
+      || list.filter(function (p) { return p._id === raw || p.id === raw; })[0] || null;
+  }
+  function scan() {
+    var ready = products ? Promise.resolve() : DF.list('products', ['id', 'code', 'name', 'cat', 'price', 'mrp', 'sizes', 'stock', 'inStock', 'hidden', 'desc', 'details']).then(function (l) { products = l; });
+    var sc = el('div', { 'class': 'scan' }), v = el('video', { playsinline: 'playsinline', muted: 'muted', autoplay: 'autoplay' }), stream = null, stop = false;
+    var typed = el('input', { type: 'text', placeholder: t('or type the code, e.g. DF-W01', 'या कोड लिखें, जैसे DF-W01'), autocapitalize: 'characters' });
+    var msg = el('div', { 'class': 'msg' });
+    function close() { stop = true; if (stream) stream.getTracks().forEach(function (tr) { tr.stop(); }); sc.remove(); }
+    function got(code) {
+      ready.then(function () { var p = findCode(code); if (p) { close(); log('scan', { code: p.code || '' }); detail(p); } else { msg.textContent = t('No product with this code: ', 'इस कोड का प्रोडक्ट नहीं मिला: ') + code; stop = false; setTimeout(loop, 1500); } });
+    }
+    typed.addEventListener('keydown', function (e) { if (e.key === 'Enter' && typed.value.trim()) { stop = true; got(typed.value); } });
+    sc.appendChild(el('div', { 'class': 'scan-box' }, [v, el('div', { 'class': 'scan-line' }), msg, el('div', { 'class': 'row' }, [typed, el('button', { text: t('Find', 'खोजें'), onclick: function () { if (typed.value.trim()) { stop = true; got(typed.value); } } })]),
+      el('button', { 'class': 'big', text: t('Close', 'बंद करें'), onclick: close })]));
+    document.body.appendChild(sc);
+    var det = null;
+    function loop() { if (stop || !det) return; det.detect(v).then(function (r) { if (r && r.length && !stop) { stop = true; try { navigator.vibrate && navigator.vibrate(80); } catch (e) { } got(r[0].rawValue); } else setTimeout(loop, 200); }, function () { setTimeout(loop, 300); }); }
+    if (!('BarcodeDetector' in window)) { msg.textContent = t('This phone cannot scan in the browser – type the code below.', 'यह फ़ोन ब्राउज़र में स्कैन नहीं कर सकता – नीचे कोड लिखें।'); v.remove(); return; }
+    var fm = ['code_128', 'qr_code', 'code_39', 'code_93', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'codabar', 'data_matrix'];
+    (BarcodeDetector.getSupportedFormats ? BarcodeDetector.getSupportedFormats() : Promise.resolve(fm)).then(function (sup) {
+      det = new BarcodeDetector({ formats: fm.filter(function (f) { return sup.indexOf(f) >= 0; }) });
+      return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (st) { stream = st; v.srcObject = st; return v.play(); }).then(loop);
+    }).catch(function () { msg.textContent = t('Camera did not open – allow it, or type the code below.', 'कैमरा नहीं खुला – इजाज़त दें, या नीचे कोड लिखें।'); });
+  }
   function detail(p) {
     root.innerHTML = '';
-    root.appendChild(DF.header(t('DF Staff', 'DF स्टाफ'), function () { detail(p); }));
+    root.appendChild(head(function () { detail(p); }));
     var main = el('main');
     root.appendChild(main);
     main.appendChild(el('button', { text: '← ' + t('Back', 'वापस'), onclick: draw }));
@@ -99,6 +155,7 @@
       el('h2', { text: t('Stock by size', 'साइज़ के हिसाब से स्टॉक') }),
       el('table', {}, [el('tr', {}, [el('th', { text: t('Size', 'साइज़') }), el('th', { 'class': 'n', text: t('In stock', 'स्टॉक') })])].concat(rows)),
       p.desc ? el('p', { 'class': 'muted', text: p.desc }) : null,
+      p.details ? el('table', {}, String(p.details).split('\n').filter(function (l) { return /:/.test(l); }).map(function (l) { var i = l.indexOf(':'); return el('tr', {}, [el('td', { 'class': 'muted', text: l.slice(0, i) }), el('td', { text: l.slice(i + 1).trim() })]); })) : null,
     ]));
     var input = el('input', { type: 'file', accept: 'image/*', capture: 'environment', multiple: 'multiple', style: 'display:none' });
     var btn = el('button', { 'class': 'gold big', text: '📷 ' + t('Add photo of this product', 'इस प्रोडक्ट की फ़ोटो जोड़ें'), onclick: function () { input.click(); } });
@@ -109,6 +166,7 @@
       DF.fit(files).then(function (photos) {
         return DF.add('inbox', { kind: 'photo', webCode: p.code || '', name: p.name || '', photos: photos, by: DF.session().email, created: new Date().toISOString() });
       }).then(function () {
+        log('photo', { code: p.code || '', n: photos.length });
         DF.toast(t('Sent. The shop PC adds it to ' + p.code + ' in a few minutes.', 'भेज दिया। दुकान का कंप्यूटर कुछ मिनट में इसे ' + p.code + ' में जोड़ देगा।'));
         btn.disabled = false; btn.textContent = '📷 ' + t('Add photo of this product', 'इस प्रोडक्ट की फ़ोटो जोड़ें');
       }, function (e) { DF.toast(e.message, true); btn.disabled = false; btn.textContent = '📷 ' + t('Add photo of this product', 'इस प्रोडक्ट की फ़ोटो जोड़ें'); });
@@ -172,6 +230,7 @@
           seller: draft.seller || '', note: draft.note || '', photos: photos, by: DF.session().email, created: new Date().toISOString(),
         });
       }).then(function () {
+        log('item', { item: draft.name.trim(), qty: +draft.qty || 0 });
         draft = { photos: [] };
         DF.toast(t('Sent to the shop PC: Stock → From the phone.', 'दुकान के कंप्यूटर पर भेज दिया: स्टॉक → फ़ोन से।'));
         draw();
@@ -179,6 +238,23 @@
     });
   }
 
+
+  /* the installed app carries the person's own name (and the phone's home-screen label) */
+  function personalise(name, manifest, startUrl){
+    if (!name) return; document.title = name + ' – Diamond Fashions';
+    var mt = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if (mt) mt.setAttribute('content', String(name).split(' ')[0].slice(0, 12));
+    if (personalise.done === name) return; personalise.done = name;
+    var link = document.querySelector('link[rel="manifest"]'); if (!window.fetch || !window.Blob) return; if (!link){ link = document.createElement('link'); link.rel = 'manifest'; document.head.appendChild(link); }
+    var base = new URL(manifest, location.href).href;
+    fetch(base).then(function(r){ return r.json(); }).then(function(j){
+      var abs = function(u){ return new URL(u, base).href; };
+      j.name = name + ' · Diamond Fashions'; j.short_name = String(name).split(' ')[0].slice(0, 12);
+      j.start_url = startUrl || abs(j.start_url); j.scope = abs(j.scope || './'); if (j.id) j.id = abs(j.id);
+      (j.icons || []).forEach(function(ic){ ic.src = abs(ic.src); });
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(j)], {type:'application/manifest+json'}));
+    }).catch(function(){});
+  }
+  
   DF.registerSW();
   start();
 })();
