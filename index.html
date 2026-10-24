@@ -433,6 +433,8 @@ footer .wrap{padding-block:22px 96px;display:flex;justify-content:space-between;
 .slide{flex:0 0 100%;height:100%;scroll-snap-align:start;position:relative;display:block;color:#fff;text-decoration:none;overflow:hidden;cursor:pointer;border:0;padding:0;text-align:left;font:inherit;background:var(--navy)}
 .slide > img,.slide > video,.slide > iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;display:block}
 .slide.gen{background:linear-gradient(115deg,#0B1626 0%,#16305A 58%,#6E5420 130%)}
+.slide.fit > img.bg{object-fit:cover;filter:blur(22px) brightness(.75) saturate(1.2);transform:scale(1.2)}
+.slide.fit > img.fg{object-fit:contain}
 .slide.gen > img{left:auto;width:48%;-webkit-mask-image:linear-gradient(90deg,transparent,#000 35%);mask-image:linear-gradient(90deg,transparent,#000 35%)}
 .slide .ov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;padding:0 6%;background:linear-gradient(90deg,rgba(6,13,24,.82),rgba(6,13,24,.25) 60%,transparent);pointer-events:none}
 .slide.gen .ov{background:none;max-width:62%}
@@ -1360,6 +1362,12 @@ function renderBanners(){
     var vid = b.type === 'video' && b.video, yt = vid ? ytId(b.video) : '';
     if (yt) sl.appendChild(el('iframe',{src:'https://www.youtube-nocookie.com/embed/'+yt+'?autoplay=1&mute=1&loop=1&playlist='+yt+'&controls=0&playsinline=1&modestbranding=1&rel=0',allow:'autoplay; encrypted-media; picture-in-picture',title:b.title||'Video',loading:'lazy'}));
     else if (vid){ var v = el('video',{src:b.video,muted:'muted',autoplay:'autoplay',loop:'loop',playsinline:'playsinline',preload:'metadata'}); v.muted = true; sl.appendChild(v); }
+    else if (b.img && !b.gen){
+      // a made / uploaded banner is shown whole (a wide 1600×600 banner on a phone): the same picture blurred fills the rest
+      sl.className += ' fit';
+      sl.appendChild(el('img',{'class':'bg',src:b.img,alt:'','aria-hidden':'true',loading:i?'lazy':'eager'}));
+      sl.appendChild(el('img',{'class':'fg',src:b.img,alt:'',loading:i?'lazy':'eager'}));
+    }
     else if (b.img) sl.appendChild(el('img',{src:b.img,alt:'',loading:i?'lazy':'eager'}));
     if (vid) sl.appendChild(el('span',{'class':'vbadge',text:f.video}));
     if (b.title || b.sub || b.btn || b.tag){
