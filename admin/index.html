@@ -1032,21 +1032,37 @@ function geminiModels(key){
   });
 }
 /* call Gemini; if one model has no quota or is gone, try the next ones */
+/* call Gemini. Fast first: "lite" models and no long "thinking" (that made Hindi conversion take over a minute).
+   If one model is busy, has no quota, is gone or takes longer than 30 s, the next one is tried. */
+var gemFastOk = {}; // model name → true once it answered
 function gemGenerate(key, parts, json){
   return geminiModels(key).then(function(list){
-    var order = gemModel ? [gemModel].concat(list.filter(function(n){ return n !== gemModel; })) : list, i = 0, lastErr = null;
+    var lite = list.filter(function(n){ return /lite/.test(n); }), other = list.filter(function(n){ return !/lite/.test(n); });
+    var order = lite.concat(other); if (gemModel) order = [gemModel].concat(order.filter(function(n){ return n !== gemModel; }));
+    var i = 0, lastErr = null;
+    function call(name, noThink){
+      var cfgG = {temperature:.7}; if (json) cfgG.responseMimeType = 'application/json';
+      if (!noThink && /flash/.test(name) && !/lite/.test(name)) cfgG.thinkingConfig = /gemini-2\./.test(name) ? {thinkingBudget:0} : {thinkingLevel:'low'};
+      var ctl = window.AbortController ? new AbortController() : null, tm = setTimeout(function(){ if (ctl) ctl.abort(); }, 30000);
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + name + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'}, signal: ctl ? ctl.signal : undefined,
+        body:JSON.stringify({contents:[{role:'user', parts:parts}], generationConfig:cfgG})})
+        .then(function(r){ return r.json().then(function(j){ clearTimeout(tm); return {j:j, s:r.status}; }); }, function(e){ clearTimeout(tm); return {j:{error:{message: e && e.name === 'AbortError' ? 'timeout' : 'network'}}, s: e && e.name === 'AbortError' ? 408 : 0}; })
+        .then(function(x){
+          if (x.j.error && x.s === 400 && !noThink && cfgG.thinkingConfig && /thinking/i.test(JSON.stringify(x.j.error))) return call(name, true); // this model does not take the "thinking" setting
+          return x;
+        });
+    }
     function next(){
       if (i >= order.length || i >= 5) throw lastErr || new Error(SL('कोई Gemini मॉडल नहीं चला','No Gemini model worked'));
       var name = order[i++];
-      var cfgG = {temperature:.7}; if (json) cfgG.responseMimeType = 'application/json';
-      return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + name + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{role:'user', parts:parts}], generationConfig:cfgG})}).then(function(r){ return r.json().then(function(j){ return {j:j, s:r.status}; }); }, function(){ throw new Error(SL('इंटरनेट नहीं है','No internet')); })
-        .then(function(x){
-          if (x.j.error){ lastErr = new Error(gemErr(x.j, x.s)); if (x.s === 429 || x.s === 404 || x.s === 400 && /not found|not supported|mime/i.test(JSON.stringify(x.j.error)) || x.s >= 500) return next(); throw lastErr; }
-          var txt = ((((x.j.candidates || [])[0] || {}).content || {}).parts || []).map(function(q){ return q.text || ''; }).join('');
-          if (!txt){ lastErr = new Error(SL('AI ने कुछ नहीं लिखा (शायद फ़ोटो रोक दी गई)','The AI wrote nothing (maybe the photo was blocked)')); return next(); }
-          gemModel = name; return txt;
-        });
+      return call(name, false).then(function(x){
+        if (x.s === 0) throw new Error(SL('इंटरनेट नहीं है','No internet'));
+        if (x.s === 408){ lastErr = new Error(SL('Gemini ने बहुत देर लगाई','Gemini took too long')); return next(); }
+        if (x.j.error){ lastErr = new Error(gemErr(x.j, x.s)); if (x.s === 429 || x.s === 404 || x.s === 400 && /not found|not supported|mime|thinking/i.test(JSON.stringify(x.j.error)) || x.s >= 500) return next(); throw lastErr; }
+        var txt = ((((x.j.candidates || [])[0] || {}).content || {}).parts || []).filter(function(q){ return !q.thought; }).map(function(q){ return q.text || ''; }).join('');
+        if (!txt){ lastErr = new Error(SL('AI ने कुछ नहीं लिखा (शायद फ़ोटो रोक दी गई)','The AI wrote nothing (maybe the photo was blocked)')); return next(); }
+        gemModel = name; return txt;
+      });
     }
     return next();
   });
@@ -2148,7 +2164,8 @@ function voiceScript(p, kind){
   var a = ['नमस्ते! डायमंड फैशन्स, पुरंदरपुर में आपका स्वागत है।'];
   var left = pcsLeft(p);
   a.push(kind === 'low' ? ('जल्दी कीजिए! ' + p.name + ' के अब सिर्फ़ ' + left + ' पीस बचे हैं।') : ('देखिए हमारा नया ' + p.name + '।'));
-  if (p.desc) a.push(p.desc + '।');
+  var dsc = String(p.desc || ''); if (/ \/ /.test(dsc)){ var hp = dsc.split(' / ').filter(function(x){ return /[\u0900-\u097F]/.test(x); })[0]; if (hp) dsc = hp; }
+  if (dsc) a.push(dsc + '।');
   String(p.details || '').split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return /:\s*\S/.test(l); }).slice(0, 5)
     .forEach(function(l){ var kv = l.split(':'); a.push(kv[0].trim() + ': ' + kv.slice(1).join(':').trim() + '।'); });
   if (p.sizes) a.push('साइज़ ' + p.sizes + ' में उपलब्ध है।');
@@ -2750,7 +2767,7 @@ function videoDialog(p){
   var hiMsg = el('span',{'class':'small'});
   var hiP = null;
   function toHindi(){ hiMsg.textContent = SL('पूरा हिंदी में बदल रहे हैं… (5–20 सेकंड)','Converting to full Hindi… (5–20 sec)'); hiMsg.style.color = ''; hiB.disabled = true;
-    var tmo = new Promise(function(res, rej){ setTimeout(function(){ rej(new Error(SL('हिंदी में बदलने में बहुत देर लगी — फिर से दबाएँ','Converting took too long — tap again'))); }, 45000); });
+    var tmo = new Promise(function(res, rej){ setTimeout(function(){ rej(new Error(SL('हिंदी में बदलने में बहुत देर लगी — फिर से दबाएँ','Converting took too long — tap again'))); }, 75000); });
     hiP = Promise.race([hindiScript(scriptTa.value), tmo]).then(function(t){ scriptTa.value = t; hiMsg.textContent = '✓ ' + SL('पूरा हिंदी में हो गया','Now fully in Hindi'); hiB.disabled = false; },
       function(e){ hiMsg.textContent = e.message || e; hiMsg.style.color = 'var(--bad)'; hiB.disabled = false; }).then(function(){ hiP = null; }); }
   var hiB = el('button',{'class':'btn b-sm b-gold',type:'button',text:'🇮🇳 '+SL('पूरा हिंदी में बदलें (AI)','Make it full Hindi (AI)'),onclick:toHindi});
@@ -2773,7 +2790,7 @@ function videoDialog(p){
   vSel.onchange = drawVoice;
   box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('प्रोडक्ट की जानकारी बोलने वाली आवाज़','Voice-over with product details')})); box.appendChild(vSel); box.appendChild(vBox); drawVoice();
   var dirChk = el('input',{type:'checkbox',checked:(meta && meta.geminiKey && meta.director !== false) ? 'checked' : null,disabled:(meta && meta.geminiKey) ? null : 'disabled'});
-  box.appendChild(el('label',{'class':'row',style:'margin:10px 0 4px'},[ dirChk, ' 🎬 '+SL('Gemini डायरेक्टर: फ़ोटो का सही क्रम, हर फ़ोटो पर छोटी हिंदी लाइन और सही संगीत','Gemini director: best photo order, a short Hindi line on each photo and the right music')+((meta && meta.geminiKey) ? '' : SL(' — सेटिंग में Gemini key चाहिए',' — needs the Gemini key in Settings')) ]));
+  box.appendChild(el('label',{'class':'row',style:'margin:10px 0 4px;flex-wrap:nowrap;align-items:flex-start;gap:8px'},[ dirChk, ' 🎬 '+SL('Gemini डायरेक्टर: फ़ोटो का सही क्रम, हर फ़ोटो पर छोटी हिंदी लाइन और सही संगीत','Gemini director: best photo order, a short Hindi line on each photo and the right music')+((meta && meta.geminiKey) ? '' : SL(' — सेटिंग में Gemini key चाहिए',' — needs the Gemini key in Settings')) ]));
   box.appendChild(el('p',{'class':'muted small',text:SL('कैसा वीडियो चाहिए?','Which kind of video?')}));
   [['cam60', SL('🎥 कैमरा स्टाइल · 1 मिनट','🎥 Camera style · 1 min')], ['cam30', SL('🎥 कैमरा स्टाइल · 30 सेकंड','🎥 Camera style · 30 sec')], ['slide', SL('🖼 स्लाइड शो · 20 सेकंड','🖼 Slideshow · 20 sec')]].forEach(function(o){
     pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ if ((vSel.value === 'mic' || vSel.value === 'file') && !micRec){ alert(SL('पहले आवाज़ रिकॉर्ड करें, या "बिना आवाज़" चुनें','Record the voice first, or choose "No voice"')); return; } if (hiP && vSel.value === 'ai'){ var bt = this; hiMsg.textContent = SL('हिंदी पूरा होते ही वीडियो बनेगा…','The video starts as soon as the Hindi is ready…'); hiP.then(function(){ bt.click(); }); return; }
