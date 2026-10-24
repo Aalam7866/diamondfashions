@@ -3066,6 +3066,8 @@ setTimeout(function(){ if (isIOS()) showAppBanner(); }, 4000);
 .dcard-brand small{display:block;font-size:9px;letter-spacing:.35em;color:#CDAA5C}
 .dcard-tag{font-size:12px;color:#CDAA5C;border:1px solid rgba(205,170,92,.6);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .dcard-name{margin-top:14px;font-size:17px;font-weight:600}
+.dcard-who{display:flex;align-items:center;gap:12px;margin-top:12px}.dcard-who .dcard-name{margin-top:0}
+.dcard-ph{width:58px;height:70px;border-radius:9px;border:2px solid #CDAA5C;object-fit:cover;flex:0 0 auto;background:#1B2C4C}
 .dcard-no{font-size:20px;letter-spacing:.12em;color:#CDAA5C;margin:2px 0 10px}
 .dcard-bcbox{background:#fff;border-radius:10px;padding:8px 10px;display:flex;justify-content:center}
 .dcard-bc{width:100%;max-width:300px;height:56px}
@@ -3289,14 +3291,14 @@ body.h-card .dcard-wrap{display:none!important}
     var src = (prof && prof.photo) || (user && user.photoURL) || '';
     var msg = mk('small',{'class':'acct-ph-msg','aria-live':'polite'});
     var take = function(f){ if (!f) return; msg.textContent = t.ph_saving;
-      squarePhoto(f).then(function(d){ if (!d) throw new Error('img'); return saveProfile({photo:d}); }).then(function(){ placeButton(); var nx = photoEditor(t); if (root.parentNode) root.parentNode.replaceChild(nx, root); nx.querySelector('.acct-ph-msg').textContent = t.ph_ok; }, function(e){ msg.textContent = errText(e); }); };
+      squarePhoto(f).then(function(d){ if (!d) throw new Error('img'); return saveProfile({photo:d}); }).then(function(){ placeButton(); syncCard(); var nx = photoEditor(t); if (root.parentNode) root.parentNode.replaceChild(nx, root); nx.querySelector('.acct-ph-msg').textContent = t.ph_ok; }, function(e){ msg.textContent = errText(e); }); };
     var mkFile = function(){ var i = mk('input',{type:'file',accept:'image/*','aria-label':t.ph_add,style:'position:absolute;inset:0;opacity:0;cursor:pointer'}); i.onchange = function(){ take(i.files && i.files[0]); }; return i; };
     var fi = mkFile();
     var root = mk('div',{'class':'acct-ph'},[
       mk('label',{'class':'acct-ph-pic',title:src ? t.ph_ch : t.ph_add},[ src ? mk('img',{src:src,alt:''}) : mk('span',{html:ICO}), fi ]),
       mk('div',{'class':'acct-ph-act'},[
         mk('label',{'class':'acct-link',style:'position:relative;overflow:hidden;cursor:pointer'},[ src ? t.ph_ch : t.ph_add, mkFile() ]),
-        (prof && prof.photo) ? mk('button',{type:'button','class':'acct-link danger',text:t.ph_rm,onclick:function(){ saveProfile({photo:''}).then(function(){ placeButton(); var nx = photoEditor(t); if (root.parentNode) root.parentNode.replaceChild(nx, root); }); }}) : null,
+        (prof && prof.photo) ? mk('button',{type:'button','class':'acct-link danger',text:t.ph_rm,onclick:function(){ saveProfile({photo:''}).then(function(){ placeButton(); syncCard(); var nx = photoEditor(t); if (root.parentNode) root.parentNode.replaceChild(nx, root); }); }}) : null,
         msg ]) ]);
     return root;
   }
@@ -3596,7 +3598,7 @@ body.h-card .dcard-wrap{display:none!important}
     function attempt(){
       var no = cardNo(), at = new Date().toISOString();
       /* the rules only allow creating a card number that does not exist yet, so two customers can never get the same one */
-      return withTimeout(fs.collection('cards').doc(no).set({no:no, uid:user.uid, name:prof.name, phone:prof.phone, email:user.email||'', issued:at, active:true}), 15000)
+      return withTimeout(fs.collection('cards').doc(no).set(Object.assign({no:no, uid:user.uid, name:prof.name, phone:prof.phone, email:user.email||'', issued:at, active:true}, cardPhoto())), 15000)
         .then(function(){ return saveProfile({card:{no:no, issued:at}}); })
         .catch(function(e){ if (++tries < 5 && /permission|exists/i.test(String(e && (e.code||e.message)))) return attempt(); throw e; });
     }
@@ -3604,7 +3606,9 @@ body.h-card .dcard-wrap{display:none!important}
     return attempt().then(function(){ cardBusy = false; if (modal && view === 'account') draw(); },
       function(e){ cardBusy = false; cardErr = errText(e); try { console.warn('discount card', e); } catch(x){} if (modal && view === 'account') draw(); });
   }
-  function syncCard(){ if (prof && prof.card && prof.card.no && fs) fs.collection('cards').doc(prof.card.no).set({name:prof.name||'', phone:prof.phone||''}, {merge:true}).catch(function(){}); ensureCard(); }
+  function cardPhoto(){ return {photo:(prof && prof.photo && prof.photo.length < 150000) ? prof.photo : '', photoUrl:(user && user.photoURL) || ''}; }
+  function syncCard(){ if (prof && prof.card && prof.card.no && fs){ var u = Object.assign({name:prof.name||'', phone:prof.phone||''}, cardPhoto());
+      fs.collection('cards').doc(prof.card.no).set(u, {merge:true}).catch(function(){ fs.collection('cards').doc(prof.card.no).set({name:u.name, phone:u.phone}, {merge:true}).catch(function(){}); }); } ensureCard(); }
   function cardBlock(t){
     var wrap = mk('div',{'class':'dcard-wrap'});
     var c = prof && prof.card;
@@ -3624,7 +3628,9 @@ body.h-card .dcard-wrap{display:none!important}
     var spent = mk('b',{'class':'num',text:'…'}), pct = mk('span',{'class':'dcard-pct'});
     var card = mk('div',{'class':'dcard'},[
       mk('div',{'class':'dcard-top'},[ mk('div',{'class':'dcard-brand',html:'DIAMOND<small>FASHIONS</small>'}), mk('span',{'class':'dcard-tag',text:t.card_h}) ]),
-      mk('div',{'class':'dcard-name',text:(prof.name||'')}), mk('div',{'class':'dcard-no num',text:c.no.replace(/^(DF)(\d{4})(\d{4})$/, '$1 $2 $3')}),
+      (function(){ var ph = (prof && prof.photo) || (user && user.photoURL) || '';
+        var who = [ mk('div',{'class':'dcard-name',text:(prof.name||'')}), mk('div',{'class':'dcard-no num',text:c.no.replace(/^(DF)(\d{4})(\d{4})$/, '$1 $2 $3')}) ];
+        return ph ? mk('div',{'class':'dcard-who'},[ mk('img',{'class':'dcard-ph',src:ph,alt:'',referrerpolicy:'no-referrer'}), mk('div',null,who) ]) : mk('div',null,who); })(),
       mk('div',{'class':'dcard-bcbox'},[ svg ]),
       mk('div',{'class':'dcard-foot'},[ mk('span',{text:t.card_since+': '+new Date(c.issued).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}), pct ]) ]);
     card.addEventListener('click', function(){ if (card.classList.contains('big')) card.classList.remove('big'); });
@@ -3728,7 +3734,11 @@ body.h-card .dcard-wrap{display:none!important}
       user = u; prof = null;
       var after = function(){
         ready = true; exposeAcct(); placeButton(); fillCheckout(true); var rvb = document.getElementById('pp-reviews'); if (rvb) drawReviews(rvb);
-        if (user && prof && prof.phone){ ensureCard(); if (window.DF && DF.afterLogin){ runAfterLogin(); return; } }
+        if (user && prof && prof.phone){
+          // the card carries the customer's photo for the shop PC: sent again when the photo changed since last time on this phone
+          var mark = prof.card && prof.card.no ? prof.card.no + ':' + String(prof.photo || '').length + ':' + (user.photoURL || '') : '';
+          try { if (mark && localStorage.getItem('df-cardsync') !== mark){ localStorage.setItem('df-cardsync', mark); syncCard(); } else ensureCard(); } catch(e){ ensureCard(); }
+          if (window.DF && DF.afterLogin){ runAfterLogin(); return; } }
         if (user && modal && (view === 'login')) openModal();
         else if (user && !modal && !(prof && prof.name && prof.phone && (prof.addresses||[]).length) && (function(){ try { return sessionStorage.getItem('df-asked'); } catch(e){ return ''; } })() !== user.uid){
           try { sessionStorage.setItem('df-asked', user.uid); } catch(e){}

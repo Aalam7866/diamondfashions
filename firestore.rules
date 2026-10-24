@@ -147,9 +147,11 @@ service cloud.firestore {
       allow read, write: if isAdmin() || dfStaff();
       allow get: if signedIn() && resource.data.uid == request.auth.uid;
       allow create: if signedIn() && no.matches('DF[0-9]{8}') && request.resource.data.no == no
-        && request.resource.data.uid == request.auth.uid && request.resource.data.get('pct', 0) == 0;
+        && request.resource.data.uid == request.auth.uid && request.resource.data.get('pct', 0) == 0
+        && request.resource.data.get('photo', '').size() < 200000;
       allow update: if signedIn() && resource.data.uid == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'photo', 'photoUrl'])
+        && request.resource.data.get('photo', '').size() < 200000;
     }
 
     // Shop expenses (DF Reports app)
