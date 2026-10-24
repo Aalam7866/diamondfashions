@@ -2591,9 +2591,11 @@ function videoDialog(p){
   var vBox = el('div'), micRec = null, scriptTa = el('textarea',{style:'width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;margin-top:4px'});
   scriptTa.value = voiceScript(p, kind);
   var hiMsg = el('span',{'class':'small'});
-  function toHindi(){ hiMsg.textContent = SL('पूरा हिंदी में बदल रहे हैं…','Converting to full Hindi…'); hiMsg.style.color = ''; hiB.disabled = true;
-    hindiScript(scriptTa.value).then(function(t){ scriptTa.value = t; hiMsg.textContent = '✓ ' + SL('पूरा हिंदी में हो गया','Now fully in Hindi'); hiB.disabled = false; },
-      function(e){ hiMsg.textContent = e.message || e; hiMsg.style.color = 'var(--bad)'; hiB.disabled = false; }); }
+  var hiP = null;
+  function toHindi(){ hiMsg.textContent = SL('पूरा हिंदी में बदल रहे हैं… (5–20 सेकंड)','Converting to full Hindi… (5–20 sec)'); hiMsg.style.color = ''; hiB.disabled = true;
+    var tmo = new Promise(function(res, rej){ setTimeout(function(){ rej(new Error(SL('हिंदी में बदलने में बहुत देर लगी — फिर से दबाएँ','Converting took too long — tap again'))); }, 45000); });
+    hiP = Promise.race([hindiScript(scriptTa.value), tmo]).then(function(t){ scriptTa.value = t; hiMsg.textContent = '✓ ' + SL('पूरा हिंदी में हो गया','Now fully in Hindi'); hiB.disabled = false; },
+      function(e){ hiMsg.textContent = e.message || e; hiMsg.style.color = 'var(--bad)'; hiB.disabled = false; }).then(function(){ hiP = null; }); }
   var hiB = el('button',{'class':'btn b-sm b-gold',type:'button',text:'🇮🇳 '+SL('पूरा हिंदी में बदलें (AI)','Make it full Hindi (AI)'),onclick:toHindi});
   var hiRow = el('div',{'class':'row',style:'margin:6px 0'},[ hiB, hiMsg ]);
   if (/[A-Za-z]/.test(scriptTa.value) && meta && meta.geminiKey) setTimeout(toHindi, 0); // English in the product name: convert right away
@@ -2615,7 +2617,8 @@ function videoDialog(p){
   box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('प्रोडक्ट की जानकारी बोलने वाली आवाज़','Voice-over with product details')})); box.appendChild(vSel); box.appendChild(vBox); drawVoice();
   box.appendChild(el('p',{'class':'muted small',text:SL('कैसा वीडियो चाहिए?','Which kind of video?')}));
   [['cam60', SL('🎥 कैमरा स्टाइल · 1 मिनट','🎥 Camera style · 1 min')], ['cam30', SL('🎥 कैमरा स्टाइल · 30 सेकंड','🎥 Camera style · 30 sec')], ['slide', SL('🖼 स्लाइड शो · 20 सेकंड','🖼 Slideshow · 20 sec')]].forEach(function(o){
-    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ if ((vSel.value === 'mic' || vSel.value === 'file') && !micRec){ alert(SL('पहले आवाज़ रिकॉर्ड करें, या "बिना आवाज़" चुनें','Record the voice first, or choose "No voice"')); return; } var mv = musSel.value, vo = {mode:vSel.value === 'file' ? 'mic' : vSel.value, rec:micRec, text:scriptTa.value}; pickRow.remove(); musSel.disabled = true; vSel.disabled = true; vBox.remove(); box.appendChild(msg); go(o[0], mv, vo); }})); });
+    pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ if ((vSel.value === 'mic' || vSel.value === 'file') && !micRec){ alert(SL('पहले आवाज़ रिकॉर्ड करें, या "बिना आवाज़" चुनें','Record the voice first, or choose "No voice"')); return; } if (hiP && vSel.value === 'ai'){ var bt = this; hiMsg.textContent = SL('हिंदी पूरा होते ही वीडियो बनेगा…','The video starts as soon as the Hindi is ready…'); hiP.then(function(){ bt.click(); }); return; }
+      var mv = musSel.value, vo = {mode:vSel.value === 'file' ? 'mic' : vSel.value, rec:micRec, text:scriptTa.value}; pickRow.remove(); musSel.disabled = true; vSel.disabled = true; vBox.remove(); box.appendChild(msg); go(o[0], mv, vo); }})); });
   box.appendChild(pickRow);
   msg.textContent = SL('बनते समय यह स्क्रीन खुली रखें, फ़ोन लॉक न करें।','Keep this screen open while it is made; do not lock the phone.');
   function go(style, music, vo){
