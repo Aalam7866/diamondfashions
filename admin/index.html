@@ -2158,6 +2158,18 @@ function geminiTts(text, voiceName){
     return next();
   });
 }
+/* the voice-over in pure spoken Hindi: English product words, numbers and the website written the way a Hindi speaker says them */
+function hindiScript(text){
+  var key = meta && meta.geminiKey;
+  if (!key) return Promise.reject(new Error(SL('हिंदी में बदलने के लिए सेटिंग में Gemini key डालें','Add the Gemini key in Settings to convert to Hindi')));
+  var prompt = 'Rewrite this shop-video voice-over as natural, warm spoken Hindi for an Indian clothing shop advertisement, written ONLY in Devanagari script (no English letters at all).\n' +
+    '- Translate English product words into simple Hindi; words people already say in Hindi (कॉटन, पैडेड, ब्रा, पैंटी, सेट, साइज़) may stay, but write them in Devanagari.\n' +
+    '- Write all prices and numbers as Hindi words (e.g. 499 = चार सौ निन्यानवे रुपये). Read the mobile number digit by digit in Hindi words.\n' +
+    '- Say the website as "डायमंड फैशन्स डॉट इन". Remove symbols like | – & / and long lists; keep it short, friendly and easy to listen to.\n' +
+    '- Keep the same meaning: greeting, product, colours, main features, sizes, price/discount, how to order, home delivery and cash on delivery.\n' +
+    'Return only the final Hindi text, nothing else.\n\nText:\n' + text;
+  return gemGenerate(key, [{text:prompt}], false).then(function(t){ t = String(t || '').replace(/^["“\s]+|["”\s]+$/g, '').trim(); if (!t) throw new Error(SL('हिंदी नहीं बनी','Hindi could not be made')); return t; });
+}
 function ttsVoice(text){ // female Hindi voice: Gemini (same key as AI description) or Google Cloud Text-to-Speech
   var vn = (meta && meta.ttsVoice) || '';
   if (/^gem:/.test(vn) || (meta && !meta.ttsKey && meta.geminiKey)) return geminiTts(text, /^gem:/.test(vn) ? vn.slice(4) : 'Kore');
@@ -2546,7 +2558,7 @@ function makeAnyVideo(p, kind, style, onProgress, music, voice){
   if (!voice) voice = {mode: (meta && meta.voice === 'ai' && hasVoiceKey()) ? 'ai' : 'none'};
   VVOICE = null;
   var getVoice = voice.mode === 'mic' && voice.rec ? Promise.resolve(voice.rec.data)
-    : voice.mode === 'ai' ? ttsVoice(voice.text || voiceScript(p, kind)) : Promise.resolve(null);
+    : voice.mode === 'ai' ? (voice.text ? Promise.resolve(voice.text) : (function(sc){ return (/[A-Za-z]/.test(sc) && meta && meta.geminiKey) ? hindiScript(sc).catch(function(){ return sc; }) : Promise.resolve(sc); })(voiceScript(p, kind))).then(ttsVoice) : Promise.resolve(null);
   return getVoice.then(function(buf){
     if (!buf) return;
     var AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
@@ -2578,12 +2590,19 @@ function videoDialog(p){
   vSel.value = (meta && meta.voice === 'ai' && hasVoiceKey()) ? 'ai' : 'none';
   var vBox = el('div'), micRec = null, scriptTa = el('textarea',{style:'width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;margin-top:4px'});
   scriptTa.value = voiceScript(p, kind);
+  var hiMsg = el('span',{'class':'small'});
+  function toHindi(){ hiMsg.textContent = SL('पूरा हिंदी में बदल रहे हैं…','Converting to full Hindi…'); hiMsg.style.color = ''; hiB.disabled = true;
+    hindiScript(scriptTa.value).then(function(t){ scriptTa.value = t; hiMsg.textContent = '✓ ' + SL('पूरा हिंदी में हो गया','Now fully in Hindi'); hiB.disabled = false; },
+      function(e){ hiMsg.textContent = e.message || e; hiMsg.style.color = 'var(--bad)'; hiB.disabled = false; }); }
+  var hiB = el('button',{'class':'btn b-sm b-gold',type:'button',text:'🇮🇳 '+SL('पूरा हिंदी में बदलें (AI)','Make it full Hindi (AI)'),onclick:toHindi});
+  var hiRow = el('div',{'class':'row',style:'margin:6px 0'},[ hiB, hiMsg ]);
+  if (/[A-Za-z]/.test(scriptTa.value) && meta && meta.geminiKey) setTimeout(toHindi, 0); // English in the product name: convert right away
   function drawVoice(){ vBox.innerHTML = ''; micRec = null;
-    if (vSel.value === 'ai'){ vBox.appendChild(el('p',{'class':'muted small',text:SL('AI यही पढ़ेगी (बदल सकते हैं):','The AI will read this (you can edit):')})); vBox.appendChild(scriptTa); }
+    if (vSel.value === 'ai'){ vBox.appendChild(el('p',{'class':'muted small',text:SL('AI यही पढ़ेगी (बदल सकते हैं):','The AI will read this (you can edit):')})); vBox.appendChild(scriptTa); vBox.appendChild(hiRow); }
     if (vSel.value === 'mic') micRecorder(vBox, scriptTa.value, function(v){ micRec = v; });
     if (vSel.value === 'file'){
       var fst = el('p',{'class':'small muted',html:SL('1. नीचे का टेक्स्ट कॉपी करें। 2. किसी फ़्री वेबसाइट पर (जैसे <b>ttsmaker.com</b>) भाषा <b>Hindi</b> और कोई <b>Female</b> आवाज़ चुनकर पेस्ट करें और MP3 डाउनलोड करें। 3. वह फ़ाइल यहाँ डालें।','1. Copy the text below. 2. On a free website (e.g. <b>ttsmaker.com</b>) pick <b>Hindi</b> and a <b>Female</b> voice, paste, and download the MP3. 3. Add that file here.')});
-      vBox.appendChild(fst); vBox.appendChild(scriptTa);
+      vBox.appendChild(fst); vBox.appendChild(scriptTa); vBox.appendChild(hiRow);
       vBox.appendChild(el('div',{'class':'row',style:'margin:6px 0'},[ el('button',{'class':'btn b-sm b-line',type:'button',text:'📋 '+SL('टेक्स्ट कॉपी करें','Copy text'),onclick:function(e){ try { navigator.clipboard.writeText(scriptTa.value); e.target.textContent = '✓ ' + SL('कॉपी हो गया','Copied'); } catch(x){ scriptTa.select(); document.execCommand('copy'); } }}) ]));
       var fi = el('input',{type:'file',accept:'audio/*,.mp3,.wav,.m4a,.ogg'}), fmsg = el('p',{'class':'small'});
       fi.onchange = function(){ var f = fi.files[0]; if (!f) return; fmsg.textContent = '…';
