@@ -543,6 +543,7 @@ function editProduct(p0){
       ph.appendChild(el('div',{'class':'ph'+(i===0?' cover':'')},[ el('img',{src:src,alt:''}), el('div',{'class':'t'},[
         el('button',{type:'button',title:L('बाएँ'),text:'←',onclick:function(){ if (i>0){ var x=p.photos[i]; p.photos[i]=p.photos[i-1]; p.photos[i-1]=x; render(); } }}),
         el('button',{type:'button',title:L('हटाएँ'),text:'🗑',onclick:function(){ p.photos.splice(i,1); render(); }}),
+        el('button',{type:'button',title:SL('AI से सुंदर बनाएँ','Make better with AI'),text:'✨',onclick:function(){ keep(); makeoverDialog(p, i, function(d, mode){ if (mode === 'replace') p.photos[i] = d; else p.photos.splice(i + 1, 0, d); render(); msg.textContent = SL('नई फ़ोटो लग गई — अब “सेव करें” दबाएँ','New photo added — now tap “Save”'); msg.className = 'msg ok'; }); }}),
         el('button',{type:'button',title:L('दाएँ'),text:'→',onclick:function(){ if (i<p.photos.length-1){ var x=p.photos[i]; p.photos[i]=p.photos[i+1]; p.photos[i+1]=x; render(); } }}) ]) ]));
     });
     var fi = el('input',{type:'file',accept:'image/*',multiple:'multiple'});
@@ -2000,6 +2001,7 @@ function drawSocial(main){
     cl.value = meta.capLang || 'hi';
     card.appendChild(el('div',{'class':'row',style:'margin:6px 0'},[ el('b',{text:SL('पोस्ट का विवरण किस भाषा में','Post text language')}), cl, el('span',{'class':'small muted',text:SL('(सामान का नाम Gemini से हिंदी में बदलता है)','(item name is put into Hindi with Gemini)')}) ]));
     card.appendChild(chk('autoNew', SL('नया सामान (फ़ोटो के साथ) सेव होते ही पोस्ट करें','Post new items (with a photo) as soon as they are saved')));
+    card.appendChild(chk('director', SL('🎬 अपने-आप वाले वीडियो में Gemini डायरेक्टर (फ़ोटो का क्रम, हर फ़ोटो पर हिंदी लाइन, संगीत)','🎬 Gemini director in automatic videos (photo order, a Hindi line on each photo, music)')));
     card.appendChild(chk('autoLow', SL('जब किसी सामान के कम पीस बचें तो पोस्ट करें','Post when an item is running low')));
     card.appendChild(chk('lowRepost', SL('स्टॉक और कम हो तो असली बचे पीस के साथ नई पोस्ट (पुरानी Facebook पोस्ट हट जाएगी, ख़त्म होने पर भी हटेगी)','When stock drops further, post again with the real number left (the old Facebook post is removed, also when sold out)')));
     card.appendChild(chk('video', SL('3 या ज़्यादा फ़ोटो हों तो फ़ोटो की जगह वीडियो (Reel) बनाकर पोस्ट करें','If an item has 3 or more photos, make and post a video (Reel) instead of a photo')));
@@ -2410,6 +2412,7 @@ function makeVideo(p, kind, onProgress){
         if (lt > PER - FADE){ var nx = imgs[i+1]; var fa = (lt - (PER - FADE)) / FADE;
           if (nx) cover(nx, 1, fa); else { x.globalAlpha = fa; x.fillStyle = '#0B1626'; x.fillRect(0,0,W,H); x.globalAlpha = 1; } }
         band(Math.min(1, tp/.5));
+        if (VPLAN && VPLAN.caps) capPill(x, W, VPLAN.caps[i], Math.min(1, lt / .4, (PER - FADE - lt) / .3), 150);
         // photo counter dots
         for (var d = 0; d < imgs.length; d++){ x.fillStyle = d === i ? '#CDAA5C' : 'rgba(255,255,255,.5)'; x.beginPath(); x.arc(W/2 - (imgs.length-1)*9 + d*18, 40, d === i ? 6 : 4, 0, 7); x.fill(); }
         return;
@@ -2522,7 +2525,7 @@ function makeCameraVideo(p, kind, len, onProgress){
     var gn = document.createElement('canvas'); gn.width = gn.height = 256; var gx = gn.getContext('2d'), id = gx.createImageData(256, 256);
     for (var q = 0; q < id.data.length; q += 4){ var v = Math.random()*255|0; id.data[q] = id.data[q+1] = id.data[q+2] = v; id.data[q+3] = 255; } gx.putImageData(id, 0, 0);
     var moves = ['tilt', 'push', 'slide', 'pull', 'detail'];
-    var shots = []; for (var s = 0; s < nShots; s++) shots.push({img: imgs[s % imgs.length], move: moves[(s + Math.floor(s / imgs.length)) % moves.length], seed: Math.random()*10, focus: s % 2 === 0});
+    var shots = []; for (var s = 0; s < nShots; s++) shots.push({ix: s % imgs.length, img: imgs[s % imgs.length], move: moves[(s + Math.floor(s / imgs.length)) % moves.length], seed: Math.random()*10, focus: s % 2 === 0});
     function ease(t){ t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); }
     // camera: cx, cy = point of the photo (0..1) at the screen centre, z = zoom over "cover" size
     function cam(sh, u){
@@ -2594,6 +2597,7 @@ function makeCameraVideo(p, kind, len, onProgress){
       } else if (tEnd < WHIP && i === nShots - 1){ drawShot(sh, u, t, 0, 0); x.globalAlpha = 1 - tEnd/WHIP; x.fillStyle = '#0B1626'; x.fillRect(0,0,W,H); x.globalAlpha = 1; }
       else drawShot(sh, u, t, 0, focusBlur);
       finish(t); bug();
+      if (VPLAN && VPLAN.caps && tEnd >= WHIP){ var ca = Math.min(1, lt / .4, (tEnd - WHIP) / .4); capPill(x, W, VPLAN.caps[sh.ix], ca, 190); }
       // name + price shown at the start, the middle and near the end
       var la = 0; [[.6, 6], [body*.5 - 2, body*.5 + 3], [body - 7, body - .4]].forEach(function(r){ if (t > r[0] && t < r[1]) la = Math.max(la, Math.min(1, (t - r[0])/.5, (r[1] - t)/.5)); });
       lower(la);
@@ -2601,7 +2605,99 @@ function makeCameraVideo(p, kind, len, onProgress){
     return recordCanvas(c, total, frame, onProgress, 4000000, type);
   });
 }
-function makeAnyVideo(p, kind, style, onProgress, music, voice){
+/* ---------- Gemini as video director: photo order, a short Hindi line on each photo, music ---------- */
+var VPLAN = null; // {caps:[...per photo...]} while a video is being drawn
+function thumb64(src, max){ return loadImg(src).then(function(im){ if (!im) return ''; var c = document.createElement('canvas'), k = Math.min(1, (max || 384) / Math.max(im.width, im.height)); c.width = Math.round(im.width*k); c.height = Math.round(im.height*k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); try { return c.toDataURL('image/jpeg', .75); } catch(e){ return ''; } }); }
+function videoPlan(p, kind){
+  var key = meta && meta.geminiKey, photos = (p.photos || []).slice(0, 10);
+  if (!key || !photos.length) return Promise.resolve(null);
+  return Promise.all(photos.map(function(s){ return thumb64(s, 384); })).then(function(th){
+    var parts = [{text:'You are the director of a short vertical shop video (Reel) for Diamond Fashions, a clothing shop in Purandarpur, UP, India. Customers are from small towns and read Hindi.\n' +
+      'Product: ' + JSON.stringify({name:p.name, price:p.price, mrp:p.mrp, sizes:p.sizes, details:p.details || '', desc:p.desc || '', kind: kind === 'low' ? 'only a few pieces left' : 'new arrival'}) + '\n' +
+      'The ' + th.filter(Boolean).length + ' photos follow, numbered from 0. Decide: (1) the best order (best-looking full photo first, close-ups/details later, drop blurry or duplicate photos but keep at least 2); ' +
+      '(2) for each photo in that order ONE very short Hindi line in Devanagari (2 to 5 words) about what that photo shows or a selling point, e.g. "शुद्ध कॉटन कपड़ा", "सुंदर बॉर्डर", "50% की छूट", "हर साइज़ में". Do not invent things you cannot see or were not told; ' +
+      '(3) music: "festive" for ethnic / festival wear, "upbeat" for western / kids / party, "soft" for innerwear, nightwear, home and kitchen items.\n' +
+      'Return JSON only: {"order":[numbers], "lines":["one line per photo in the same order"], "music":"festive|upbeat|soft"}'}];
+    th.forEach(function(d, i){ var m = /^data:(image\/[a-z]+);base64,(.*)$/.exec(d || ''); if (m){ parts.push({text:'Photo ' + i + ':'}); parts.push({inline_data:{mime_type:m[1], data:m[2]}}); } });
+    return gemGenerate(key, parts, true).then(function(t){
+      var o = JSON.parse(String(t).replace(/^\s*```(?:json)?/, '').replace(/```\s*$/, '').trim());
+      var order = (o.order || []).map(function(n){ return +n; }).filter(function(n, i, a){ return n >= 0 && n < photos.length && a.indexOf(n) === i; });
+      if (order.length < Math.min(2, photos.length)) order = photos.map(function(x, i){ return i; });
+      var lines = (o.lines || []).map(function(l){ return String(l || '').replace(/[A-Za-z]+/g, '').trim().slice(0, 40); });
+      return {order:order, caps:order.map(function(n, i){ return lines[i] || ''; }), music:/^(festive|upbeat|soft)$/.test(o.music) ? o.music : ''};
+    });
+  }).catch(function(e){ try { console.warn('video plan failed', e); } catch(x){} return null; });
+}
+function capPill(x, W, text, a, y){
+  if (!text || a <= 0) return; x.save(); x.globalAlpha = a; x.font = "bold 46px 'Hind','Noto Sans Devanagari',Arial,sans-serif"; x.textAlign = 'center';
+  var tw = Math.min(W - 60, x.measureText(text).width + 60); x.fillStyle = 'rgba(11,22,38,.78)'; x.beginPath(); if (x.roundRect) x.roundRect((W - tw)/2, y - 52, tw, 78, 39); else x.rect((W - tw)/2, y - 52, tw, 78); x.fill();
+  x.strokeStyle = '#CDAA5C'; x.lineWidth = 3; x.stroke(); x.fillStyle = '#FFFFFF'; x.fillText(text, W/2, y + 2, W - 90); x.restore();
+}
+/* ---------- AI photo makeover (Gemini image model, "Nano Banana"): paid per photo ---------- */
+var imgModels = null;
+function geminiImageModels(key){
+  if (imgModels) return Promise.resolve(imgModels);
+  return fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key)).then(function(r){ return r.json().then(function(j){ if (j.error) throw new Error(gemErr(j, r.status)); return j; }); }).then(function(j){
+    var ms = (j.models || []).filter(function(m){ return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0; }).map(function(m){ return String(m.name).replace(/^models\//, ''); })
+      .filter(function(n){ return /image|banana/.test(n) && /^gemini/.test(n) && !/tts|imagen|embed|live/.test(n); });
+    function ver(n){ var m = /(\d+(?:\.\d+)?)/.exec(n); return m ? parseFloat(m[1]) : 0; }
+    function score(n){ return ver(n) + (/banana/.test(n) ? 2 : 0) + (/flash/.test(n) ? 1 : 0) - (/pro/.test(n) ? 3 : 0) - (/preview/.test(n) ? .2 : 0); }
+    ms.sort(function(a, b){ return score(b) - score(a); });
+    imgModels = ms.length ? ms : ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview']; return imgModels;
+  });
+}
+var MAKEOVER = [
+  ['white', 'सफ़ेद साफ़ बैकग्राउंड (ऑनलाइन दुकान जैसा)', 'Clean white background (online-shop look)', 'Put this exact product on a clean pure white studio background with a soft natural shadow, like a professional e-commerce catalogue photo. Keep the product exactly the same: same colour, design, print, embroidery, border, shape and size. Do not add text, logos or watermarks.'],
+  ['studio', 'स्टूडियो फ़ोटो (अच्छी रोशनी, साफ़ रंग)', 'Studio photo (good light, true colours)', 'Make this a bright professional studio product photo: even soft lighting, true colours, sharp details, neat soft beige backdrop. Keep the product exactly the same: same colour, design, print, embroidery and shape. No text, no logos.'],
+  ['model_f', 'भारतीय महिला मॉडल ने पहना हुआ', 'Worn by an Indian woman model', 'Show this exact garment worn by a graceful Indian woman model, full or three-quarter body, modest and decent pose, in a bright studio or elegant room. Keep the garment exactly the same: same colour, pattern, border, embroidery and style. Natural realistic photo, no text, no logos.'],
+  ['model_m', 'भारतीय पुरुष मॉडल ने पहना हुआ', 'Worn by an Indian man model', 'Show this exact garment worn by a smart Indian man model, natural pose, bright studio background. Keep the garment exactly the same: same colour, pattern and style. Natural realistic photo, no text, no logos.'],
+  ['mannequin', 'पुतले (mannequin) पर, मॉडल के बिना', 'On a mannequin (no model)', 'Show this exact garment neatly displayed on a plain white dress-form mannequin, studio light, clean light background. Keep the garment exactly the same. No text, no logos.'],
+  ['shop', 'सुंदर दुकान / शोरूम बैकग्राउंड', 'Nice shop / showroom background', 'Place this exact product in a tidy, well-lit Indian clothing showroom setting, product clearly in focus in the front. Keep the product exactly the same: colour, design and shape. No text, no logos.']
+];
+function aiMakeover(src, how){
+  var key = meta && meta.geminiKey; if (!key) return Promise.reject(new Error(SL('सेटिंग में Gemini key डालें','Add the Gemini key in Settings')));
+  var opt = MAKEOVER.filter(function(m){ return m[0] === how; })[0] || MAKEOVER[0];
+  return Promise.all([geminiImageModels(key), thumb64(src, 1024)]).then(function(r){
+    var list = r[0], m = /^data:(image\/[a-z]+);base64,(.*)$/.exec(r[1] || ''); if (!m) throw new Error(SL('फ़ोटो पढ़ी नहीं जा सकी','Could not read the photo'));
+    var i = 0, last = null;
+    function next(){
+      if (i >= list.length || i >= 3) throw last || new Error(SL('फ़ोटो नहीं बनी','The photo could not be made'));
+      var name = list[i++];
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + name + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user', parts:[{text:opt[3]}, {inline_data:{mime_type:m[1], data:m[2]}}]}], generationConfig:{responseModalities:['TEXT','IMAGE']}})})
+        .then(function(x){ return x.json().then(function(j){ return {j:j, s:x.status}; }); }).then(function(x){
+          if (x.j.error){ last = new Error(gemErr(x.j, x.s)); if (x.s === 429 || x.s === 404 || x.s >= 500) return next(); throw last; }
+          var part = ((((x.j.candidates || [])[0] || {}).content || {}).parts || []).filter(function(q){ return q.inlineData || q.inline_data; })[0];
+          var d = part && (part.inlineData || part.inline_data);
+          if (!d || !d.data){ last = new Error(SL('AI ने फ़ोटो नहीं भेजी (शायद रोक दी गई) — दूसरा तरीका चुनें','The AI sent no photo (maybe blocked) — try another style')); return next(); }
+          return compress('data:' + (d.mimeType || d.mime_type || 'image/png') + ';base64,' + d.data, 1000, .8);
+        });
+    }
+    return next();
+  });
+}
+function makeoverDialog(p, idx, onUse){
+  var sc = el('div',{'class':'scrim',style:'z-index:60',onclick:function(e){ if (e.target === sc) sc.remove(); }}), box = el('div',{'class':'modal',style:'max-width:520px'}); sc.appendChild(box); document.body.appendChild(sc);
+  var how = 'white', result = '', msg = el('p',{'class':'msg'});
+  var before = el('img',{src:p.photos[idx],alt:'',style:'width:100%;border-radius:8px;background:#eee'}), after = el('div',{style:'aspect-ratio:3/4;border-radius:8px;background:var(--gold-soft,#F3EAD6);display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;padding:8px',text:SL('नई फ़ोटो यहाँ दिखेगी','The new photo shows here')});
+  box.appendChild(el('button',{'class':'x',type:'button',text:'×',onclick:function(){ sc.remove(); }}));
+  box.appendChild(el('h2',{text:'✨ '+SL('AI से फ़ोटो सुंदर बनाएँ','Make the photo better with AI')}));
+  box.appendChild(el('p',{'class':'muted small',text:SL('Google Gemini (Nano Banana) से। हर फ़ोटो के लगभग ₹3–6 लगते हैं — Google AI Studio में billing चालू होनी चाहिए। AI कभी-कभी कपड़े की छोटी डिज़ाइन बदल देता है, इसलिए लगाने से पहले ध्यान से देखें।','With Google Gemini (Nano Banana). Each photo costs about ₹3–6 — billing must be on in Google AI Studio. The AI sometimes changes small details of the design, so check carefully before using it.')}));
+  box.appendChild(el('div',{style:'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0'},[ el('div',null,[ el('b',{'class':'small',text:SL('अभी','Now')}), before ]), el('div',null,[ el('b',{'class':'small',text:SL('AI के बाद','After AI')}), after ]) ]));
+  var opts = el('div');
+  MAKEOVER.forEach(function(m){ opts.appendChild(el('label',{'class':'row',style:'margin:4px 0'},[ el('input',{type:'radio',name:'mk-how',value:m[0],checked:m[0]===how?'checked':null,onchange:function(){ how = m[0]; }}), ' '+SL(m[1], m[2]) ])); });
+  box.appendChild(opts);
+  var go = el('button',{'class':'btn b-gold',type:'button',text:'✨ '+SL('बनाएँ','Make it'),onclick:function(){
+    go.disabled = true; msg.textContent = SL('AI फ़ोटो बना रहा है… (10–40 सेकंड)','The AI is making the photo… (10–40 sec)'); msg.className = 'msg';
+    aiMakeover(p.photos[idx], how).then(function(d){ result = d; after.innerHTML = ''; after.style.padding = '0'; after.appendChild(el('img',{src:d,alt:'',style:'width:100%;height:100%;object-fit:contain;border-radius:8px'})); msg.textContent = ''; go.disabled = false; go.textContent = '↻ '+SL('दोबारा बनाएँ','Make again'); useRow.hidden = false; },
+      function(e){ msg.textContent = e.message || e; msg.className = 'msg err'; go.disabled = false; }); }});
+  var useRow = el('div',{'class':'row',hidden:'hidden'},[
+    el('button',{'class':'btn b-ok',type:'button',text:'✓ '+SL('पुरानी की जगह लगाएँ','Replace the old one'),onclick:function(){ onUse(result, 'replace'); sc.remove(); }}),
+    el('button',{'class':'btn b-line',type:'button',text:'+ '+SL('नई फ़ोटो की तरह जोड़ें','Add as a new photo'),onclick:function(){ onUse(result, 'add'); sc.remove(); }}),
+    el('button',{'class':'btn b-line',type:'button',text:'⬇',title:SL('डाउनलोड','Download'),onclick:function(){ var a = el('a',{href:result,download:(p.code||'photo')+'-ai.jpg'}); document.body.appendChild(a); a.click(); a.remove(); }}) ]);
+  box.appendChild(el('div',{'class':'row',style:'margin-top:8px'},[ go ])); box.appendChild(useRow); box.appendChild(msg);
+}
+function makeAnyVideo(p, kind, style, onProgress, music, voice, useDirector){
   style = style || (meta && meta.vstyle) || 'cam60';
   VMUSIC = music || (meta && meta.music) || 'festive';
   if (!voice) voice = {mode: (meta && meta.voice === 'ai' && hasVoiceKey()) ? 'ai' : 'none'};
@@ -2612,7 +2708,19 @@ function makeAnyVideo(p, kind, style, onProgress, music, voice){
     if (!buf) return;
     var AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
     return ac.decodeAudioData(buf.slice(0)).then(function(b){ VVOICE = {buf:b}; try { ac.close(); } catch(e){} });
-  }).then(function(){ return makeAnyVideo2(p, kind, style, onProgress); });
+  }).then(function(){
+    var wantPlan = useDirector === undefined ? (meta && meta.director !== false) : useDirector;
+    if (!wantPlan || !(meta && meta.geminiKey) || (p.photos || []).length < 1) return null;
+    if (onProgress) onProgress(0);
+    if (window.__vidStatus) window.__vidStatus(SL('🎬 Gemini वीडियो की योजना बना रहा है…','🎬 Gemini is planning the video…'));
+    return videoPlan(p, kind);
+  }).then(function(plan){
+    var p2 = p;
+    if (plan){ p2 = Object.assign({}, p, {photos: plan.order.map(function(n){ return p.photos[n]; })}); VPLAN = {caps: plan.caps};
+      if (plan.music && !music) VMUSIC = plan.music; }
+    else VPLAN = null;
+    return makeAnyVideo2(p2, kind, style, onProgress).then(function(v){ VPLAN = null; return v; }, function(e){ VPLAN = null; throw e; });
+  });
 }
 function makeAnyVideo2(p, kind, style, onProgress){
   if (style === 'cam60') return makeCameraVideo(p, kind, 60, onProgress);
@@ -2664,6 +2772,8 @@ function videoDialog(p){
     } }
   vSel.onchange = drawVoice;
   box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('प्रोडक्ट की जानकारी बोलने वाली आवाज़','Voice-over with product details')})); box.appendChild(vSel); box.appendChild(vBox); drawVoice();
+  var dirChk = el('input',{type:'checkbox',checked:(meta && meta.geminiKey && meta.director !== false) ? 'checked' : null,disabled:(meta && meta.geminiKey) ? null : 'disabled'});
+  box.appendChild(el('label',{'class':'row',style:'margin:10px 0 4px'},[ dirChk, ' 🎬 '+SL('Gemini डायरेक्टर: फ़ोटो का सही क्रम, हर फ़ोटो पर छोटी हिंदी लाइन और सही संगीत','Gemini director: best photo order, a short Hindi line on each photo and the right music')+((meta && meta.geminiKey) ? '' : SL(' — सेटिंग में Gemini key चाहिए',' — needs the Gemini key in Settings')) ]));
   box.appendChild(el('p',{'class':'muted small',text:SL('कैसा वीडियो चाहिए?','Which kind of video?')}));
   [['cam60', SL('🎥 कैमरा स्टाइल · 1 मिनट','🎥 Camera style · 1 min')], ['cam30', SL('🎥 कैमरा स्टाइल · 30 सेकंड','🎥 Camera style · 30 sec')], ['slide', SL('🖼 स्लाइड शो · 20 सेकंड','🖼 Slideshow · 20 sec')]].forEach(function(o){
     pickRow.appendChild(el('button',{'class':'btn '+(o[0]==='cam60'?'b-gold':'b-line'),type:'button',text:o[1],onclick:function(){ if ((vSel.value === 'mic' || vSel.value === 'file') && !micRec){ alert(SL('पहले आवाज़ रिकॉर्ड करें, या "बिना आवाज़" चुनें','Record the voice first, or choose "No voice"')); return; } if (hiP && vSel.value === 'ai'){ var bt = this; hiMsg.textContent = SL('हिंदी पूरा होते ही वीडियो बनेगा…','The video starts as soon as the Hindi is ready…'); hiP.then(function(){ bt.click(); }); return; }
@@ -2672,7 +2782,9 @@ function videoDialog(p){
   msg.textContent = SL('बनते समय यह स्क्रीन खुली रखें, फ़ोन लॉक न करें।','Keep this screen open while it is made; do not lock the phone.');
   function go(style, music, vo){
   msg.textContent = vo.mode === 'ai' ? SL('AI आवाज़ बन रही है…','Making the AI voice…') : msg.textContent;
-  makeAnyVideo(p, kind, style, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }, music, vo).then(function(vid){
+  window.__vidStatus = function(t){ msg.textContent = t; };
+  var dirOn = dirChk.checked, mus2 = dirOn && music === ((meta && meta.music) || 'festive') ? '' : music; // director may pick the music unless you chose a different one
+  makeAnyVideo(p, kind, style, function(pc){ msg.textContent = SL('वीडियो बन रहा है… ','Making the video… ') + pc + '%'; }, mus2, vo, dirOn).then(function(vid){
     var url = URL.createObjectURL(vid.blob);
     msg.textContent = SL('वीडियो तैयार ✓','Video ready ✓') + ' (' + Math.round(vid.blob.size/1024/1024*10)/10 + ' MB)'; msg.className = 'msg ok';
     box.appendChild(el('video',{src:url,controls:'',autoplay:'',muted:'',playsinline:'',style:'width:100%;max-height:60vh;border-radius:10px;background:#000;margin:8px 0'}));
