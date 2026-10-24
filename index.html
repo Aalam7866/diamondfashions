@@ -3588,7 +3588,7 @@ body.h-card .dcard-wrap{display:none!important}
   var barcodeP = null;
   function loadBarcode(){ if (window.JsBarcode) return Promise.resolve(); if (!barcodeP) barcodeP = loadScript('/jsbarcode.min.js').catch(function(){ barcodeP = null; }); return barcodeP; }
   function cardNo(){ var n = ''; for (var i = 0; i < 8; i++) n += Math.floor(Math.random() * 10); return 'DF' + (n.charAt(0) === '0' ? '7' + n.slice(1) : n); }
-  var cardBusy = false;
+  var cardBusy = false, cardErr = '';
   function ensureCard(){
     if (!user || !prof || !prof.name || !prof.phone || (prof.card && prof.card.no) || cardBusy) return Promise.resolve();
     cardBusy = true;
@@ -3596,18 +3596,30 @@ body.h-card .dcard-wrap{display:none!important}
     function attempt(){
       var no = cardNo(), at = new Date().toISOString();
       /* the rules only allow creating a card number that does not exist yet, so two customers can never get the same one */
-      return fs.collection('cards').doc(no).set({no:no, uid:user.uid, name:prof.name, phone:prof.phone, email:user.email||'', issued:at, active:true})
+      return withTimeout(fs.collection('cards').doc(no).set({no:no, uid:user.uid, name:prof.name, phone:prof.phone, email:user.email||'', issued:at, active:true}), 15000)
         .then(function(){ return saveProfile({card:{no:no, issued:at}}); })
         .catch(function(e){ if (++tries < 5 && /permission|exists/i.test(String(e && (e.code||e.message)))) return attempt(); throw e; });
     }
-    return attempt().then(function(){ cardBusy = false; if (modal && view === 'account') draw(); }, function(){ cardBusy = false; });
+    cardErr = '';
+    return attempt().then(function(){ cardBusy = false; if (modal && view === 'account') draw(); },
+      function(e){ cardBusy = false; cardErr = errText(e); try { console.warn('discount card', e); } catch(x){} if (modal && view === 'account') draw(); });
   }
   function syncCard(){ if (prof && prof.card && prof.card.no && fs) fs.collection('cards').doc(prof.card.no).set({name:prof.name||'', phone:prof.phone||''}, {merge:true}).catch(function(){}); ensureCard(); }
   function cardBlock(t){
     var wrap = mk('div',{'class':'dcard-wrap'});
     var c = prof && prof.card;
     wrap.appendChild(mk('h3',{'class':'acct-h',text:t.card_h}));
-    if (!c || !c.no){ wrap.appendChild(mk('p',{'class':'hint',text:'…'})); ensureCard(); return wrap; }
+    if (!c || !c.no){
+      var hi = (document.documentElement.lang || 'en').slice(0, 2) === 'hi';
+      if (!prof || !prof.phone || !prof.name){
+        wrap.appendChild(mk('p',{'class':'hint',text: hi ? 'कार्ड पाने के लिए अपना नाम और मोबाइल नंबर जोड़ें।' : 'Add your name and mobile number to get your card.'}));
+        wrap.appendChild(mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text:t.edit_prof,onclick:function(){ openModal('profile'); }}) ]));
+      } else if (cardErr && !cardBusy){
+        wrap.appendChild(mk('p',{'class':'hint',style:'color:var(--danger,#B42318)',text:(hi ? 'कार्ड अभी नहीं बन पाया: ' : 'Your card could not be made just now: ') + cardErr}));
+        wrap.appendChild(mk('div',{'class':'acct-mini'},[ mk('button',{type:'button',text: hi ? 'फिर से कोशिश करें' : 'Try again',onclick:function(){ cardErr = ''; draw(); }}) ]));
+      } else { wrap.appendChild(mk('p',{'class':'hint',text: hi ? 'आपका कार्ड बन रहा है…' : 'Making your card…'})); ensureCard(); }
+      return wrap;
+    }
     var svg = document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('class','dcard-bc'); svg.setAttribute('role','img'); svg.setAttribute('aria-label', 'Barcode ' + c.no);
     var spent = mk('b',{'class':'num',text:'…'}), pct = mk('span',{'class':'dcard-pct'});
     var card = mk('div',{'class':'dcard'},[
