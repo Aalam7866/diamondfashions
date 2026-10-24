@@ -2145,7 +2145,7 @@ function geminiTts(text, voiceName){
       if (i >= list.length || i >= 4) throw last || new Error(SL('Gemini आवाज़ नहीं बनी','Gemini voice could not be made'));
       var name = list[i++];
       return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + name + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:'Read this aloud in Hindi, in a warm, friendly and clear Indian woman’s voice, like a shop advertisement, at a natural pace: ' + text}]}],
+        body:JSON.stringify({contents:[{parts:[{text:text}]}], // only the words to speak: an instruction here gets read out loud too
           generationConfig:{responseModalities:['AUDIO'], speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voiceName || 'Kore'}}}}})})
         .then(function(r){ return r.json().then(function(j){ return {j:j, s:r.status}; }); }).then(function(x){
           if (x.j.error){ last = new Error(gemErr(x.j, x.s)); if (x.s === 429 || x.s === 404 || x.s >= 500 || x.s === 400) return next(); throw last; }
