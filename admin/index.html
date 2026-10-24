@@ -2457,9 +2457,19 @@ function recordLive(c, total, frame, onProgress, br, type){
       }, 1000/30);
   });
 }
+/* Instagram takes small files more easily: every video is kept under 15 MB (the picture's bit rate follows the length) */
+var VID_MAX = 15 * 1024 * 1024;
+function fitBitrate(br, total){ var room = Math.floor(VID_MAX * 8 * 0.85 / Math.max(1, total)) - 128000; return Math.max(500000, Math.min(br, room)); }
 function recordCanvas(c, total, frame, onProgress, br, type){
+  br = fitBitrate(br, total);
   if (!wcOk()) return recordLive(c, total, frame, onProgress, br, type);
-  return encodeMp4(c, total, frame, onProgress, br).catch(function(e){ try { console.warn('MP4 encoder failed, using recorder', e); } catch(x){} return recordLive(c, total, frame, onProgress, br, type); });
+  return encodeMp4(c, total, frame, onProgress, br).then(function(v){
+    if (!v || !v.blob || v.blob.size <= VID_MAX) return v;
+    // the encoder went over: once more with a lower bit rate
+    var br2 = Math.max(400000, Math.floor(br * VID_MAX / v.blob.size * 0.8));
+    try { console.warn('video ' + Math.round(v.blob.size / 1048576) + ' MB, encoding again at ' + br2); } catch(x){}
+    return encodeMp4(c, total, frame, onProgress, br2).then(function(v2){ return v2 && v2.blob && v2.blob.size < v.blob.size ? v2 : v; }, function(){ return v; });
+  }).catch(function(e){ try { console.warn('MP4 encoder failed, using recorder', e); } catch(x){} return recordLive(c, total, frame, onProgress, br, type); });
 }
 function canReel(t){ return /avc1/.test(t || vidType()); } // Instagram needs H.264 MP4
 /* 720x1280 vertical slideshow: intro, each photo with slow zoom + crossfade, end card. Plays in real time while it records. */
