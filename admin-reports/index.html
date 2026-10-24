@@ -57,7 +57,10 @@ button.tile:active{transform:scale(.98)}</style>
   }
   function loadExp() {
     if (exps) return Promise.resolve(exps);
-    return DF.list('expenses').then(function (l) { exps = l.sort(function (a, b) { return String(b.date + b.at).localeCompare(String(a.date + a.at)); }); return exps; }, function (e) { exps = []; throw e; });
+    return DF.list('expenses').then(function (l) {
+      // expenses written on the shop PC (TailorShop → Expenses) come with the report: shown here too, read-only
+      var pc = ((R && R.expensesList) || []).map(function (x, i) { return { _id: 'pc' + i, pc: true, amount: x.amount, cat: x.cat, note: [x.method, x.note].filter(Boolean).join(' · '), date: x.date, at: '', by: t('Shop PC', 'दुकान का PC') }; });
+      exps = l.concat(pc).sort(function (a, b) { return String(b.date + b.at).localeCompare(String(a.date + a.at)); }); return exps; }, function (e) { exps = []; throw e; });
   }
   var ST = { new: ['New', 'नया'], accepted: ['Accepted', 'मंज़ूर'], packed: ['Packed', 'पैक'], shipped: ['On the way', 'रास्ते में'], pickup: ['Ready at shop', 'दुकान पर तैयार'], delivered: ['Delivered', 'पहुँच गया'], rejected: ['Rejected', 'मना'], cancelled: ['Cancelled', 'रद्द'], return_req: ['Return asked', 'वापसी रिक्वेस्ट'], return_ok: ['Return approved', 'वापसी मंज़ूर'], return_pick: ['Return picked', 'वापसी उठाई'], returned: ['Returned', 'वापस'], return_no: ['Return refused', 'वापसी मना'] };
   function stName(s) { var x = ST[s]; return x ? t(x[0], x[1]) : (s || ''); }
@@ -187,7 +190,7 @@ button.tile:active{transform:scale(.98)}</style>
       ml.forEach(function (x) {
         box.appendChild(el('div', { 'class': 'card' }, [el('div', { 'class': 'row' }, [
           el('div', { 'class': 'grow' }, [el('b', { text: DF.money(x.amount) + ' · ' + catName(x.cat) }), el('div', { 'class': 'muted', text: dmy(x.date) + (x.note ? ' · ' + x.note : '') + (x.by ? ' · ' + x.by : '') })]),
-          el('button', { text: '🗑', title: t('Delete', 'हटाएँ'), onclick: function () { if (!confirm(t('Delete this expense?', 'यह खर्चा हटाएँ?'))) return; DF.del('expenses/' + encodeURIComponent(x._id)).then(function () { exps = null; drawExpenses(); }, function (e) { DF.toast(e.message, true); }); } })])]));
+          x.pc ? el('span', { 'class': 'muted', text: 'PC' }) : el('button', { text: '🗑', title: t('Delete', 'हटाएँ'), onclick: function () { if (!confirm(t('Delete this expense?', 'यह खर्चा हटाएँ?'))) return; DF.del('expenses/' + encodeURIComponent(x._id)).then(function () { exps = null; drawExpenses(); }, function (e) { DF.toast(e.message, true); }); } })])]));
       });
     }, function (e) { box.innerHTML = ''; box.appendChild(none(e.message)); });
   }
@@ -199,7 +202,7 @@ button.tile:active{transform:scale(.98)}</style>
     var main = el('main', {}, [el('div', { 'class': 'empty', text: t('Loading…', 'आ रहा है…') })]);
     root.appendChild(main);
     web = null; tail = null; exps = null;
-    DF.get('reports/today').then(function (r) { R = r; return r; }, function (e) { if (e.status === 404) { R = {}; return R; } throw e; }).then(function (r) {
+    DF.get('reports/today').then(function (r) { R = r; exps = null; return r; }, function (e) { if (e.status === 404) { R = {}; return R; } throw e; }).then(function (r) {
       main.innerHTML = '';
       var iso = isoDay();
       main.appendChild(el('div', { 'class': 'row' }, [el('div', { 'class': 'grow muted', text: t('Updated', 'अपडेट') + ': ' + (r.updatedText || '–') }), el('button', { text: '↻ ' + t('Refresh', 'रीफ़्रेश'), onclick: draw })]));
