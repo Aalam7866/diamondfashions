@@ -492,7 +492,7 @@ function drawProducts(main){
     products.filter(function(p){ return !qq || (p.name+' '+p.code).toLowerCase().indexOf(qq)>=0; }).forEach(function(p){
       var im = el('div',{'class':'im'}); if (p.photos && p.photos[0]) im.appendChild(el('img',{src:p.photos[0],alt:''})); else im.textContent = L('फ़ोटो नहीं');
       grid.appendChild(el('button',{'class':'pcard',type:'button',onclick:function(){ editProduct(p); }},[ im, el('div',{'class':'b'},[ el('span',{'class':'num small muted',text:p.code}), el('b',{text:p.name}),
-        el('span',{text:(p.price?rupees(p.price)+(p.unit==='m'?L(' / मीटर'):''):L('दाम नहीं'))+(p.hidden?L(' · छुपा'):'')+(p.inStock===false?L(' · स्टॉक ख़त्म'):'')+(p.featured?' · ⭐':'')}) ]) ]));
+        el('span',{text:(p.price?rupees(p.price)+(p.unit==='m'?L(' / मीटर'):''):L('दाम नहीं'))+(p.hidden?L(' · छुपा'):'')+(p.inStock===false?L(' · स्टॉक ख़त्म'):'')+(p.featured?' · ⭐':'')+(familyOf(p).length>1?' · 🎨 '+familyOf(p).length:'')}) ]) ]));
     }); };
   s.oninput = fill; fill();
   var mm = el('p',{'class':'msg'});
@@ -524,6 +524,52 @@ function fitPhotos(photos){ // keep a product under Firestore's 1 MB limit
   return go(0);
 }
 function nextCode(cat){ var pf = 'DF-'+(PFX[cat]||'X'), max = 0; products.forEach(function(p){ var m = new RegExp('^'+pf+'(\\d+)$').exec(p.code||''); if (m) max = Math.max(max, parseInt(m[1],10)); }); return pf + (max+1<10?'0':'') + (max+1); }
+/* ---------- colours of one model: products with the same "family" show together on the website ---------- */
+function colorOf(p){ if (p.color) return String(p.color).trim(); var m = /^\s*(colou?r|रंग)\s*:\s*(.+)$/im.exec(p.details || ''); return m ? m[2].trim() : ''; }
+function familyOf(p){ return p && p.family ? products.filter(function(x){ return x.family === p.family; }) : []; }
+function linkColor(p, x){
+  var fam = p.family || x.family || p.id, ids = {}; ids[p.id] = 1; ids[x.id] = 1;
+  products.forEach(function(y){ if (y.family && (y.family === p.family || y.family === x.family)) ids[y.id] = 1; });
+  var batch = db.batch(); Object.keys(ids).forEach(function(id){ batch.set(db.collection('products').doc(id), {family:fam}, {merge:true}); });
+  return batch.commit().then(function(){ products.forEach(function(y){ if (ids[y.id]) y.family = fam; }); p.family = fam; return fam; });
+}
+function unlinkColor(p, x){
+  var rest = products.filter(function(y){ return y.family && y.family === p.family && y.id !== x.id; });
+  var batch = db.batch(); batch.update(db.collection('products').doc(x.id), {family:FV.delete()});
+  if (rest.length === 1) batch.update(db.collection('products').doc(rest[0].id), {family:FV.delete()});
+  return batch.commit().then(function(){ x.family = null; if (rest.length === 1) rest[0].family = null; if (x.id === p.id || rest.length === 1 && rest[0].id === p.id) p.family = null; });
+}
+function colorSection(p, isNew, keep, rerender, msg){
+  var box = el('div',{'class':'card',style:'background:var(--bg);margin:0 0 12px'});
+  box.appendChild(el('b',{text:'🎨 '+SL('इसी मॉडल के दूसरे रंग','Other colours of this model')}));
+  box.appendChild(el('p',{'class':'muted small',style:'margin:4px 0 8px',text:SL('एक ही डिज़ाइन के अलग-अलग रंग (हर रंग अलग सामान) जोड़ दें — वेबसाइट पर फ़ोटो के नीचे सारे रंग एक साथ दिखेंगे, जो रंग ख़त्म है उस पर "Out of stock" दिखेगा।','Link the other colours of the same design (each colour is its own item) — the website shows all colours together under the photos; a colour with no stock shows "Out of stock".')}));
+  box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'e-color',text:SL('इस सामान का रंग (जैसे Yellow, पीला)','Colour of this item (e.g. Yellow)')}), el('input',{id:'e-color',value:p.color || colorOf(p) || ''}) ]));
+  if (isNew){ box.appendChild(el('p',{'class':'muted small',text:SL('सेव करने के बाद दूसरे रंग जोड़ सकते हैं।','After saving you can link the other colours.')})); return box; }
+  var row = el('div',{'class':'row',style:'gap:8px;flex-wrap:wrap'});
+  familyOf(p).filter(function(x){ return x.id !== p.id; }).forEach(function(x){
+    var im = el('div',{style:'width:56px;height:70px;border-radius:8px;overflow:hidden;background:var(--surface);flex:0 0 auto'}); if (x.photos && x.photos[0]) im.appendChild(el('img',{src:x.photos[0],alt:'',style:'width:100%;height:100%;object-fit:cover'}));
+    row.appendChild(el('div',{'class':'card row',style:'padding:6px;gap:8px;margin:0'},[ im, el('div',{},[ el('b',{'class':'small',text:colorOf(x) || x.name}), el('div',{'class':'muted small',text:x.code + (x.inStock === false ? ' · ' + SL('स्टॉक ख़त्म','out of stock') : '')}),
+      el('button',{'class':'btn b-sm b-line',type:'button',text:'✕ '+SL('हटाएँ','Remove'),onclick:function(e){ e.target.disabled = true; keep(); unlinkColor(p, x).then(rerender, function(er){ msg.textContent = er.message; msg.className = 'msg err'; }); }}) ]) ]));
+  });
+  box.appendChild(row);
+  box.appendChild(el('button',{'class':'btn b-sm b-gold',type:'button',style:'margin-top:8px',text:'+ '+SL('दूसरे रंग का सामान जोड़ें','Add another colour'),onclick:function(){ keep(); pickColorItem(p, function(x){ linkColor(p, x).then(rerender, function(er){ msg.textContent = er.message; msg.className = 'msg err'; }); }); }}));
+  return box;
+}
+function pickColorItem(p, done){
+  var sc = el('div',{'class':'scrim',style:'z-index:60',onclick:function(e){ if (e.target===sc) sc.remove(); }}), box = el('div',{'class':'modal'}); sc.appendChild(box); document.body.appendChild(sc);
+  box.appendChild(el('button',{'class':'x',type:'button',text:'×',onclick:function(){ sc.remove(); }}));
+  box.appendChild(el('h2',{text:SL('किस सामान को इसका दूसरा रंग बनाएँ?','Which item is another colour of this?')}));
+  var s = el('input',{'class':'search',type:'search',placeholder:SL('नाम या कोड से खोजें','Search name or code')}), list = el('div',{'class':'plist'});
+  box.appendChild(s); box.appendChild(list);
+  function fill(){ list.innerHTML = ''; var qq = s.value.trim().toLowerCase();
+    products.filter(function(x){ return x.id !== p.id && !(p.family && x.family === p.family) && !x.bundle && (!qq || (x.name+' '+x.code+' '+colorOf(x)).toLowerCase().indexOf(qq) >= 0); })
+      .sort(function(a, b){ return (b.cat === p.cat) - (a.cat === p.cat); })
+      .forEach(function(x){
+        var im = el('div',{'class':'im'}); if (x.photos && x.photos[0]) im.appendChild(el('img',{src:x.photos[0],alt:''})); else im.textContent = L('फ़ोटो नहीं');
+        list.appendChild(el('button',{'class':'pcard',type:'button',onclick:function(){ sc.remove(); done(x); }},[ im, el('div',{'class':'b'},[ el('span',{'class':'num small muted',text:x.code}), el('b',{text:x.name}), el('span',{'class':'small',text:(colorOf(x) || '') + (x.family ? ' · 🎨 ' + SL('दूसरे ग्रुप में','in another group') : '')}) ]) ]));
+      }); }
+  s.oninput = fill; fill(); s.focus();
+}
 function editProduct(p0){
   var isNew = !p0, p = JSON.parse(JSON.stringify(p0 || {cat:'women', art:'suit', unit:'pc', inStock:true, photos:[], sizes:'', stock:{}, stockM:0, minM:1}));
   p.photos = p.photos || []; p.stock = p.stock || {};
@@ -581,6 +627,7 @@ function editProduct(p0){
       footwear:'Material: PU leather\nSole: Rubber\nColour: Black\nHeel: Flat', jewellery:'Material: Alloy, gold plated\nStones: Kundan\nSet includes: Necklace, 2 earrings', beauty:'Brand: \nQuantity: 30 ml\nExpiry: ', stationery:'Brand: \nPages / Pack: \nSize: ', cookware:'Material: Stainless steel\nCapacity: 5 L\nInduction: Yes\nWarranty: 1 year'}[p.cat] || 'Material: \nColour: \nBrand: ';
     box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'e-det',text:L('पूरी जानकारी (हर लाइन में  नाम: जानकारी)')}), el('textarea',{id:'e-det',placeholder:ex,style:'min-height:120px'},[p.details||'']) ]));
     box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'e-long',text:L('लंबा विवरण (ग्राहक "पूरी जानकारी" में देखेगा)')}), el('textarea',{id:'e-long'},[p.longDesc||'']) ]));
+    box.appendChild(colorSection(p, isNew, keep, render, msg));
     box.appendChild(sel('e-art',L('फ़ोटो न हो तो कौन सा निशान दिखे'),p.art||'suit',ARTS.map(function(a){ return [a, ART_NAME[a] || a]; })));
     box.appendChild(el('div',{'class':'row',style:'margin:6px 0 12px'},[
       el('label',{'class':'row'},[ el('input',{type:'checkbox',id:'e-in',checked:p.inStock!==false?'checked':null}), L(' स्टॉक में है') ]),
@@ -605,6 +652,7 @@ function editProduct(p0){
     if (!document.getElementById('e-name')) return;
     p.name = v('e-name'); p.cat = v('e-cat'); p.unit = v('e-unit') || p.unit; p.price = num(v('e-price')); p.mrp = num(v('e-mrp'));
     p.desc = v('e-desc'); p.details = (document.getElementById('e-det')||{}).value || ''; p.longDesc = v('e-long'); p.art = v('e-art'); p.inStock = document.getElementById('e-in').checked; p.hidden = document.getElementById('e-hid').checked; p.featured = !!(document.getElementById('e-feat')||{}).checked;
+    if (document.getElementById('e-color')) p.color = v('e-color');
     if (document.getElementById('e-stockM')){ p.stockM = num(v('e-stockM'))||0; p.minM = num(v('e-minM'))||1; }
     if (document.getElementById('e-sizes')){ p.sizes = v('e-sizes'); var st = {}; Array.prototype.forEach.call(box.querySelectorAll('[data-size]'), function(n){ var x = num(n.value); if (x!==null) st[n.getAttribute('data-size')] = Math.round(x); }); p.stock = st; }
   }

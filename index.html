@@ -320,6 +320,15 @@ footer .wrap{padding-block:22px 96px;display:flex;justify-content:space-between;
 .info .mrp{font-size:17px}.info .off{font-size:17px}
 .info .lbl{font-weight:600;font-size:15px;margin-bottom:6px}
 .sizechips{display:flex;gap:8px;flex-wrap:wrap}
+.clr-box{margin:2px 0 4px}.clr-box .lbl b{font-weight:700}
+.clr-row{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 6px;scrollbar-width:thin}
+.clr{position:relative;flex:0 0 auto;width:76px;padding:0;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:stretch}
+.clr img,.clr>span:first-child{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:var(--bg)}
+.clr.on{border:2.5px solid var(--ink,#0B1626);box-shadow:0 0 0 2px var(--surface) inset}
+.clr.out img{filter:grayscale(.6) brightness(.6)}
+.clr-out{position:absolute;left:0;right:0;top:38%;background:rgba(255,255,255,.88);color:#C2410C;font-size:11px;font-weight:700;text-align:center;padding:3px 0}
+.clr-n{font-size:11px;line-height:1.2;padding:3px 4px 4px;text-align:center;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .clr-more{font-size:12px;font-weight:600;color:var(--muted)}
 .sizechips button{min-width:52px;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600}
 .sizechips button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-ink);border-color:var(--chip-on)}
 .buyrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1263,7 +1272,8 @@ function renderGrid(){
         el('h3',{text:p.name}),
         rateBadge(p.id, true),
         pricing(p),
-        isM(p) ? el('div',{'class':'sizes',text:fmtM(p.stockM)+t.m_stock}) : sz.length ? el('div',{'class':'sizes',text:t.sizes_lbl+(sz.length>3? sz[0]+' – '+sz[sz.length-1] : sz.join(', '))}) : null
+        isM(p) ? el('div',{'class':'sizes',text:fmtM(p.stockM)+t.m_stock}) : sz.length ? el('div',{'class':'sizes',text:t.sizes_lbl+(sz.length>3? sz[0]+' – '+sz[sz.length-1] : sz.join(', '))}) : null,
+        familyOf(p).length ? el('div',{'class':'clr-more',text:'🎨 '+D3(FK().clr_more, familyOf(p).length)}) : null
       ])
     ]);
     grid.appendChild(card);
@@ -1281,6 +1291,23 @@ var FKS = {
       b1t:'नए सूट और साड़ियाँ',b1s:'हर मौके के लिए नए डिज़ाइन',b2t:'लेडीज़ और जेंट्स सिलाई',b2s:'सही फिटिंग, समय पर',b3t:'मीटर से कपड़ा',b3s:'जितना चाहिए उतना लें',b4t:'कैश ऑन डिलीवरी',b4s:'ऑनलाइन ऑर्डर करें, घर पर पैसे दें। {d} दिन में आसान वापसी।',shop:'अभी खरीदें',book:'बुक करें',upto:'{p}% तक छूट',video:'वीडियो'}
 };
 function FK(){ return FKS[lang] || FKS.en; }
+Object.assign(FKS.en, {clr_sel:'Selected colour', clr_lbl:'Other colours of this model', clr_more:'{n} colours'});
+Object.assign(FKS.hi, {clr_sel:'चुना गया रंग', clr_lbl:'इसी मॉडल के दूसरे रंग', clr_more:'{n} रंग'});
+/* ---------- colours of one model (products with the same "family", set in Admin) ---------- */
+function colorOf(p){ if (p.color) return String(p.color).trim(); var m = /^\s*(colou?r|रंग)\s*:\s*(.+)$/im.exec(p.details || ''); return m ? m[2].trim() : ''; }
+function familyOf(p){ if (!p || !p.family) return []; var l = products.filter(function(x){ return x.family === p.family && !x.bundle; }); return l.length > 1 ? l : []; }
+function colorsBox(p, from){
+  var fam = familyOf(p); if (!fam.length) return null;
+  var f = FK(), row = el('div',{'class':'clr-row',role:'group','aria-label':f.clr_lbl});
+  fam.forEach(function(x){
+    var out = !avail(x), cur = x.id === p.id, nm = colorOf(x);
+    var im = (x.photos && x.photos[0]) ? el('img',{src:x.photos[0],alt:'',loading:'lazy'}) : el('span',{html:artSvg(x.art)});
+    row.appendChild(el('button',{type:'button','class':'clr'+(cur?' on':'')+(out?' out':''),'aria-pressed':String(cur),title:nm || x.name,'aria-label':(nm || x.name)+(out?' – '+T().out_stock:''),
+      onclick:function(){ if (cur) return; openProduct(x.id, from); var sc = document.getElementById('pp-scrim'); if (sc) sc.scrollTop = 0; }},
+      [ im, out ? el('span',{'class':'clr-out',text:T().out_stock}) : null, nm ? el('span',{'class':'clr-n',text:nm}) : null ]));
+  });
+  return el('div',{'class':'clr-box'},[ el('div',{'class':'lbl'},[ el('b',{text:f.clr_sel+': '}), colorOf(p) || p.name ]), row ]);
+}
 var ICO_U = {
   cod:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/></svg>',
   ret:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
@@ -1802,6 +1829,7 @@ function openProduct(id, from){
     el('div',{'class':'sku',id:'pp-sku',text:t.item_no+skuFor(p,size)}),
     pricing(p),
     el('div',{'class':'stockline'+(avail(p)?'':' out'),text:avail(p)?t.in_stock:t.out_stock}),
+    colorsBox(p, from),
     p.desc ? el('p',{style:'margin:0',text:p.desc}) : null,
     detailsBox(p),
     (!isM(p) && chipBox) ? el('div',null,[ el('div',{'class':'lbl',text:t.size_choose}), chipBox ]) : null,
