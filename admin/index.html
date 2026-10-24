@@ -2020,6 +2020,31 @@ function postProduct0(p, kind, capIn){
   }, function(e){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, ok:false, err:String(e.message||e).slice(0,200)}); throw e; });
 }
 /* watch product changes: new item with photo, or stock at or below the limit */
+/* ---------- Reels Instagram refused: tried again by itself (10, 20, 40 min … up to about a day), then the photos go as a carousel ---------- */
+function reelQueueSet(fn){ return metaRef().get().then(function(s){ var q = fn(((s.exists && s.data().reelQueue) || []).slice()); return metaRef().set({reelQueue:q.slice(-10)}, {merge:true}); }).catch(function(){}); }
+function reelQueueAdd(job){ return reelQueueSet(function(q){ return q.filter(function(x){ return x.fbVid !== job.fbVid; }).concat([job]); }); }
+var reelBusy = false, REEL_WAIT = [10, 20, 40, 60, 120, 240, 480];
+function reelRetry(force){
+  if (reelBusy || !meta || !meta.pageToken || !meta.igId || meta.ig === false) return Promise.resolve();
+  var nowMs = Date.now(), job = (meta.reelQueue || []).filter(function(j){ return force === j.fbVid || (!force && (!j.next || Date.parse(j.next) <= nowMs)); })[0];
+  if (!job) return Promise.resolve();
+  reelBusy = true;
+  var p = products.filter(function(x){ return x.id === job.pid; })[0] || {id:job.pid, code:job.code, name:job.name, photos:[]};
+  return igReel(p, job.kind, null, job.fbVid, job.cap, true).then(function(id){
+    toast('🎬 ' + (job.name || job.code) + SL(' की Reel Instagram पर पोस्ट हो गई',' Reel posted on Instagram'));
+    socialLog({at:now(), code:job.code, name:job.name, kind:job.kind, video:true, ig:id, ok:true, err:SL('Instagram ने Reel ' + ((job.tries||0) + 2) + 'वीं कोशिश में ली','Instagram took the Reel on try ' + ((job.tries||0) + 2))});
+    return reelQueueSet(function(q){ return q.filter(function(x){ return x.fbVid !== job.fbVid; }); });
+  }, function(e){
+    var tries = (job.tries || 0) + 1, err = String(e.message || e).slice(0, 160);
+    if (tries > REEL_WAIT.length){
+      // kept refusing for about a day: Instagram gets the photos as a swipeable post instead
+      return reelQueueSet(function(q){ return q.filter(function(x){ return x.fbVid !== job.fbVid; }); }).then(function(){
+        return (p.photos || []).length ? postIgCarousel(p, job.kind, job.cap).then(function(id){ socialLog({at:now(), code:job.code, name:job.name, kind:job.kind, video:true, ig:id, ok:true, err:'Instagram: Reel refused ' + tries + ' times (' + err + ') → photos posted as carousel'}); }) : null; });
+    }
+    return reelQueueSet(function(q){ return q.map(function(x){ return x.fbVid === job.fbVid ? Object.assign({}, x, {tries:tries, err:err, next:new Date(Date.now() + REEL_WAIT[tries - 1] * 60000).toISOString()}) : x; }); });
+  }).then(function(){ reelBusy = false; }, function(){ reelBusy = false; });
+}
+setInterval(function(){ try { reelRetry(); } catch(e){} }, 120000);
 function socialWatch(){
   if (!meta || !meta.pageToken || !metaLoaded) return;
   var lim = meta.low || 3;
@@ -2106,6 +2131,16 @@ function drawSocial(main){
       el('input',{inputmode:'numeric',value:meta.low||3,onchange:function(e){ metaRef().set({low:Math.max(1, parseInt(e.target.value,10)||3)},{merge:true}); }}) ]));
     card.appendChild(el('p',{'class':'muted small',text:SL('हर सामान एक बार "नया माल" के रूप में पोस्ट होता है (3+ फ़ोटो हों तो वीडियो बनकर; वीडियो जितना लंबा, बनने में उतना ही समय, यानी 1 मिनट वाला 1 मिनट में)। कम स्टॉक वाली पोस्ट दोबारा तभी होगी जब स्टॉक बढ़ाकर फिर कम हो। अपने-आप पोस्ट तभी होती है जब यह Admin खुला हो (ऑर्डर मंज़ूर करते या सामान सेव करते समय)।','Each item is posted once as a new arrival (as a video when it has 3+ photos; a video takes as long to make as it lasts, so a 1-minute video takes 1 minute). A low-stock post repeats only after you restock and it runs low again. Auto-posting runs while this Admin is open (when you save items or accept orders).')}));
     card.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-line b-sm',type:'button',text:SL('कनेक्शन हटाएँ','Disconnect'),onclick:function(){ if (confirm(SL('Facebook/Instagram कनेक्शन हटाएँ?','Disconnect Facebook/Instagram?'))) metaRef().set({pageToken:'', pageId:'', igId:''},{merge:true}); }}) ]));
+    var rq = meta.reelQueue || [];
+    if (rq.length){
+      card.appendChild(el('h4',{style:'margin:14px 0 6px',text:'🎬 '+SL('Instagram पर भेजनी बाक़ी Reels','Reels still to go to Instagram')}));
+      card.appendChild(el('p',{'class':'muted small',style:'margin:0 0 6px',text:SL('Instagram ने मना किया था; Admin खुला रहने पर ये अपने-आप फिर भेजी जाती हैं (लगभग 1 दिन तक), फिर भी न जाएँ तो फ़ोटो वाली पोस्ट जाती है।','Instagram refused these; while Admin is open they are sent again by themselves (for about a day); if still refused, a photo post goes instead.')}));
+      rq.forEach(function(j){ card.appendChild(el('div',{'class':'small',style:'padding:5px 0;border-bottom:1px dashed var(--line)'},[
+        el('b',{text:(j.code||'')+' '+(j.name||'')}), ' · '+SL('कोशिश ','tries ')+((j.tries||0)+1)+(j.next?' · '+SL('अगली ','next ')+when(j.next):''),
+        el('div',{style:'color:var(--warn)',text:j.err||''}),
+        el('div',{'class':'row',style:'margin-top:4px'},[ el('button',{'class':'btn b-sm b-gold',type:'button',text:'↻ '+SL('अभी भेजें','Send now'),onclick:function(e){ e.target.disabled = true; e.target.textContent = '…'; reelRetry(j.fbVid); }}),
+          el('button',{'class':'btn b-sm b-line',type:'button',text:'✕ '+SL('छोड़ दें','Drop'),onclick:function(){ reelQueueSet(function(q){ return q.filter(function(x){ return x.fbVid !== j.fbVid; }); }); }}) ]) ])); });
+    }
     var log = meta.log || [];
     if (log.length){
       card.appendChild(el('h4',{style:'margin:14px 0 6px',text:SL('हाल की पोस्ट','Recent posts')}));
@@ -2533,7 +2568,7 @@ function postIgCarousel(p, kind, cap){
 /* upload the video to the Facebook Page, then reuse it as an Instagram Reel */
 /* Instagram Reel from our video. Way 1: send the MP4 file itself (resumable upload). Way 2: let Instagram fetch Facebook's copy (video_url), tried a few times,
    because Instagram often refuses once with a temporary error (2207076) and accepts later. */
-function igReel(p, kind, vid, fbVideoId, cap){
+function igReel(p, kind, vid, fbVideoId, cap, quick){
   var tok = meta.pageToken, say = function(t){ if (window.__vidStatus) window.__vidStatus(t); };
   function publishWhenReady(cr){ var n = 0;
     function ready(){ return gfetch(cr.id, {fields:'status_code,status', access_token:tok}).then(function(st){
@@ -2543,6 +2578,8 @@ function igReel(p, kind, vid, fbVideoId, cap){
     return ready().then(function(){ return gfetch(meta.igId + '/media_publish', {creation_id:cr.id, access_token:tok}, 'POST'); }).then(function(pub){ return pub.id; }); }
   function direct(){
     if (!vid || !vid.blob || !/mp4/.test(vid.type || '')) return Promise.reject(new Error('no mp4'));
+    // Instagram takes only AAC sound: a phone that could only make Opus sound uses Facebook's converted copy instead
+    if (/opus/i.test(vid.type || '')) return Promise.reject(new Error('opus audio'));
     say(SL('Instagram पर वीडियो फ़ाइल सीधे भेज रहे हैं…','Sending the video file straight to Instagram…'));
     return gfetch(meta.igId + '/media', {media_type:'REELS', upload_type:'resumable', caption:igCaption(cap, p), share_to_feed:'true', access_token:tok}, 'POST').then(function(cr){
       return fetch('https://rupload.facebook.com/ig-api-upload/' + cr.id, {method:'POST', headers:{'Authorization':'OAuth ' + tok, 'offset':'0', 'file_size':String(vid.blob.size)}, body:vid.blob})
@@ -2556,11 +2593,11 @@ function igReel(p, kind, vid, fbVideoId, cap){
     if (vs === 'error') throw new Error('Facebook could not convert the video');
     if (++tries > 75) throw new Error('Facebook is still processing the video'); return wait(4000).then(src); }); }
   function byUrl(){ tries = 0; return src().then(function(url){ return gfetch(meta.igId + '/media', {media_type:'REELS', video_url:url, caption:igCaption(cap, p), share_to_feed:'true', access_token:tok}, 'POST'); }).then(publishWhenReady); }
-  var waits = [30, 60, 120];
+  var waits = [30];   // more tries later by themselves (reelRetry)
   function byUrlN(k){ return byUrl().catch(function(e){ if (k > waits.length) throw e;
     say(SL('Instagram ने अभी मना किया, ' + waits[k-1] + ' सेकंड बाद फिर कोशिश (' + (k+1) + '/' + (waits.length+1) + ')… यह स्क्रीन खुली रखें', 'Instagram refused for now, retrying in ' + waits[k-1] + 's (' + (k+1) + '/' + (waits.length+1) + ')… keep this screen open'));
     return wait(waits[k-1] * 1000).then(function(){ return byUrlN(k + 1); }); }); }
-  return direct().catch(function(e){ try { console.warn('IG direct upload failed, using video_url', e); } catch(x){} return fbVideoId ? byUrlN(1) : Promise.reject(e); });
+  return direct().catch(function(e){ try { console.warn('IG direct upload failed, using video_url', e); } catch(x){} return fbVideoId ? (quick ? byUrl() : byUrlN(1)) : Promise.reject(e); });
 }
 function postVideo0(p, kind, vid, capIn){
   if (!meta || !meta.pageToken) return Promise.reject(new Error(SL('पहले Facebook जोड़ें (सेटिंग में)', 'Connect Facebook first (in Settings)')));
@@ -2572,8 +2609,11 @@ function postVideo0(p, kind, vid, capIn){
     if (!meta.igId || meta.ig === false) return;
     // if Instagram still refuses the Reel, post the photos as a swipeable carousel, so Instagram gets the item anyway (the Reel can be tried again later)
     return igReel(p, kind, vid, r.id, cap).then(function(id){ out.ig = id; }, function(e){ out.reelErr = String(e.message || e).slice(0, 160);
-      return postIgCarousel(p, kind, cap).then(function(id){ out.ig = id; out.carousel = true; }); });
-  }).then(function(){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, video:true, fb:out.fb, ig:out.ig, ok:true, err: out.carousel ? 'Instagram: Reel refused (' + out.reelErr + ') → photos posted as carousel' : ''}); return out; },
+      // Instagram refused now (often a passing problem on Meta's side): the Reel is tried again by itself later
+      out.queued = true;
+      return reelQueueAdd({fbVid:r.id, pid:p.id, code:p.code || '', name:p.name || '', kind:kind, cap:cap, at:now(), tries:0, err:out.reelErr, next:new Date(Date.now() + 10*60000).toISOString()});
+    });
+  }).then(function(){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, video:true, fb:out.fb, ig:out.ig, ok:true, err: out.queued ? 'Instagram: Reel refused now (' + out.reelErr + ') → will be tried again by itself' : ''}); return out; },
      function(e){ socialLog({at:now(), code:p.code, name:p.name, kind:kind, video:true, fb:out.fb, ok:false, err:String(e.message||e).slice(0,200)}); throw e; });
 }
 /* ---------- "camera style" video: photos filmed like a handheld product video ---------- */
@@ -2858,10 +2898,10 @@ function videoDialog(p){
     if (meta && meta.pageToken){ var pb = el('button',{'class':'btn b-gold',type:'button',text:'📣 '+SL('FB/Instagram पर पोस्ट','Post to FB / Instagram'),onclick:function(){
       pb.disabled = true; msg.textContent = SL('अपलोड हो रहा है… 1–3 मिनट','Uploading… 1–3 minutes'); msg.className = 'msg';
       window.__vidStatus = function(t){ msg.textContent = t; };
-      postVideo(p, kind, vid).then(function(o){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓') + (o && o.carousel ? SL(' — Instagram ने अभी Reel नहीं लिया, वहाँ फ़ोटो (स्वाइप वाली) डाल दी गईं। वजह: ',' — Instagram did not take the Reel now, so the photos were posted there as a carousel. Reason: ') + o.reelErr : ''); msg.className = 'msg ok';
-        if (o && o.carousel && o.fbVid){ var rb = el('button',{'class':'btn b-gold',type:'button',text:'↻ '+SL('Instagram पर Reel फिर से भेजें','Send the Reel to Instagram again'),onclick:function(){
+      postVideo(p, kind, vid).then(function(o){ msg.textContent = SL('पोस्ट हो गया ✓','Posted ✓') + (o && o.queued ? SL(' — Instagram ने अभी Reel नहीं ली (वजह: ',' — Instagram did not take the Reel now (reason: ') + o.reelErr + SL('). Admin अपने-आप 10 मिनट, 20 मिनट… बाद फिर भेजेगा (Admin कहीं खुला हो तो)। चाहें तो नीचे वाला बटन दबाएँ।','). Admin sends it again by itself after 10 min, 20 min… (while Admin is open somewhere). Or press the button below.') : ''); msg.className = 'msg ok';
+        if (o && o.queued && o.fbVid){ var rb = el('button',{'class':'btn b-gold',type:'button',text:'↻ '+SL('Instagram पर Reel फिर से भेजें','Send the Reel to Instagram again'),onclick:function(){
           rb.disabled = true; msg.className = 'msg'; window.__vidStatus = function(t){ msg.textContent = t; };
-          igReel(p, kind, vid, o.fbVid, o.cap).then(function(){ msg.textContent = SL('Instagram पर Reel पोस्ट हो गई ✓','Reel posted on Instagram ✓'); msg.className = 'msg ok'; rb.remove(); },
+          igReel(p, kind, vid, o.fbVid, o.cap).then(function(id){ reelQueueSet(function(q){ return q.filter(function(x){ return x.fbVid !== o.fbVid; }); }); msg.textContent = SL('Instagram पर Reel पोस्ट हो गई ✓','Reel posted on Instagram ✓'); msg.className = 'msg ok'; rb.remove(); },
             function(e){ msg.textContent = SL('Instagram ने फिर मना किया: ','Instagram refused again: ') + (e.message || e) + SL(' — 10-15 मिनट बाद फिर दबाएँ।',' — try again in 10-15 minutes.'); msg.className = 'msg err'; rb.disabled = false; }); }});
           acts.appendChild(rb); } }, function(e){ msg.textContent = (e.message||e); msg.className = 'msg err'; pb.disabled = false; }); }}); acts.appendChild(pb); }
     box.appendChild(acts);
@@ -2929,7 +2969,7 @@ function listen(){
     fresh.forEach(function(r){ var k = {cancel:'कैंसिल',return:'वापसी',exchange:'बदलाव',tailoring:'सिलाई'}[r.kind] || r.kind; notifyAdmin('📩 '+L('नई रिक्वेस्ट')+' · '+L(k), (r.orderId||r.name||'')+' '+(r.item||r.phone||''), 'r-'+r._id); });
     setBadge(); syncTjobs(); redraw(); }));
   unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); socialWatch(); }));
-  unsubs.push(metaRef().onSnapshot(function(s){ meta = s.exists ? s.data() : null; metaLoaded = true; if (tab === 'settings') redraw(); socialWatch(); }, function(){ metaLoaded = false; }));
+  unsubs.push(metaRef().onSnapshot(function(s){ meta = s.exists ? s.data() : null; metaLoaded = true; if (tab === 'settings') redraw(); socialWatch(); setTimeout(function(){ reelRetry(); }, 3000); }, function(){ metaLoaded = false; }));
   unsubs.push(db.collection('track').onSnapshot(function(s){ track = {}; s.docs.forEach(function(d){ track[d.id] = d.data(); }); }));
   unsubs.push(db.collection('karigars').onSnapshot(function(s){ karigars = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); }); if (tab === 'silai') redraw(); }, function(){}));
   unsubs.push(db.collectionGroup('deductions').onSnapshot(function(s){ kded = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'silai') redraw(); }, function(){}));
