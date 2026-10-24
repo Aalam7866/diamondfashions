@@ -150,7 +150,7 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid && request.resource.data.get('pct', 0) == 0
         && request.resource.data.get('photo', '').size() < 200000;
       allow update: if signedIn() && resource.data.uid == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'photo', 'photoUrl'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'photo', 'photoUrl', 'addr'])
         && request.resource.data.get('photo', '').size() < 200000;
     }
 

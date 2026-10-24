@@ -3430,11 +3430,11 @@ body.h-card .dcard-wrap{display:none!important}
       var isDef = prof.defaultAddr === a.id;
       var card = mk('div',{'class':'acct-card'},[ mk('div',null,[ mk('span',{text:addrText(a)}), isDef ? mk('span',{'class':'acct-badge',text:t.def}) : null, a.loc ? mk('a',{'class':'acct-loc',href:'https://maps.google.com/?q='+a.loc.lat+','+a.loc.lng,target:'_blank',rel:'noopener',text:t.ml_has}) : null ]) ]);
       var tools = mk('div',{'class':'acct-mini'});
-      if (!isDef) tools.appendChild(mk('button',{type:'button',text:t.use_def,onclick:function(){ saveProfile({defaultAddr:a.id}).then(function(){ fillCheckout(true); draw(); }); }}));
+      if (!isDef) tools.appendChild(mk('button',{type:'button',text:t.use_def,onclick:function(){ saveProfile({defaultAddr:a.id}).then(function(){ fillCheckout(true); syncCard(); draw(); }); }}));
       tools.appendChild(mk('button',{type:'button',text:t.edit,onclick:function(){ editAddr = a; openModal('addr'); }}));
       if ((prof.addresses||[]).length > 1) tools.appendChild(mk('button',{type:'button','class':'danger',text:t.del,onclick:function(){
         var list = prof.addresses.filter(function(x){ return x.id !== a.id; });
-        saveProfile({addresses:list, defaultAddr: isDef ? list[0].id : prof.defaultAddr}).then(function(){ fillCheckout(true); draw(); });
+        saveProfile({addresses:list, defaultAddr: isDef ? list[0].id : prof.defaultAddr}).then(function(){ fillCheckout(true); syncCard(); draw(); });
       }}));
       card.appendChild(tools); box3.appendChild(card);
     });
@@ -3606,7 +3606,9 @@ body.h-card .dcard-wrap{display:none!important}
     return attempt().then(function(){ cardBusy = false; if (modal && view === 'account') draw(); },
       function(e){ cardBusy = false; cardErr = errText(e); try { console.warn('discount card', e); } catch(x){} if (modal && view === 'account') draw(); });
   }
-  function cardPhoto(){ return {photo:(prof && prof.photo && prof.photo.length < 150000) ? prof.photo : '', photoUrl:(user && user.photoURL) || ''}; }
+  function defAddrText(){ var l = (prof && prof.addresses) || []; var a = l.filter(function(x){ return x.id === prof.defaultAddr; })[0] || l[0]; return a ? addrText(a).slice(0, 300) : ''; }
+  // what the shop PC takes from the card: the photo and the default address (Customers there)
+  function cardPhoto(){ return {photo:(prof && prof.photo && prof.photo.length < 150000) ? prof.photo : '', photoUrl:(user && user.photoURL) || '', addr:defAddrText()}; }
   function syncCard(){ if (prof && prof.card && prof.card.no && fs){ var u = Object.assign({name:prof.name||'', phone:prof.phone||''}, cardPhoto());
       fs.collection('cards').doc(prof.card.no).set(u, {merge:true}).catch(function(){ fs.collection('cards').doc(prof.card.no).set({name:u.name, phone:u.phone}, {merge:true}).catch(function(){}); }); } ensureCard(); }
   function cardBlock(t){
@@ -3736,7 +3738,7 @@ body.h-card .dcard-wrap{display:none!important}
         ready = true; exposeAcct(); placeButton(); fillCheckout(true); var rvb = document.getElementById('pp-reviews'); if (rvb) drawReviews(rvb);
         if (user && prof && prof.phone){
           // the card carries the customer's photo for the shop PC: sent again when the photo changed since last time on this phone
-          var mark = prof.card && prof.card.no ? prof.card.no + ':' + String(prof.photo || '').length + ':' + (user.photoURL || '') : '';
+          var mark = prof.card && prof.card.no ? prof.card.no + ':' + String(prof.photo || '').length + ':' + (user.photoURL || '') + ':' + defAddrText() : '';
           try { if (mark && localStorage.getItem('df-cardsync') !== mark){ localStorage.setItem('df-cardsync', mark); syncCard(); } else ensureCard(); } catch(e){ ensureCard(); }
           if (window.DF && DF.afterLogin){ runAfterLogin(); return; } }
         if (user && modal && (view === 'login')) openModal();
