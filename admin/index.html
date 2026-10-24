@@ -1974,16 +1974,17 @@ function drawSocial(main){
     var vc = el('div',{style:'margin:0 0 10px 26px;padding:10px;border:1px dashed var(--line);border-radius:10px'});
     vc.appendChild(el('b',{text:'🤖 '+SL('अपने-आप वाले वीडियो में AI लेडी आवाज़ (हिंदी)','AI ladies voice (Hindi) in automatic videos')}));
     vc.appendChild(el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:meta.voice==='ai'?'checked':null,onchange:function(e){ metaRef().set({voice:e.target.checked?'ai':'none'},{merge:true}); }}), ' '+SL('चालू','On') ]));
-    var kIn = el('input',{type:'password',placeholder:'Google Cloud API key',value:meta.ttsKey||'',style:'width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px'});
-    var vName = el('select',{style:'min-height:40px;border-radius:8px;margin-top:6px'}, TTS_VOICES.map(function(x){ return el('option',{value:x[0],text:x[1]}); })); vName.value = meta.ttsVoice || 'hi-IN-Neural2-A';
+    var kIn = el('input',{type:'password',placeholder:SL('Google Cloud key (Gemini आवाज़ के लिए खाली छोड़ें)','Google Cloud key (leave empty for Gemini voice)'),value:meta.ttsKey||'',style:'width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px'});
+    var vName = el('select',{style:'min-height:40px;border-radius:8px;margin-top:6px'}, TTS_VOICES.map(function(x){ return el('option',{value:x[0],text:x[1]}); })); vName.value = meta.ttsVoice || (meta.ttsKey ? 'hi-IN-Neural2-A' : 'gem:Kore');
     var vMsg = el('p',{'class':'msg'});
     vc.appendChild(kIn); vc.appendChild(vName);
     vc.appendChild(el('div',{'class':'row',style:'margin-top:6px'},[ el('button',{'class':'btn b-sm b-gold',type:'button',text:SL('सेव करें','Save'),onclick:function(){ metaRef().set({ttsKey:kIn.value.trim(), ttsVoice:vName.value},{merge:true}).then(function(){ vMsg.textContent = SL('सेव हो गया ✓','Saved ✓'); vMsg.className = 'msg ok'; }); }}),
       el('button',{'class':'btn b-sm b-line',type:'button',text:'▶ '+SL('आवाज़ सुनें','Test voice'),onclick:function(){ vMsg.textContent = '…'; vMsg.className = 'msg';
         var m0 = meta; meta = Object.assign({}, meta, {ttsKey:kIn.value.trim(), ttsVoice:vName.value});
-        ttsVoice('नमस्ते! डायमंड फैशन्स में आपका स्वागत है। नया माल आ गया है, आज ही ऑर्डर कीजिए।').then(function(buf){ meta = m0; new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}))).play(); vMsg.textContent = '🔊'; }, function(e){ meta = m0; vMsg.textContent = e.message; vMsg.className = 'msg err'; }); }}) ]));
+        ttsVoice('नमस्ते! डायमंड फैशन्स में आपका स्वागत है। नया माल आ गया है, आज ही ऑर्डर कीजिए।').then(function(buf){ meta = m0; var isWav = new Uint8Array(buf.slice(0,4)).join(',') === '82,73,70,70'; new Audio(URL.createObjectURL(new Blob([buf],{type:isWav?'audio/wav':'audio/mpeg'}))).play(); vMsg.textContent = '🔊'; }, function(e){ meta = m0; vMsg.textContent = e.message; vMsg.className = 'msg err'; }); }}) ]));
     vc.appendChild(vMsg);
-    vc.appendChild(el('p',{'class':'muted small',text:SL('Key कहाँ से: console.cloud.google.com → प्रोजेक्ट diamond-fashions → "Cloud Text-to-Speech API" Enable → APIs & Services → Credentials → Create credentials → API key। इसके लिए Google Cloud में billing (कार्ड) चालू होनी चाहिए; हर महीने एक तय सीमा तक मुफ़्त है।','Get a key: console.cloud.google.com → project diamond-fashions → enable "Cloud Text-to-Speech API" → APIs & Services → Credentials → Create credentials → API key. Google Cloud billing (a card) must be on; a monthly amount is free.')}));
+    vc.appendChild(el('p',{'class':'small',style:'margin:8px 0 4px',html:SL('✅ <b>आसान तरीका:</b> ऊपर लिस्ट में कोई <b>Gemini</b> आवाज़ चुनें, key वाला डिब्बा खाली छोड़ें और सेव करें — वही Gemini key चलेगी जो “AI से सामान का विवरण” में डाली है।','✅ <b>Easy way:</b> pick a <b>Gemini</b> voice in the list above, leave the key box empty and Save — the same Gemini key from “AI product description” is used.')}));
+    vc.appendChild(el('p',{'class':'muted small',text:SL('या Key कहाँ से: console.cloud.google.com → प्रोजेक्ट diamond-fashions → "Cloud Text-to-Speech API" Enable → APIs & Services → Credentials → Create credentials → API key। इसके लिए Google Cloud में billing (कार्ड) चालू होनी चाहिए; हर महीने एक तय सीमा तक मुफ़्त है।','Get a key: console.cloud.google.com → project diamond-fashions → enable "Cloud Text-to-Speech API" → APIs & Services → Credentials → Create credentials → API key. Google Cloud billing (a card) must be on; a monthly amount is free.')}));
     card.appendChild(vc);
     var oc = el('div',{style:'margin:0 0 10px 26px;padding:10px;border:1px dashed var(--line);border-radius:10px'});
     oc.appendChild(el('b',{text:'🔔 '+SL('ग्राहकों को सूचना (OneSignal)','Customer notifications (OneSignal)')}));
@@ -2117,8 +2118,49 @@ function voiceScript(p, kind){
   a.push('ऑर्डर करने के लिए diamondfashions.in पर जाइए, या WhatsApp कीजिए ' + String(cfg.display || '88741 29818').replace(/\+91\s*/, '') + ' पर। घर पर डिलीवरी और कैश ऑन डिलीवरी उपलब्ध है।');
   return a.join(' ');
 }
-var TTS_VOICES = [['hi-IN-Neural2-A','Neural2-A (best)'],['hi-IN-Wavenet-A','Wavenet-A'],['hi-IN-Wavenet-D','Wavenet-D'],['hi-IN-Standard-A','Standard-A (cheapest)']];
-function ttsVoice(text){ // Google Cloud Text-to-Speech, female Hindi voice
+var TTS_VOICES = [['gem:Kore','Gemini · Kore (female, clear)'],['gem:Aoede','Gemini · Aoede (female, soft)'],['gem:Leda','Gemini · Leda (female, young)'],['gem:Zephyr','Gemini · Zephyr (female, bright)'],
+  ['hi-IN-Neural2-A','Cloud TTS · Neural2-A (best)'],['hi-IN-Wavenet-A','Cloud TTS · Wavenet-A'],['hi-IN-Wavenet-D','Cloud TTS · Wavenet-D'],['hi-IN-Standard-A','Cloud TTS · Standard-A (cheapest)']];
+function hasVoiceKey(){ return !!(meta && (meta.ttsKey || meta.geminiKey)); }
+/* Gemini (the same key as AI description) can also speak: its answer is raw 24 kHz PCM, wrapped here into a WAV file */
+function pcmToWav(b64, rate){
+  var bin = atob(b64), n = bin.length, buf = new ArrayBuffer(44 + n), v = new DataView(buf), u = new Uint8Array(buf);
+  function w(o, t){ for (var i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); }
+  w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n, true);
+  for (var i = 0; i < n; i++) u[44 + i] = bin.charCodeAt(i);
+  return buf;
+}
+var ttsList = null;
+function geminiTts(text, voiceName){
+  var key = meta && meta.geminiKey;
+  if (!key) return Promise.reject(new Error(SL('सेटिंग में Gemini key डालें (AI विवरण वाले कार्ड में)','Add the Gemini key in Settings (AI description card)')));
+  var models = ttsList ? Promise.resolve(ttsList) : fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key)).then(function(r){ return r.json().then(function(j){ if (j.error) throw new Error(gemErr(j, r.status)); return j; }); }).then(function(j){
+    var ms = (j.models || []).map(function(m){ return String(m.name).replace(/^models\//, ''); }).filter(function(n){ return /tts/.test(n) && /^gemini-/.test(n); });
+    function ver(n){ var m = /gemini-(\d+(?:\.\d+)?)/.exec(n); return m ? parseFloat(m[1]) : 0; }
+    ms.sort(function(a, b){ return (ver(b)*10 + (/flash/.test(b)?3:0) - (/pro/.test(b)?2:0)) - (ver(a)*10 + (/flash/.test(a)?3:0) - (/pro/.test(a)?2:0)); });
+    ttsList = ms.length ? ms : ['gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts']; return ttsList; });
+  return models.then(function(list){
+    var i = 0, last = null;
+    function next(){
+      if (i >= list.length || i >= 4) throw last || new Error(SL('Gemini आवाज़ नहीं बनी','Gemini voice could not be made'));
+      var name = list[i++];
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + name + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:'Read this aloud in Hindi, in a warm, friendly and clear Indian woman’s voice, like a shop advertisement, at a natural pace: ' + text}]}],
+          generationConfig:{responseModalities:['AUDIO'], speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voiceName || 'Kore'}}}}})})
+        .then(function(r){ return r.json().then(function(j){ return {j:j, s:r.status}; }); }).then(function(x){
+          if (x.j.error){ last = new Error(gemErr(x.j, x.s)); if (x.s === 429 || x.s === 404 || x.s >= 500 || x.s === 400) return next(); throw last; }
+          var part = ((((x.j.candidates || [])[0] || {}).content || {}).parts || []).filter(function(q){ return q.inlineData || q.inline_data; })[0];
+          var d = part && (part.inlineData || part.inline_data); if (!d || !d.data){ last = new Error(SL('Gemini ने आवाज़ नहीं भेजी','Gemini sent no audio')); return next(); }
+          var rate = +((/rate=(\d+)/.exec(d.mimeType || d.mime_type || '') || [])[1]) || 24000;
+          return pcmToWav(d.data, rate);
+        });
+    }
+    return next();
+  });
+}
+function ttsVoice(text){ // female Hindi voice: Gemini (same key as AI description) or Google Cloud Text-to-Speech
+  var vn = (meta && meta.ttsVoice) || '';
+  if (/^gem:/.test(vn) || (meta && !meta.ttsKey && meta.geminiKey)) return geminiTts(text, /^gem:/.test(vn) ? vn.slice(4) : 'Kore');
   if (!meta || !meta.ttsKey) return Promise.reject(new Error(SL('AI आवाज़ के लिए सेटिंग में Google Text-to-Speech की key डालें','Add a Google Text-to-Speech key in Settings for the AI voice')));
   return fetch('https://texttospeech.googleapis.com/v1/text:synthesize?key=' + encodeURIComponent(meta.ttsKey), {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({input:{text:text}, voice:{languageCode:'hi-IN', name: meta.ttsVoice || 'hi-IN-Neural2-A'}, audioConfig:{audioEncoding:'MP3', speakingRate:1.02, pitch:1}})})
@@ -2501,7 +2543,7 @@ function makeCameraVideo(p, kind, len, onProgress){
 function makeAnyVideo(p, kind, style, onProgress, music, voice){
   style = style || (meta && meta.vstyle) || 'cam60';
   VMUSIC = music || (meta && meta.music) || 'festive';
-  if (!voice) voice = {mode: (meta && meta.voice === 'ai' && meta.ttsKey) ? 'ai' : 'none'};
+  if (!voice) voice = {mode: (meta && meta.voice === 'ai' && hasVoiceKey()) ? 'ai' : 'none'};
   VVOICE = null;
   var getVoice = voice.mode === 'mic' && voice.rec ? Promise.resolve(voice.rec.data)
     : voice.mode === 'ai' ? ttsVoice(voice.text || voiceScript(p, kind)) : Promise.resolve(null);
@@ -2530,10 +2572,10 @@ function videoDialog(p){
   box.appendChild(el('p',{'class':'muted small',style:'margin-bottom:4px',text:SL('संगीत (हमारा अपना बनाया, कॉपीराइट-फ़्री)','Music (made by us, copyright-free)')})); box.appendChild(musSel);
   var vSel = el('select',{style:'min-height:40px;border-radius:8px;width:100%;margin-bottom:6px'}, [
     el('option',{value:'none',text:'🔇 '+SL('बिना आवाज़ (सिर्फ़ संगीत)','No voice (music only)')}),
-    el('option',{value:'ai',text:'🤖 '+SL('AI लेडी आवाज़ (हिंदी)','AI ladies voice (Hindi)')+((meta && meta.ttsKey) ? '' : SL(' — सेटिंग में key चाहिए',' — needs key in Settings'))}),
+    el('option',{value:'ai',text:'🤖 '+SL('AI लेडी आवाज़ (हिंदी)','AI ladies voice (Hindi)')+(hasVoiceKey() ? '' : SL(' — सेटिंग में key चाहिए',' — needs key in Settings'))}),
     el('option',{value:'mic',text:'🎙 '+SL('अपनी आवाज़ रिकॉर्ड करें','Record your own voice')}),
     el('option',{value:'file',text:'📁 '+SL('आवाज़ की फ़ाइल डालें (फ़्री वेबसाइट से बनी)','Upload a voice file (made on a free website)')}) ]);
-  vSel.value = (meta && meta.voice === 'ai' && meta.ttsKey) ? 'ai' : 'none';
+  vSel.value = (meta && meta.voice === 'ai' && hasVoiceKey()) ? 'ai' : 'none';
   var vBox = el('div'), micRec = null, scriptTa = el('textarea',{style:'width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;margin-top:4px'});
   scriptTa.value = voiceScript(p, kind);
   function drawVoice(){ vBox.innerHTML = ''; micRec = null;
