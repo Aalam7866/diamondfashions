@@ -1003,7 +1003,51 @@ function editBundle(b0){
 }
 
 /* ---------- AI product description (Google Gemini, key saved in Settings) ---------- */
-var gemModel = '';
+var gemModel = '', gemList = null;
+/* plain-language reason for a Gemini error */
+function gemErr(j, status){
+  var e = (j && j.error) || {}, m = String(e.message || ''), st = String(e.status || '');
+  if (/API key not valid|API_KEY_INVALID/i.test(m)) return SL('यह API key सही नहीं है — aistudio.google.com/apikey से नई key कॉपी करके डालें।','This API key is not valid — copy a new key from aistudio.google.com/apikey.');
+  if (status === 429 || /RESOURCE_EXHAUSTED|quota/i.test(st + m)) return SL('Google की फ़्री लिमिट ख़त्म / बंद है। थोड़ी देर बाद कोशिश करें, या aistudio.google.com में Billing चालू करें (एक विवरण के कुछ पैसे लगते हैं)।','Google’s free limit is used up / switched off. Try later, or turn on Billing in aistudio.google.com (a few paise per description).');
+  if (/PERMISSION_DENIED|has not been used|is disabled|SERVICE_DISABLED/i.test(st + m)) return SL('इस key के प्रोजेक्ट में “Generative Language API” चालू नहीं है — aistudio.google.com/apikey से नई key बनाएँ।','“Generative Language API” is not on for this key’s project — create a new key at aistudio.google.com/apikey.');
+  if (/location is not supported|User location/i.test(m)) return SL('Google इस जगह से Gemini नहीं चलने दे रहा।','Google does not allow Gemini from this location.');
+  return 'Gemini: ' + (m || st || status);
+}
+function geminiModels(key){
+  if (gemList) return Promise.resolve(gemList);
+  return fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key)).then(function(r){ return r.json().then(function(j){ if (j.error) throw new Error(gemErr(j, r.status)); return j; }); }).then(function(j){
+    var ms = (j.models || []).filter(function(m){ return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0; }).map(function(m){ return String(m.name).replace(/^models\//, ''); });
+    var ok = ms.filter(function(n){ return /^gemini-/.test(n) && !/tts|image|live|embed|audio|thinking|exp|vision|robotics|computer|native/.test(n); });
+    function ver(n){ var m = /gemini-(\d+(?:\.\d+)?)/.exec(n); return m ? parseFloat(m[1]) : 0; }
+    function score(n){ return ver(n) * 10 + (/flash/.test(n) ? 5 : 0) - (/pro/.test(n) ? 3 : 0) - (/preview/.test(n) ? 1 : 0) + (/latest/.test(n) ? .5 : 0); }
+    ok.sort(function(a, b){ return score(b) - score(a); });
+    // flash-lite models often still have free quota: keep them right after the best flash
+    var lite = ok.filter(function(n){ return /lite/.test(n); }), rest = ok.filter(function(n){ return !/lite/.test(n); });
+    gemList = rest.slice(0, 1).concat(lite.slice(0, 2), rest.slice(1));
+    if (!gemList.length) gemList = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+    return gemList;
+  });
+}
+/* call Gemini; if one model has no quota or is gone, try the next ones */
+function gemGenerate(key, parts, json){
+  return geminiModels(key).then(function(list){
+    var order = gemModel ? [gemModel].concat(list.filter(function(n){ return n !== gemModel; })) : list, i = 0, lastErr = null;
+    function next(){
+      if (i >= order.length || i >= 5) throw lastErr || new Error(SL('कोई Gemini मॉडल नहीं चला','No Gemini model worked'));
+      var name = order[i++];
+      var cfgG = {temperature:.7}; if (json) cfgG.responseMimeType = 'application/json';
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + name + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user', parts:parts}], generationConfig:cfgG})}).then(function(r){ return r.json().then(function(j){ return {j:j, s:r.status}; }); }, function(){ throw new Error(SL('इंटरनेट नहीं है','No internet')); })
+        .then(function(x){
+          if (x.j.error){ lastErr = new Error(gemErr(x.j, x.s)); if (x.s === 429 || x.s === 404 || x.s === 400 && /not found|not supported|mime/i.test(JSON.stringify(x.j.error)) || x.s >= 500) return next(); throw lastErr; }
+          var txt = ((((x.j.candidates || [])[0] || {}).content || {}).parts || []).map(function(q){ return q.text || ''; }).join('');
+          if (!txt){ lastErr = new Error(SL('AI ने कुछ नहीं लिखा (शायद फ़ोटो रोक दी गई)','The AI wrote nothing (maybe the photo was blocked)')); return next(); }
+          gemModel = name; return txt;
+        });
+    }
+    return next();
+  });
+}
 function geminiPickModel(key){
   if (gemModel) return Promise.resolve(gemModel);
   return fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key)).then(function(r){ return r.json(); }).then(function(j){
@@ -1029,14 +1073,11 @@ function aiDescribe(p, lang){
   var parts = [{text:prompt}];
   var src = p.photos && p.photos[0];
   var photo = src ? (/^data:image\//.test(src) ? Promise.resolve(src) : loadImg(src).then(function(im){ if (!im) return ''; var c = document.createElement('canvas'), k = Math.min(1, 768 / Math.max(im.width, im.height)); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); try { return c.toDataURL('image/jpeg', .8); } catch(e){ return ''; } })) : Promise.resolve('');
-  return Promise.all([geminiPickModel(key), photo]).then(function(r){
-    var m = /^data:(image\/[a-z]+);base64,(.*)$/.exec(r[1] || ''); if (m) parts.push({inline_data:{mime_type:m[1], data:m[2]}});
-    return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + r[0] + ':generateContent?key=' + encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user', parts:parts}], generationConfig:{temperature:.7, responseMimeType:'application/json'}})}).then(function(x){ return x.json(); });
-  }).then(function(j){
-    if (j.error) throw new Error('Gemini: ' + (j.error.message || j.error.status));
-    var txt = (((j.candidates || [])[0] || {}).content || {}).parts; txt = (txt || []).map(function(x){ return x.text || ''; }).join('');
-    var o; try { o = JSON.parse(txt.replace(/^```(?:json)?|```$/g, '').trim()); } catch(e){ throw new Error(SL('AI का जवाब समझ नहीं आया, फिर कोशिश करें','Could not read the AI answer, try again')); }
+  return photo.then(function(ph){
+    var m = /^data:(image\/[a-z]+);base64,(.*)$/.exec(ph || ''); if (m) parts.push({inline_data:{mime_type:m[1], data:m[2]}});
+    return gemGenerate(key, parts, true);
+  }).then(function(txt){
+    var o; try { o = JSON.parse(String(txt).replace(/^\s*```(?:json)?/, '').replace(/```\s*$/, '').trim()); } catch(e){ var mm = /\{[\s\S]*\}/.exec(txt); try { o = JSON.parse(mm ? mm[0] : ''); } catch(e2){ throw new Error(SL('AI का जवाब समझ नहीं आया, फिर कोशिश करें','Could not read the AI answer, try again')); } }
     if (Array.isArray(o.details)) o.details = o.details.join('\n');
     return {short:String(o.short || '').trim(), details:String(o.details || '').trim(), long:String(o.long || '').trim()};
   });
@@ -1046,8 +1087,9 @@ function drawGemini(main){
     el('p',{'class':'muted small',html:SL('1. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> खोलें (अपने Gmail से) → <b>Create API key</b>। 2. key कॉपी करके नीचे डालें → सेव। फिर हर सामान में “✨ AI से लिखें” बटन चलेगा। key सिर्फ़ आपके Admin में रहती है।','1. Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (with your Gmail) → <b>Create API key</b>. 2. Copy the key, paste it below → Save. The “✨ Write with AI” button then works in every product. The key stays only in your Admin.')}) ]);
   var kIn = el('input',{type:'password',value:(meta && meta.geminiKey) || '',placeholder:'AIza…',autocomplete:'off',style:'width:100%'}), m = el('p',{'class':'msg'});
   card.appendChild(el('div',{'class':'field'},[ el('label',{text:'Gemini API key'}), kIn ]));
-  card.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){ gemModel = ''; metaRef().set({geminiKey:kIn.value.trim()}, {merge:true}).then(function(){ m.textContent = L('सेव हो गया ✓'); m.className = 'msg ok'; }, function(e){ m.textContent = e.message; m.className = 'msg err'; }); }}),
-    el('button',{'class':'btn b-line',type:'button',text:'▶ '+SL('टेस्ट करें','Test'),onclick:function(){ gemModel = ''; m.textContent = '…'; m.className = 'msg'; geminiPickModel(kIn.value.trim()).then(function(n){ m.textContent = '✓ ' + SL('चल रहा है: ','Working: ') + n; m.className = 'msg ok'; }, function(e){ gemModel = ''; m.textContent = e.message; m.className = 'msg err'; }); }}) ]));
+  card.appendChild(el('div',{'class':'row'},[ el('button',{'class':'btn b-gold',type:'button',text:L('सेव करें'),onclick:function(){ gemModel = ''; gemList = null; metaRef().set({geminiKey:kIn.value.trim()}, {merge:true}).then(function(){ m.textContent = L('सेव हो गया ✓'); m.className = 'msg ok'; }, function(e){ m.textContent = e.message; m.className = 'msg err'; }); }}),
+    el('button',{'class':'btn b-line',type:'button',text:'▶ '+SL('टेस्ट करें','Test'),onclick:function(){ gemModel = ''; gemList = null; m.textContent = '…'; m.className = 'msg';
+      gemGenerate(kIn.value.trim(), [{text:'Write one short friendly line in Hindi welcoming customers to Diamond Fashions clothing shop.'}], false).then(function(txt){ m.textContent = '✓ ' + SL('चल रहा है','Working') + ' (' + gemModel + '): ' + String(txt).trim().slice(0, 120); m.className = 'msg ok'; }, function(e){ m.textContent = e.message; m.className = 'msg err'; }); }}) ]));
   card.appendChild(m); main.appendChild(card);
 }
 /* website + admin show / hide switches */
