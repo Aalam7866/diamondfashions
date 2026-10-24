@@ -707,6 +707,7 @@ function drawBanners(main){
       el('span',{'class':'st '+(b.active===false?'bad':'ok'),text:b.active===false?L('बंद'):L('चालू')}),
       el('div',{'class':'row'},[ el('button',{'class':'btn b-sm b-line',type:'button',text:'↑ '+L('ऊपर'),onclick:function(){ move(-1); }}), el('button',{'class':'btn b-sm b-line',type:'button',text:'↓ '+L('नीचे'),onclick:function(){ move(1); }}),
         el('button',{'class':'btn b-sm b-gold',type:'button',text:L('बदलें'),onclick:function(){ editBanner(b); }}),
+        b.spec ? el('button',{'class':'btn b-sm b-line',type:'button',title:SL('नए डिज़ाइन में दोबारा बनाएँ (बड़ी फ़ोटो)','Make again in the new design (bigger photos)'),text:'↻ '+SL('नया डिज़ाइन','New design'),onclick:function(){ bannerMaker(Object.assign({}, b.spec, {replaceId:b._id, order:b.order, keepText:true})); }}) : null,
         el('button',{'class':'btn b-sm b-bad',type:'button',text:L('हटाएँ'),onclick:function(){ if (confirm(L('बैनर हटाएँ?'))) db.collection('config').doc(b._id).delete(); }}) ]) ]) ]));
   });
 }
@@ -885,9 +886,11 @@ function drawBanner(c, o){
   x.save(); x.scale(c.width / W, c.height / H);
   var g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, th.bg[0]); g.addColorStop(1, th.bg[1]); x.fillStyle = g; x.fillRect(0, 0, W, H);
   (th.mo || []).forEach(function(m){ try { MOTIF[m](x, W, H, R, th); } catch(e){} });
-  var photos = (o.photos || []).filter(Boolean).slice(0, 3), textW = photos.length ? 820 : 1100, left = 70;
-  if (photos.length){ // product photos in tilted white frames on the right
-    var spots = photos.length === 1 ? [[1180, 300, 0, 1]] : photos.length === 2 ? [[1060, 310, -.06, .9], [1340, 290, .07, .9]] : [[990, 330, -.08, .78], [1225, 285, .02, .86], [1455, 330, .09, .78]];
+  var photos = (o.photos || []).filter(Boolean).slice(0, 3), left = 70;
+  // product photos big, in tilted white frames on the right (they must read on a phone too)
+  var textW = [1100, 880, 790, 730][photos.length];
+  if (photos.length){
+    var spots = photos.length === 1 ? [[1255, 300, .02, 1.3]] : photos.length === 2 ? [[1105, 305, -.05, 1.12], [1395, 295, .06, 1.12]] : [[1020, 318, -.07, .96], [1250, 292, .02, 1.06], [1452, 318, .08, .87]];
     photos.forEach(function(im, i){ var sp = spots[i], fw = 300*sp[3], fh = 400*sp[3];
       x.save(); x.translate(sp[0], sp[1]); x.rotate(sp[2]); x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 30; x.shadowOffsetY = 10; x.fillStyle = '#fff'; x.fillRect(-fw/2 - 10, -fh/2 - 10, fw + 20, fh + 20); x.shadowColor = 'transparent';
       var k = Math.max(fw / im.width, fh / im.height); x.beginPath(); x.rect(-fw/2, -fh/2, fw, fh); x.clip(); x.drawImage(im, -im.width*k/2, -im.height*k/2, im.width*k, im.height*k); x.restore(); });
@@ -898,7 +901,16 @@ function drawBanner(c, o){
   x.fillStyle = ink; x.globalAlpha = .9; x.font = "600 30px 'Jost',Arial,sans-serif"; x.fillText('DIAMOND FASHIONS', left, 92); x.globalAlpha = .75; x.font = '24px ' + FAM; x.fillText('Purandarpur · diamondfashions.in', left, 128); x.globalAlpha = 1;
   var y = 200;
   if (o.tag){ x.font = 'bold 34px ' + FAM; var tw = x.measureText(o.tag).width + 44; x.fillStyle = th.accent; x.beginPath(); if (x.roundRect) x.roundRect(left, y - 4, tw, 56, 28); else x.rect(left, y - 4, tw, 56); x.fill(); x.fillStyle = th.ink ? '#fff' : '#1A1A1A'; x.fillText(o.tag, left + 22, y + 36); y += 80; } else y += 20;
-  var ts = fitFont(x, o.title || '', textW, 104, '800', FAM); x.fillStyle = ink; x.shadowColor = dark ? 'rgba(0,0,0,.35)' : 'transparent'; x.shadowBlur = 12; x.fillText(o.title || '', left, y + ts*.8); x.shadowColor = 'transparent'; y += ts*.8 + 24;
+  // a long title goes on two lines (bigger) instead of one tiny line
+  var tt = o.title || '', lines = [tt], ts = fitFont(x, tt, textW, 104, '800', FAM);
+  if (ts < 76 && tt.indexOf(' ') > 0){
+    var words = tt.split(' '), best = null;
+    for (var wi = 1; wi < words.length; wi++){ var a = words.slice(0, wi).join(' '), b2 = words.slice(wi).join(' ');
+      var sz2 = Math.min(fitFont(x, a, textW, 84, '800', FAM), fitFont(x, b2, textW, 84, '800', FAM)); if (!best || sz2 > best[0]) best = [sz2, a, b2]; }
+    if (best && best[0] > ts){ ts = best[0]; lines = [best[1], best[2]]; }
+  }
+  x.font = '800 ' + ts + 'px ' + FAM; x.fillStyle = ink; x.shadowColor = dark ? 'rgba(0,0,0,.35)' : 'transparent'; x.shadowBlur = 12;
+  lines.forEach(function(ln){ x.fillText(ln, left, y + ts*.8); y += ts*.98; }); x.shadowColor = 'transparent'; y += 24 - ts*.18;
   if (o.sub){ var ss = fitFont(x, o.sub, textW, 44, '500', FAM); x.fillStyle = ink; x.globalAlpha = .92; x.fillText(o.sub, left, y + ss); x.globalAlpha = 1; y += ss + 30; }
   var btn = o.btn || 'Shop now  ›'; x.font = 'bold 32px ' + FAM; var bw = x.measureText(btn).width + 60; var by = Math.min(H - 90, y + 14);
   x.fillStyle = th.accent; x.beginPath(); if (x.roundRect) x.roundRect(left, by, bw, 66, 33); else x.rect(left, by, bw, 66); x.fill(); x.fillStyle = th.ink ? '#fff' : '#1A1A1A'; x.fillText(btn, left + 30, by + 44);
@@ -944,8 +956,10 @@ function bannerMaker(init){
     box.appendChild(el('div',{'class':'field'},[ el('label',{'for':'bm-l',text:L('दबाने पर कहाँ जाए')}), lk ]));
     var save = el('button',{'class':'btn b-gold',type:'button',text:'✓ '+SL('बैनर वेबसाइट पर लगाएँ','Put banner on the website'),onclick:function(){
       save.disabled = true; msg.textContent = '…'; msg.className = 'msg';
-      var img = bannerJpeg(Object.assign({}, o, {photos:imgs})), id = 'banner_' + Date.now().toString(36);
-      db.collection('config').doc(id).set({type:'image', img:img, title:'', sub:'', btn:'', tag:'', link:o.link || 'sec:shop', active:true, order:-Date.now(), made:o.theme, updated:now()})
+      var img = bannerJpeg(Object.assign({}, o, {photos:imgs})), id = o.replaceId || ('banner_' + Date.now().toString(36));
+      // what it was made from is kept, so the banner can be made again later with a newer design (↻ in the list)
+      var spec = {theme:o.theme, lang:o.lang, title:o.title, sub:o.sub, tag:o.tag, btn:o.btn, pids:o.pids, link:o.link || ''};
+      db.collection('config').doc(id).set({type:'image', img:img, title:'', sub:'', btn:'', tag:'', link:o.link || 'sec:shop', active:true, order:o.replaceId ? (o.order || -Date.now()) : -Date.now(), made:o.theme, spec:spec, updated:now()})
         .then(function(){ msg.textContent = SL('बैनर लग गया ✓ वेबसाइट पर सबसे पहले दिखेगा','Banner is live ✓ It shows first on the website'); msg.className = 'msg ok'; setTimeout(close, 900); }, function(e){ save.disabled = false; msg.textContent = e.message; msg.className = 'msg err'; });
     }});
     var dl = el('button',{'class':'btn b-line',type:'button',text:'⬇ '+SL('फ़ोटो डाउनलोड (WhatsApp स्टेटस)','Download picture (WhatsApp status)'),onclick:function(){ var a = el('a',{href:bannerJpeg(Object.assign({}, o, {photos:imgs})),download:'banner-'+o.theme+'.jpg'}); document.body.appendChild(a); a.click(); a.remove(); }});
