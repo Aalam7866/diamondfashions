@@ -1890,14 +1890,49 @@ function postCaption(p, kind, left){
   return lines.join('\n');
 }
 /* Instagram does not open links in captions and reads "#p-" as a hashtag */
-function igCaption(cap, p){ return cap.replace(/🛒 Order online: \S+/, '🛒 Order online: diamondfashions.in (link in bio) · search code ' + p.code); }
+function igCaption(cap, p){ return cap.replace(/🛒 Order online: \S+/, '🛒 Order online: diamondfashions.in (link in bio) · search code ' + p.code).replace(/🛒 ऑनलाइन ऑर्डर करें: \S+/, '🛒 ऑनलाइन ऑर्डर: diamondfashions.in (बायो में लिंक) · कोड ' + p.code + ' खोजें'); }
 function socialLog(entry){
   return metaRef().get().then(function(s){ var log = (s.exists && s.data().log) || []; log.unshift(entry); return metaRef().set({log: log.slice(0, 30)}, {merge:true}); }).catch(function(){});
 }
 /* post one product to Facebook and/or Instagram */
-function postProduct(p, kind){
+/* ---------- post text in Hindi (default), English or both ---------- */
+function capLang(){ return (meta && meta.capLang) || 'hi'; }
+function hindiNames(p){ // product name + description in Hindi, made once with Gemini and kept on the product
+  var src = (p.name || '') + '|' + (p.desc || '');
+  if (p.hiSrc === src && p.hiName) return Promise.resolve({name:p.hiName, desc:p.hiDesc || ''});
+  if (!(meta && meta.geminiKey) || !/[A-Za-z]/.test(src)) return Promise.resolve({name:p.name, desc:p.desc || ''});
+  var prompt = 'Translate this clothing-shop product for a Facebook/Instagram post into simple, natural Hindi in Devanagari script (people in a small Indian town will read it). ' +
+    'Keep it short and attractive. Common words like कॉटन, साड़ी, सूट, ब्रा, पैंटी, सेट may be used. Do not add prices. Return JSON only: {"name": "...", "desc": "..."}.\n' + JSON.stringify({name:p.name, desc:p.desc || ''});
+  return gemGenerate(meta.geminiKey, [{text:prompt}], true).then(function(t){
+    var o = JSON.parse(String(t).replace(/^\s*```(?:json)?/, '').replace(/```\s*$/, '').trim()); var r = {name:String(o.name || p.name).trim(), desc:String(o.desc || '').trim()};
+    p.hiName = r.name; p.hiDesc = r.desc; p.hiSrc = src;
+    if (p.id) db.collection('products').doc(p.id).update({hiName:r.name, hiDesc:r.desc, hiSrc:src}).catch(function(){});
+    return r;
+  }).catch(function(){ return {name:p.name, desc:p.desc || ''}; });
+}
+function postCaptionHi(p, kind, left, hn){
+  var price = p.price ? '₹' + Number(p.price).toLocaleString('en-IN') + (p.unit === 'm' ? ' प्रति मीटर' : '') : 'दाम के लिए पूछें';
+  var off = p.mrp && p.price && p.mrp > p.price ? Math.round((1 - p.price/p.mrp)*100) : 0;
+  var link = 'https://diamondfashions.in/#p-' + p.code;
+  var lines = [kind === 'low' ? '⏳ जल्दी करें! सिर्फ़ ' + left + ' पीस बचे हैं — ' + hn.name : '✨ नया माल आ गया है — ' + hn.name, ''];
+  if (hn.desc) lines.push(hn.desc);
+  lines.push('💰 दाम: ' + price + (off ? ' (MRP ₹' + Number(p.mrp).toLocaleString('en-IN') + ', पूरे ' + off + '% की छूट)' : ''));
+  if (p.sizes) lines.push('📏 साइज़: ' + p.sizes);
+  lines.push('🔖 कोड: ' + p.code, '', '🛒 ऑनलाइन ऑर्डर करें: ' + link, '📞 WhatsApp: ' + (cfg.display || '+91 88741 29818'), '🚚 घर पर डिलीवरी · कैश ऑन डिलीवरी', '📍 डायमंड फैशन्स, ' + (cfg.place || 'पुरंदरपुर, उत्तर प्रदेश'), '');
+  var tagCat = {women:'#womenfashion #suits #sarees', men:'#mensfashion', boys:'#kidsfashion', girls:'#kidsfashion', kids:'#kidswear', footwear:'#footwear', jewellery:'#artificialjewellery', beauty:'#beauty', cookware:'#kitchen', stationery:'#stationery #school'}[p.cat] || '';
+  lines.push('#डायमंडफैशन्स #DiamondFashions #Purandarpur #Maharajganj ' + tagCat + (kind === 'low' ? ' #limitedstock' : ' #newarrival'));
+  return lines.join('\n');
+}
+function captionFor(p, kind, left){
+  var lg = capLang();
+  if (lg === 'en') return Promise.resolve(postCaption(p, kind, left));
+  return hindiNames(p).then(function(hn){ var hi = postCaptionHi(p, kind, left, hn); return lg === 'both' ? hi + '\n\n— — — English — — —\n' + postCaption(p, kind, left) : hi; });
+}
+function postProduct(p, kind){ return captionFor(p, kind, pcsLeft(p)).then(function(c){ return postProduct0(p, kind, c); }); }
+function postVideo(p, kind, vid){ return captionFor(p, kind, pcsLeft(p)).then(function(c){ return postVideo0(p, kind, vid, c); }); }
+function postProduct0(p, kind, capIn){
   if (!meta || !meta.pageToken) return Promise.reject(new Error(SL('पहले Facebook जोड़ें (सेटिंग में)', 'Connect Facebook first (in Settings)')));
-  var left = pcsLeft(p), cap = postCaption(p, kind, left), out = {fb:'', ig:''}, tok = meta.pageToken;
+  var left = pcsLeft(p), cap = capIn || postCaption(p, kind, left), out = {fb:'', ig:''}, tok = meta.pageToken;
   return postImage(p, kind, left).then(function(blob){
     var fd = new FormData(); fd.append('source', blob, 'post.jpg'); fd.append('caption', cap); fd.append('message', cap); fd.append('published', meta.fb === false ? 'false' : 'true'); fd.append('access_token', tok);
     return gfetch(meta.pageId + '/photos', {}, 'POST', fd);
@@ -1961,6 +1996,9 @@ function drawSocial(main){
   if (meta && meta.pageToken){
     card.appendChild(el('p',{html:'✅ '+SL('जुड़ा हुआ:','Connected:')+' <b>Facebook: '+(meta.pageName||meta.pageId)+'</b>'+(meta.igId?' · <b>Instagram: @'+(meta.igUser||meta.igId)+'</b>':' · '+SL('Instagram नहीं जुड़ा (पेज से Instagram Business खाता लिंक करें)','Instagram not linked (link an Instagram Business account to the Page)'))}));
     var chk = function(key, label){ return el('label',{'class':'row',style:'margin:6px 0'},[ el('input',{type:'checkbox',checked:meta[key]!==false?'checked':null,onchange:function(e){ var u = {}; u[key] = e.target.checked; metaRef().set(u,{merge:true}); }}), ' '+label ]); };
+    var cl = el('select',{style:'min-height:40px;border-radius:8px',onchange:function(e){ metaRef().set({capLang:e.target.value},{merge:true}); }},[ el('option',{value:'hi',text:'हिंदी'}), el('option',{value:'both',text:SL('हिंदी + English','Hindi + English')}), el('option',{value:'en',text:'English'}) ]);
+    cl.value = meta.capLang || 'hi';
+    card.appendChild(el('div',{'class':'row',style:'margin:6px 0'},[ el('b',{text:SL('पोस्ट का विवरण किस भाषा में','Post text language')}), cl, el('span',{'class':'small muted',text:SL('(सामान का नाम Gemini से हिंदी में बदलता है)','(item name is put into Hindi with Gemini)')}) ]));
     card.appendChild(chk('autoNew', SL('नया सामान (फ़ोटो के साथ) सेव होते ही पोस्ट करें','Post new items (with a photo) as soon as they are saved')));
     card.appendChild(chk('autoLow', SL('जब किसी सामान के कम पीस बचें तो पोस्ट करें','Post when an item is running low')));
     card.appendChild(chk('lowRepost', SL('स्टॉक और कम हो तो असली बचे पीस के साथ नई पोस्ट (पुरानी Facebook पोस्ट हट जाएगी, ख़त्म होने पर भी हटेगी)','When stock drops further, post again with the real number left (the old Facebook post is removed, also when sold out)')));
@@ -2425,9 +2463,9 @@ function postIgCarousel(p, kind, cap){
   }).then(function(pub){ return pub.id; });
 }
 /* upload the video to the Facebook Page, then reuse it as an Instagram Reel */
-function postVideo(p, kind, vid){
+function postVideo0(p, kind, vid, capIn){
   if (!meta || !meta.pageToken) return Promise.reject(new Error(SL('पहले Facebook जोड़ें (सेटिंग में)', 'Connect Facebook first (in Settings)')));
-  var tok = meta.pageToken, cap = postCaption(p, kind, pcsLeft(p)), out = {fb:'', ig:''};
+  var tok = meta.pageToken, cap = capIn || postCaption(p, kind, pcsLeft(p)), out = {fb:'', ig:''};
   var fd = new FormData(); fd.append('source', vid.blob, /mp4/.test(vid.type) ? 'reel.mp4' : 'reel.webm');
   fd.append('description', cap); fd.append('published', meta.fb === false ? 'false' : 'true'); fd.append('access_token', tok);
   return gfetch(meta.pageId + '/videos', {}, 'POST', fd).then(function(r){
