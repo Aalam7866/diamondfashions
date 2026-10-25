@@ -882,15 +882,17 @@ function festByKey(k){ return k === 'brand' ? BRAND_THEME : FESTS.filter(functio
 function fitFont(x, text, maxW, size, weight, fam){ var sz = size; do { x.font = weight + ' ' + sz + 'px ' + fam; if (x.measureText(text).width <= maxW) break; sz -= 4; } while (sz > 28); return sz; }
 /* draw one banner. o = {theme, title, sub, tag, btn, photos:[img elements]} ; scale lets thumbnails reuse it */
 function drawBanner(c, o){
-  var W = 1600, H = 600, x = c.getContext('2d'), th = festByKey(o.theme), R = seeded((o.theme || 'b').length * 7919 + 13), ink = th.ink || '#FFFFFF', FAM = "'Hind','Noto Sans Devanagari','Jost',Arial,sans-serif";
+  var mob = !!o.mob, W = mob ? 1080 : 1600, H = mob ? 608 : 600, x = c.getContext('2d'), th = festByKey(o.theme), R = seeded((o.theme || 'b').length * 7919 + 13), ink = th.ink || '#FFFFFF', FAM = "'Hind','Noto Sans Devanagari','Jost',Arial,sans-serif";
   x.save(); x.scale(c.width / W, c.height / H);
   var g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, th.bg[0]); g.addColorStop(1, th.bg[1]); x.fillStyle = g; x.fillRect(0, 0, W, H);
   (th.mo || []).forEach(function(m){ try { MOTIF[m](x, W, H, R, th); } catch(e){} });
   var photos = (o.photos || []).filter(Boolean).slice(0, 3), left = 70;
   // product photos big, in tilted white frames on the right (they must read on a phone too)
-  var textW = [1100, 880, 790, 730][photos.length];
+  // mob: the phone version (16:9, as the website's banner box on a phone) – fewer, smaller-spaced photos, text in the left half
+  var textW = (mob ? [960, 560, 500, 470] : [1100, 880, 790, 730])[photos.length];
   if (photos.length){
-    var spots = photos.length === 1 ? [[1255, 300, .02, 1.3]] : photos.length === 2 ? [[1105, 305, -.05, 1.12], [1395, 295, .06, 1.12]] : [[1020, 318, -.07, .96], [1250, 292, .02, 1.06], [1452, 318, .08, .87]];
+    var spots = mob ? (photos.length === 1 ? [[835, 312, .03, 1.15]] : photos.length === 2 ? [[745, 318, -.05, .95], [925, 300, .06, .95]] : [[705, 330, -.07, .78], [850, 300, .02, .9], [985, 330, .08, .74]])
+      : photos.length === 1 ? [[1255, 300, .02, 1.3]] : photos.length === 2 ? [[1105, 305, -.05, 1.12], [1395, 295, .06, 1.12]] : [[1020, 318, -.07, .96], [1250, 292, .02, 1.06], [1452, 318, .08, .87]];
     photos.forEach(function(im, i){ var sp = spots[i], fw = 300*sp[3], fh = 400*sp[3];
       x.save(); x.translate(sp[0], sp[1]); x.rotate(sp[2]); x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 30; x.shadowOffsetY = 10; x.fillStyle = '#fff'; x.fillRect(-fw/2 - 10, -fh/2 - 10, fw + 20, fh + 20); x.shadowColor = 'transparent';
       var k = Math.max(fw / im.width, fh / im.height); x.beginPath(); x.rect(-fw/2, -fh/2, fw, fh); x.clip(); x.drawImage(im, -im.width*k/2, -im.height*k/2, im.width*k, im.height*k); x.restore(); });
@@ -898,8 +900,8 @@ function drawBanner(c, o){
   // soft panel behind the text so it stays readable over motifs
   var pg = x.createLinearGradient(0, 0, textW + 160, 0); var dark = !th.ink; pg.addColorStop(0, dark ? 'rgba(0,0,0,.38)' : 'rgba(255,255,255,.55)'); pg.addColorStop(1, dark ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)'); x.fillStyle = pg; x.fillRect(0, 0, textW + 160, H);
   x.textBaseline = 'alphabetic';
-  x.fillStyle = ink; x.globalAlpha = .9; x.font = "600 30px 'Jost',Arial,sans-serif"; x.fillText('DIAMOND FASHIONS', left, 92); x.globalAlpha = .75; x.font = '24px ' + FAM; x.fillText('Purandarpur · diamondfashions.in', left, 128); x.globalAlpha = 1;
-  var y = 200;
+  x.fillStyle = ink; x.globalAlpha = .9; x.font = "600 30px 'Jost',Arial,sans-serif"; x.fillText('DIAMOND FASHIONS', left, mob ? 76 : 92); x.globalAlpha = .75; x.font = '24px ' + FAM; x.fillText('Purandarpur · diamondfashions.in', left, mob ? 110 : 128); x.globalAlpha = 1;
+  var y = mob ? 152 : 200;
   if (o.tag){ x.font = 'bold 34px ' + FAM; var tw = x.measureText(o.tag).width + 44; x.fillStyle = th.accent; x.beginPath(); if (x.roundRect) x.roundRect(left, y - 4, tw, 56, 28); else x.rect(left, y - 4, tw, 56); x.fill(); x.fillStyle = th.ink ? '#fff' : '#1A1A1A'; x.fillText(o.tag, left + 22, y + 36); y += 80; } else y += 20;
   // a long title goes on two lines (bigger) instead of one tiny line
   var tt = o.title || '', lines = [tt], ts = fitFont(x, tt, textW, 104, '800', FAM);
@@ -908,6 +910,13 @@ function drawBanner(c, o){
     for (var wi = 1; wi < words.length; wi++){ var a = words.slice(0, wi).join(' '), b2 = words.slice(wi).join(' ');
       var sz2 = Math.min(fitFont(x, a, textW, 84, '800', FAM), fitFont(x, b2, textW, 84, '800', FAM)); if (!best || sz2 > best[0]) best = [sz2, a, b2]; }
     if (best && best[0] > ts){ ts = best[0]; lines = [best[1], best[2]]; }
+    // on the phone banner a very long name may take 3 lines
+    if (mob && ts < 58 && words.length > 2){
+      for (var i1 = 1; i1 < words.length - 1; i1++) for (var i2 = i1 + 1; i2 < words.length; i2++){
+        var l3 = [words.slice(0, i1).join(' '), words.slice(i1, i2).join(' '), words.slice(i2).join(' ')];
+        var sz3 = Math.min.apply(null, l3.map(function(t){ return fitFont(x, t, textW, 64, '800', FAM); }));
+        if (sz3 > ts + 4){ ts = sz3; lines = l3; } }
+    }
   }
   x.font = '800 ' + ts + 'px ' + FAM; x.fillStyle = ink; x.shadowColor = dark ? 'rgba(0,0,0,.35)' : 'transparent'; x.shadowBlur = 12;
   lines.forEach(function(ln){ x.fillText(ln, left, y + ts*.8); y += ts*.98; }); x.shadowColor = 'transparent'; y += 24 - ts*.18;
@@ -917,6 +926,23 @@ function drawBanner(c, o){
   x.restore();
 }
 function bannerJpeg(o){ var c = document.createElement('canvas'); c.width = 1600; c.height = 600; drawBanner(c, o); var d = c.toDataURL('image/jpeg', .86); if (d.length > 700000) d = c.toDataURL('image/jpeg', .7); return d; }
+/* the same banner laid out for a phone (16:9), so it fills the website's banner on mobile instead of a thin strip */
+function bannerJpegM(o, room){ var c = document.createElement('canvas'); c.width = 1080; c.height = 608; drawBanner(c, Object.assign({}, o, {mob:true}));
+  var q = [.84, .74, .64, .54], d = ''; for (var i = 0; i < q.length; i++){ d = c.toDataURL('image/jpeg', q[i]); if (d.length <= (room || 330000)) return d; } return d.length <= (room || 330000) ? d : ''; }
+/* a Firestore doc holds 1 MB: what is left for the phone picture next to the wide one */
+function roomM(img){ return Math.min(330000, 990000 - (img || '').length - 6000); }
+/* banners made before the phone version: make it once from what they were made of (spec) */
+var bnrMobDone = {};
+function bannerMobFill(){
+  banners.forEach(function(b){
+    if (!b.spec || b.imgM || bnrMobDone[b._id]) return; bnrMobDone[b._id] = 1;
+    var ps = (b.spec.pids || []).map(function(id){ return products.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean);
+    photosOf(ps.map(function(p){ return p.photos && p.photos[0]; })).then(function(imgs){
+      var m = bannerJpegM(Object.assign({}, b.spec, {photos:imgs}), roomM(b.img)); if (!m) return;
+      return db.collection('config').doc(b._id).set({imgM:m}, {merge:true});
+    }).catch(function(e){ console.warn('banner phone picture', b._id, e); });
+  });
+}
 function photosOf(list){ return Promise.all((list || []).slice(0, 3).map(loadImg)).then(function(a){ return a.filter(Boolean); }); }
 function offOf(p){ return p && p.mrp && p.price && p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0; }
 /* the banner maker: theme + text + up to 3 product photos, live preview, saves as a normal banner */
@@ -957,9 +983,10 @@ function bannerMaker(init){
     var save = el('button',{'class':'btn b-gold',type:'button',text:'✓ '+SL('बैनर वेबसाइट पर लगाएँ','Put banner on the website'),onclick:function(){
       save.disabled = true; msg.textContent = '…'; msg.className = 'msg';
       var img = bannerJpeg(Object.assign({}, o, {photos:imgs})), id = o.replaceId || ('banner_' + Date.now().toString(36));
+      var imgM = bannerJpegM(Object.assign({}, o, {photos:imgs}), roomM(img));
       // what it was made from is kept, so the banner can be made again later with a newer design (↻ in the list)
       var spec = {theme:o.theme, lang:o.lang, title:o.title, sub:o.sub, tag:o.tag, btn:o.btn, pids:o.pids, link:o.link || ''};
-      db.collection('config').doc(id).set({type:'image', img:img, title:'', sub:'', btn:'', tag:'', link:o.link || 'sec:shop', active:true, order:o.replaceId ? (o.order || -Date.now()) : -Date.now(), made:o.theme, spec:spec, updated:now()})
+      db.collection('config').doc(id).set(Object.assign(imgM ? {imgM:imgM} : {}, {type:'image', img:img, title:'', sub:'', btn:'', tag:'', link:o.link || 'sec:shop', active:true, order:o.replaceId ? (o.order || -Date.now()) : -Date.now(), made:o.theme, spec:spec, updated:now()}))
         .then(function(){ msg.textContent = SL('बैनर लग गया ✓ वेबसाइट पर सबसे पहले दिखेगा','Banner is live ✓ It shows first on the website'); msg.className = 'msg ok'; setTimeout(close, 900); }, function(e){ save.disabled = false; msg.textContent = e.message; msg.className = 'msg err'; });
     }});
     var dl = el('button',{'class':'btn b-line',type:'button',text:'⬇ '+SL('फ़ोटो डाउनलोड (WhatsApp स्टेटस)','Download picture (WhatsApp status)'),onclick:function(){ var a = el('a',{href:bannerJpeg(Object.assign({}, o, {photos:imgs})),download:'banner-'+o.theme+'.jpg'}); document.body.appendChild(a); a.click(); a.remove(); }});
@@ -2992,7 +3019,7 @@ function listen(){
     var fresh = requests.filter(function(r){ return r.status === 'new' && seenReqs && !seenReqs[r._id]; }); if (!seenReqs) seenReqs = {}; requests.forEach(function(r){ seenReqs[r._id] = 1; });
     fresh.forEach(function(r){ var k = {cancel:'कैंसिल',return:'वापसी',exchange:'बदलाव',tailoring:'सिलाई'}[r.kind] || r.kind; notifyAdmin('📩 '+L('नई रिक्वेस्ट')+' · '+L(k), (r.orderId||r.name||'')+' '+(r.item||r.phone||''), 'r-'+r._id); });
     setBadge(); syncTjobs(); redraw(); }));
-  unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); socialWatch(); }));
+  unsubs.push(db.collection('products').onSnapshot(function(s){ products = s.docs.map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); redraw(); socialWatch(); bannerMobFill(); }));
   unsubs.push(metaRef().onSnapshot(function(s){ meta = s.exists ? s.data() : null; metaLoaded = true; if (tab === 'settings') redraw(); socialWatch(); setTimeout(function(){ reelRetry(); }, 3000); }, function(){ metaLoaded = false; }));
   unsubs.push(db.collection('track').onSnapshot(function(s){ track = {}; s.docs.forEach(function(d){ track[d.id] = d.data(); }); }));
   unsubs.push(db.collection('karigars').onSnapshot(function(s){ karigars = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); }); if (tab === 'silai') redraw(); }, function(){}));
@@ -3011,7 +3038,7 @@ function listen(){
   unsubs.push(db.collection('cards').onSnapshot(function(s){ cards = s.docs.map(function(d){ return d.data(); }); if (tab === 'cards') redraw(); }, function(){}));
   unsubs.push(db.collection('reviews').orderBy('created','desc').limit(500).onSnapshot(function(s){ reviews = s.docs.map(function(d){ var x = d.data(); x._id = d.id; return x; }); if (tab === 'reviews') redraw(); }, function(){}));
   unsubs.push(db.collection('config').onSnapshot(function(s){ bundles = s.docs.filter(function(d){ return d.id.indexOf('bundle_') === 0; }).map(function(d){ return d.data(); }).sort(function(a,b){ return (a.order||0)-(b.order||0); });
-    banners = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); if (tab === 'banners') redraw(); }));
+    banners = s.docs.filter(function(d){ return d.id.indexOf('banner_') === 0; }).map(function(d){ var x = d.data(); x._id = d.id; return x; }).sort(function(a,b){ return (a.order||0)-(b.order||0); }); if (products.length) bannerMobFill(); if (tab === 'banners') redraw(); }));
 }
 auth.getRedirectResult().catch(function(){});
 auth.onAuthStateChanged(function(u){
