@@ -933,13 +933,31 @@ function bannerJpegM(o, room){ var c = document.createElement('canvas'); c.width
 function roomM(img){ return Math.min(330000, 990000 - (img || '').length - 6000); }
 /* banners made before the phone version: make it once from what they were made of (spec) */
 var bnrMobDone = {};
+function specFromOld(b){
+  var lk = b.link || '', th = b.made, lang = 'en';
+  if (/^p:/.test(lk)){
+    var p = products.filter(function(x){ return String(x.code||'').toUpperCase() === lk.slice(2).toUpperCase(); })[0]; if (!p) return null;
+    if (th === 'brand'){ var off = offOf(p);
+      return {theme:'brand', lang:lang, title:p.name, sub:(p.price ? 'Only ' + rupees(p.price) + (p.unit === 'm' ? ' / metre' : '') : '') + (p.mrp && p.price && p.mrp > p.price ? ' · MRP ' + rupees(p.mrp) : ''),
+        tag: off ? off + '% OFF' : 'NEW ARRIVAL', btn:'Shop now  ›', pids:[p.id], link:lk}; }
+  }
+  var f = th !== 'brand' && FESTS.filter(function(z){ return z.k === th; })[0];
+  if (f) return {theme:th, lang:lang, title:f.t[0], sub:f.s[0], tag:'', btn:'Shop now  ›', pids:[], link:lk};
+  return null;
+}
 function bannerMobFill(){
   banners.forEach(function(b){
-    if (!b.spec || b.imgM || bnrMobDone[b._id]) return; bnrMobDone[b._id] = 1;
-    var ps = (b.spec.pids || []).map(function(id){ return products.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean);
+    if (b.imgM || bnrMobDone[b._id]) return;
+    // made before the maker remembered its design: made again from its product (or its festival), wide + phone
+    var again = !b.spec && b.made && b.type === 'image';
+    if (!b.spec && !again) return;
+    var spec = b.spec || specFromOld(b); if (!spec) return;
+    bnrMobDone[b._id] = 1;
+    var ps = (spec.pids || []).map(function(id){ return products.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean);
     photosOf(ps.map(function(p){ return p.photos && p.photos[0]; })).then(function(imgs){
-      var m = bannerJpegM(Object.assign({}, b.spec, {photos:imgs}), roomM(b.img)); if (!m) return;
-      return db.collection('config').doc(b._id).set({imgM:m}, {merge:true});
+      var o2 = Object.assign({}, spec, {photos:imgs}), wide = again ? bannerJpeg(o2) : b.img;
+      var m = bannerJpegM(o2, roomM(wide)); if (!m) return;
+      return db.collection('config').doc(b._id).set(again ? {img:wide, imgM:m, spec:spec} : {imgM:m}, {merge:true});
     }).catch(function(e){ console.warn('banner phone picture', b._id, e); });
   });
 }

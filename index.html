@@ -1436,7 +1436,7 @@ function renderBanners(){
     var vid = b.type === 'video' && b.video, yt = vid ? ytId(b.video) : '';
     if (yt) sl.appendChild(el('iframe',{src:'https://www.youtube-nocookie.com/embed/'+yt+'?autoplay=1&mute=1&loop=1&playlist='+yt+'&controls=0&playsinline=1&modestbranding=1&rel=0',allow:'autoplay; encrypted-media; picture-in-picture',title:b.title||'Video',loading:'lazy'}));
     else if (vid){ var v = el('video',{src:b.video,muted:'muted',autoplay:'autoplay',loop:'loop',playsinline:'playsinline',preload:'metadata'}); v.muted = true; sl.appendChild(v); }
-    else if (b.img && !b.gen){
+    else if (b.img && !b.gen && (b.made || b.imgM || !b.title)){
       // a made / uploaded banner is shown whole (a wide 1600×600 banner on a phone): the same picture blurred fills the rest
       sl.className += ' fit';
       sl.appendChild(el('img',{'class':'bg',src:b.img,alt:'','aria-hidden':'true',loading:i?'lazy':'eager'}));
