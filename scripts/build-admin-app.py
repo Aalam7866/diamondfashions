@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Publish the DF Admin app and the DF Rider app to their own address (aalam7866.github.io/admin/ and /rider/).
 They live away from diamondfashions.in so phones install them as apps separate from the customer app."""
-import os, shutil, sys
+import os, re, shutil, sys
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 DST = sys.argv[1] if len(sys.argv) > 1 else '/home/claude/aalam7866.github.io'
 FILES = ['index.html', 'mp4-muxer.min.js', 'manifest.webmanifest', 'sw.js', 'icon-96.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png']
@@ -12,7 +12,7 @@ for app in ['admin', 'rider', 'karigar']:
         if not os.path.exists(src): continue
         if f == 'index.html':
             html = open(src, encoding='utf-8').read()
-            if 'rel="manifest"' not in html:
+            if not re.search(r'<link[^>]+rel="manifest"', html):
                 html = html.replace('</title>', '</title>\n<link rel="manifest" href="manifest.webmanifest">', 1)
             open(os.path.join(DST, app, f), 'w', encoding='utf-8').write(html)
         else:

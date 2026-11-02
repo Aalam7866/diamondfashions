@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="hi">
 <head>
+<script>/* each app lives only on apps.diamondfashions.in (its own installed app); on the shop website's address it moves there */
+if (/^(www\.)?diamondfashions\.in$/.test(location.hostname)) location.replace('https://apps.diamondfashions.in' + location.pathname + location.search + location.hash);</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DF Staff</title>
